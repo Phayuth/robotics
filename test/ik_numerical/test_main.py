@@ -1,4 +1,4 @@
-import numerical_ik
+import numerical_ik as numerical_ik
 import numpy as np
 
 robot = numerical_ik.robot_rr_plannar()

@@ -28,17 +28,3 @@ def quaternion_to_theta_and_vector(q):
     nz = q3/np.sin(theta/2)
 
     return theta, np.array([nx,ny,nz])
-
-
-unit_vector_x = np.array([1,0,0])
-unit_vector_y = np.array([0,1,0])
-unit_vector_z = np.array([0,0,1])
-
-theta = np.deg2rad(90)
-print(theta)
-
-q = quaternion_from_theta_and_vector(theta,unit_vector_x)
-theta_ori,n_ori = quaternion_to_theta_and_vector(q)
-
-print(q)
-print(theta_ori,n_ori)

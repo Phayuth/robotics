@@ -1,7 +1,6 @@
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 import numpy as np
-from ur5e_lib import ur5
 
 theta = np.array([[0],
                   [0],
@@ -9,7 +8,7 @@ theta = np.array([[0],
                   [0],
                   [0],
                   [0]])
-r = ur5()
+r = ur5e.ur5e()
 _, _, _, _, _, p = r.forward_kinematic(theta)
 
 roll = 0

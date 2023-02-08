@@ -1,7 +1,9 @@
 import numpy as np
 
-class ur5:
+class ur5e:
     def __init__(self):
+        # DH parameter is from this publication
+        # https://www.researchgate.net/publication/347021253_Mathematical_Modelling_and_Simulation_of_Human-Robot_Collaboration
         self.a     = np.array([      [0], [-0.425], [-0.3922],       [0],        [0],      [0]])
         self.alpha = np.array([[np.pi/2],      [0],       [0], [np.pi/2], [-np.pi/2],      [0]])
         self.d     = np.array([ [0.1625],      [0],       [0],  [0.1333],   [0.0997], [0.0996]])
@@ -22,22 +24,42 @@ class ur5:
         A5 = self.dh_transformation(theta[4,0],self.alpha[4,0],self.d[4,0],self.a[4,0])
         A6 = self.dh_transformation(theta[5,0],self.alpha[5,0],self.d[5,0],self.a[5,0])
 
-        T01 = A1
-        T02 = A1 @ A2
-        T03 = A1 @ A2 @ A3
-        T04 = A1 @ A2 @ A3 @ A4
-        T05 = A1 @ A2 @ A3 @ A4 @ A5
+        # T01 = A1
+        # T02 = A1 @ A2
+        # T03 = A1 @ A2 @ A3
+        # T04 = A1 @ A2 @ A3 @ A4
+        # T05 = A1 @ A2 @ A3 @ A4 @ A5
         T06 = A1 @ A2 @ A3 @ A4 @ A5 @ A6
 
-        pe = np.array([[0],[0],[0],[1]]) # the fourth element MUST be equal to 1
-        p01 = T01 @ pe
-        p02 = T02 @ pe
-        p03 = T03 @ pe
-        p04 = T04 @ pe
-        p05 = T05 @ pe
-        p06 = T06 @ pe
+        # pe = np.array([[0],[0],[0],[1]]) # the fourth element MUST be equal to 1
+        # p01 = T01 @ pe
+        # p02 = T02 @ pe
+        # p03 = T03 @ pe
+        # p04 = T04 @ pe
+        # p05 = T05 @ pe
+        # p06 = T06 @ pe
 
-        return p01,p02,p03,p04,p05,p06
+
+        # https://www.daslhub.org/unlv/courses/me729-sp/week03/lecture/Note_02_Forward_Kinematics.pdf
+        # https://robotics.stackexchange.com/questions/8516/getting-pitch-yaw-and-roll-from-rotation-matrix-in-dh-parameter
+        # x - y - z sequence
+        # tan(roll) = r32/r33
+        # tan(pitch)= -r31/(sqrt(r32^2 + r33^2))
+        # tan(yaw)  = r21/r11
+        # np.arctan2(y, x)
+        
+        roll = np.arctan2(T06[2,1],T06[2,2])
+        pitch= np.arctan2(-T06[2,0],np.sqrt(T06[2,1]*T06[2,1] + T06[2,2]*T06[2,2]))
+        yaw  = np.arctan2(T06[1,0],T06[0,0])
+
+        x_current = np.array([[T06[0, 3]],
+                              [T06[1, 3]],
+                              [T06[2, 3]],
+                                   [roll],
+                                  [pitch],
+                                    [yaw]])
+
+        return x_current
 
     def jacobian(self,theta):
 
@@ -83,29 +105,29 @@ class ur5:
                        [0],
                        [0]])
 
-        O1 = np.array([[T01[0,3]],
-                       [T01[1,3]],
-                       [T01[2,3]]])
+        O1 = np.array([[T01[3,0]],
+                       [T01[3,1]],
+                       [T01[3,2]]])
 
-        O2 = np.array([[T02[0,3]],
-                       [T02[1,3]],
-                       [T02[2,3]]])
+        O2 = np.array([[T02[3,0]],
+                       [T02[3,1]],
+                       [T02[3,2]]])
 
-        O3 = np.array([[T03[0,3]],
-                       [T03[1,3]],
-                       [T03[2,3]]])
+        O3 = np.array([[T03[3,0]],
+                       [T03[3,1]],
+                       [T03[3,2]]])
 
-        O4 = np.array([[T04[0,3]],
-                       [T04[1,3]],
-                       [T04[2,3]]])
+        O4 = np.array([[T04[3,0]],
+                       [T04[3,1]],
+                       [T04[3,2]]])
 
-        O5 = np.array([[T05[0,3]],
-                       [T05[1,3]],
-                       [T05[2,3]]])
+        O5 = np.array([[T05[3,0]],
+                       [T05[3,1]],
+                       [T05[3,2]]])
 
-        O6 = np.array([[T06[0,3]],
-                       [T06[1,3]],
-                       [T06[2,3]]])
+        O6 = np.array([[T06[3,0]],
+                       [T06[3,1]],
+                       [T06[3,2]]])
 
         Jv1 = np.transpose(np.cross(np.transpose(Z0),np.transpose(O6-O0))) 
         Jv2 = np.transpose(np.cross(np.transpose(Z1),np.transpose(O6-O1))) 
@@ -150,14 +172,3 @@ class ur5:
         Ja = Ja_mul @ self.jacobian(theta)
 
         return Ja
-
-
-
-
-# Test
-r = ur5()
-a = np.array([[0], [0], [0], [0], [0], [0]])
-_,_,_,_,_,current = r.forward_kinematic(a)
-Jac = r.jacobian(a)
-print(current)
-print(Jac)

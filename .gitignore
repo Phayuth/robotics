@@ -14,3 +14,8 @@ ipython_config.py
 *.mp4
 pyrobotic/
 # test/
+
+# python setup.py install
+build/
+dist/
+*.egg-info/

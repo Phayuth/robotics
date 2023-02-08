@@ -1,6 +1,5 @@
 import numpy as np
 
-
 # 2d rotation
 def rotation_2d(theta):
     R = np.array([[np.cos(theta), -np.sin(theta)],
@@ -26,36 +25,3 @@ def rotation_3d_z_axis(theta):
                   [np.sin(theta),  np.cos(theta),  0],
                   [            0,              0,  1]])
     return R
-
-# 2d
-theta = np.deg2rad(90)
-p1 = np.array([[1],[0]])
-p2 = rotation_2d(theta) @ p1
-print("This is 2d rotation")
-print(p1)
-print(p2)
-
-# 3d
-theta = np.deg2rad(40)
-p1 = np.array([[1],[0],[0]])
-p2 = rotation_3d_y_axis(theta) @ p1
-print("This is 3d rotation")
-print(p1)
-print(p2)
-
-# sequence of rotation
-# for concurrent frame rotation, we post multiply of rotation matrix
-theta = np.deg2rad(90)
-p1 = np.array([[1],[0],[0]])
-p2 = rotation_3d_y_axis(theta) @ rotation_3d_z_axis(theta) @ p1
-print("This concurrent frame rotation")
-print(p1)
-print(p2)
-
-# for fixed frame rotation, we pre multiply of rotation matrix
-theta = np.deg2rad(90)
-p1 = np.array([[1],[0],[0]])
-p2 = rotation_3d_z_axis(theta) @ rotation_3d_y_axis(theta) @ p1
-print("This is fixed frame rotation")
-print(p1)
-print(p2)

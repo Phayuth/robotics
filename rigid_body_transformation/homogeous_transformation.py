@@ -27,19 +27,4 @@ def hom_pure_translation(x,y,z):
                   [            0,              0,  1,    z],
                   [            0,              0,  0,    1]])
     return R
-
-
-
-theta = np.deg2rad(40)
-p1 = np.array([[1],[1],[1],[1]]) # the fourth element MUST be equal to 1
-
-H01 = hom_pure_translation(5,0,0)
-H12 = hom_pure_translation(0,5,0)
-H23 = hom_pure_translation(0,0,5)
-
-H = H01@H12@H23
-p0 = H@p1
-
-print(H)
-print(p1)
-print(p0)
+    
