@@ -8,15 +8,21 @@ import time
 import math
 import matplotlib.pyplot as plt
 from planner.rrt_star2D import node , rrt_star
-from RobotArm2D import Robot, map, pmap
+from robot.plannar_rr.RobotArm2D import Robot
+from map.generate_map import pmap
+from config_space_2d.generate_config_space import construct_config_space_2d
 
+
+
+
+#pmap is probability map
 iteration = 1000
 map = pmap()
 # map = map()
 base_position = [15, 15]
 link_lenths = [5, 5]
-robot = Robot(base_position, link_lenths, map)
-c_map = robot.construct_config_space()
+robot = Robot(base_position, link_lenths)
+c_map = construct_config_space_2d(robot, map)
 m = c_map.shape[0] * c_map.shape[1]
 r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
 eta =  r * (math.log(iteration) / iteration)**(1/2)

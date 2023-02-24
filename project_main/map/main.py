@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import generate_map
 import glob
+from generate_map import grid_map_binary, grid_map_probability
+from grid_map_sampling import Sampling
 
+# View map
 # map = np.load("./map/mapdata/task_space/grid_113.npy").astype(np.uint8)
 # print(map.shape)
 # plt.imshow(map)
@@ -26,9 +28,13 @@ import glob
 # plt.imshow(map)
 # plt.show()
 
-# conf = np.load('./map/mapdata/config_space_data_2d/path(leaf-x)-5.npy')
-# print(conf.shape)
-# plt.imshow(conf)
+# conf2d = np.load('./map/mapdata/config_space_data_2d/path(leaf-x)-5.npy')
+# print(conf2d.shape)
+# plt.imshow(conf2d)
+# plt.show()
+
+# conf3d = np.load('./map/mapdata/config_space_data_3d/config3D.npy')
+# plt.imshow(conf2d[0])
 # plt.show()
 
 # point_cloud_rgb = np.load('./map/mapdata/point_cloud/rgb(0.3).npy')
@@ -37,6 +43,54 @@ import glob
 # point_cloud_xyz = np.load('./map/mapdata/point_cloud/xyz(0.3).npy')
 # print(point_cloud_xyz.shape)
 
-conf1 = np.load('./map/mapdata/config_space_data_3d/2/config3D.npy')
-conf2 = np.load('./map/mapdata/config_space_data_3d/2/config3D(73).npy')
-print(np.array_equal(conf1,conf2))
+
+
+# Grid Sampling
+map1 = grid_map_probability(0, 0, False)
+map2 = grid_map_probability(0, 3, False)
+map3 = grid_map_probability(0, 3, True)
+
+plt.figure(figsize=(10,10))
+plt.axes().set_aspect('equal')
+for i in range(1000):
+    x = np.random.uniform(low = 0, high = map1.shape[0])
+    y = np.random.uniform(low = 0, high = map1.shape[1])
+    plt.scatter(x, y, c="red", s=2)
+    if i%100 == 0:
+        print(i)
+
+plt.imshow(np.transpose(map1),cmap = "gray", interpolation = 'nearest')
+plt.show()
+
+plt.figure(figsize=(10,10))
+plt.axes().set_aspect('equal')
+for i in range(1000):
+    x = Sampling(map1)
+    plt.scatter(x[0], x[1], c="red", s=2)
+    if i%100 == 0:
+        print(i)
+
+plt.imshow(np.transpose(map1),cmap = "gray", interpolation = 'nearest')
+plt.show()
+
+plt.figure(figsize=(10,10))
+plt.axes().set_aspect('equal')
+for i in range(1000):
+    x = Sampling(map2)
+    plt.scatter(x[0], x[1], c="red", s=2)
+    if i%100 == 0:
+        print(i)
+
+plt.imshow(np.transpose(map2),cmap = "gray", interpolation = 'nearest')
+plt.show()
+
+plt.figure(figsize=(10,10))
+plt.axes().set_aspect('equal')
+for i in range(1000):
+    x = Sampling(map3)
+    plt.scatter(x[0], x[1], c="red", s=2)
+    if i%100 == 0:
+        print(i)
+
+plt.imshow(np.transpose(map3),cmap = "gray", interpolation = 'nearest')
+plt.show()
