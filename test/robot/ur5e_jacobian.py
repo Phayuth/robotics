@@ -137,13 +137,19 @@ Jw4 = Z3
 Jw5 = Z4
 Jw6 = Z5
 
-J1 = np.append(Jv1,Jw1,axis=0)
-J2 = np.append(Jv2,Jw2,axis=0)
-J3 = np.append(Jv3,Jw3,axis=0)
-J4 = np.append(Jv4,Jw4,axis=0)
-J5 = np.append(Jv5,Jw5,axis=0)
-J6 = np.append(Jv6,Jw6,axis=0)
+# J1 = np.append(Jv1,Jw1,axis=0)
+# J2 = np.append(Jv2,Jw2,axis=0)
+# J3 = np.append(Jv3,Jw3,axis=0)
+# J4 = np.append(Jv4,Jw4,axis=0)
+# J5 = np.append(Jv5,Jw5,axis=0)
+# J6 = np.append(Jv6,Jw6,axis=0)
 
+J1 = np.vstack((Jv1,Jw1))
+J2 = np.vstack((Jv2,Jw2))
+J3 = np.vstack((Jv3,Jw3))
+J4 = np.vstack((Jv4,Jw4))
+J5 = np.vstack((Jv5,Jw5))
+J6 = np.vstack((Jv6,Jw6))
 
 print(J1)
 print(J2)
@@ -153,6 +159,6 @@ print(J5)
 print(J6)
 
 print("Jac")
-J = np.append(np.append(np.append(np.append(np.append(J1,J2,axis=1),J3,axis=1),J4,axis=1),J5,axis=1),J6,axis=1)
+J = np.hstack((J1,J2,J3,J4,J5,J6))
 print(J)
 print(np.shape(J))

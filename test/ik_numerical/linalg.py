@@ -104,3 +104,15 @@ print(phi2)
 
 deltheta = clampMagAbs(phi1+phi2,gama_max)
 print(deltheta)
+
+
+a = np.array([1, 2, 3])
+b = np.array([4, 5, 6])
+c = np.vstack((a,b,a,b,a,b))
+print(c)
+
+
+a = np.array([1, 2, 3])
+b = np.array([4, 5, 6])
+c = np.hstack((a,b,a,b,a,b))
+print(c)
