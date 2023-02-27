@@ -1,3 +1,8 @@
+import os
+import sys
+wd = os.path.abspath(os.getcwd())
+sys.path.append(str(wd))
+
 import numpy as np
 from shapely.geometry import Polygon
 from PIL import Image, ImageDraw
@@ -34,7 +39,7 @@ def Collision_range(obstacle):
 
 def Obstacle_BARN_113():
 
-    map = np.load("task_space/grid_113.npy").astype(np.uint8)
+    map = np.load("./map/mapdata/task_space/grid_113.npy").astype(np.uint8)
 
     obs_center = []
     obs = []

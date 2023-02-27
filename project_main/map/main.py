@@ -10,11 +10,11 @@ from grid_map_sampling import Sampling
 # plt.imshow(map)
 # plt.show()
 
-# index = 0
-# map = generate_map.grid_map_binary(index)
-# print(map)
-# plt.imshow(map)
-# plt.show()
+index = 0
+map = grid_map_binary(index)
+print(map)
+plt.imshow(map)
+plt.show()
 
 # filter_size = 3 # 1 = 3x3, 2 = 5x5, 3 = 7x7
 # classify = True

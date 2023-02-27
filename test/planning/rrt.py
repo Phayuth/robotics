@@ -1,30 +1,49 @@
-# my attempt to write the code from pseudo 
-# RRT Pseudo Code
+# xi = [5, 5]; % Initial configuration
+# D = 0.2; % Distance to new node
+# maxIter = 1000;
+# M = [xi]; % Map
 
-# Qgoal //region that identifies success
-# Counter = 0 //keeps track of iterations
-# lim = n //number of iterations algorithm should run for
-# G(V,E) //Graph containing edges and vertices, initialized as empty
-# While counter < lim:
-#     Xnew  = RandomPosition()
-#     if IsInObstacle(Xnew) == True:
-#         continue
-#     Xnearest = Nearest(G(V,E),Xnew) //find nearest vertex
-#     Link = Chain(Xnew,Xnearest)
-#     G.append(Link)
-#     if Xnew in Qgoal:
-#         Return G
-# Return G
+# hFig = OFig(2, 3, 1); hFig.sketch(); axis square equal; axis([0, 10, 0, 10]);
 
-# /////////////////////////////////////////////////////////////
-import random
+# j = 1;
+# while j < maxIter
+#     xRand = 10*rand(1,2); % Random configuration
+#     dMin = 100; iMin = 1; % Search for the closest point in the map M
+#     for i = 1:size(M,1)
+#         d = norm(M(i,:)-xRand);
+#         if d<dMin
+#             dMin = d;
+#             iMin = i;
+#         end
+#     end
 
-q_goal = [10,10]
-counter = 0
-lim = 100
-V = []
-E = []
-while counter < lim:
-    Xnew = random.random()
+#     xNear = M(iMin,:);
+#     v = xRand - xNear;
+#     xNew = xNear + v/norm(v)*D; % Calculate new point
+
+#     con = [xNear; xNew];
+#     M = [M; xNew];
+#     j = j + 1;
     
-    if IsInobst(Xnew) == True:
+#     line(con(:,1), con(:,2), 'Color', 'b');
+# end
+import numpy as np
+# simple rrt from WMR book
+xi = np.array([5,5])
+D = 0.2
+Iter = 10
+M = np.array(xi)
+print(type(M))
+
+j = 1
+while 1 < Iter:
+    xrand = 10*np.random.rand(1,2)
+    dMin = 100
+    iMin = 1
+    for i in range(len(M)[0]):
+        d = np.linalg.norm(M[i,:] - xrand)
+        if d<dMin:
+            dMin = d
+            iMin = i
+            print(dMin)
+    

@@ -2,7 +2,6 @@ import numpy as np
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
 
-
 class node(object):
     def __init__(self, x, y, cost = 0, parent = None ):
 
@@ -11,7 +10,6 @@ class node(object):
         self.arr = np.array([self.x, self.y])
         self.cost = cost
         self.parent = parent
-
 
 class rrt_star():
     def __init__(self, map, x_init, x_goal, eta, obs, obstacle_center, collision_range, map_size):

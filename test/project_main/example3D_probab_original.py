@@ -1,12 +1,19 @@
+import os
+import sys
+wd = os.path.abspath(os.getcwd())
+sys.path.append(str(wd))
+
 import numpy as np
 import time
 import math
-from generate_map import map, Reshape_map
-from rrt_star3D import node, rrt_star
+from map.generate_map import map_3d, Reshape_map
+from planner.rrt_star3D import node, rrt_star
 
+# Creat map
+map = map_3d()
 
-iteration = 3000
-map = map()
+# Create planner
+iteration = 100
 m = map.shape[0] * map.shape[1] * map.shape[2]
 r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
 eta =  r * (math.log(iteration) / iteration)**(1/2)
@@ -14,8 +21,8 @@ eta =  r * (math.log(iteration) / iteration)**(1/2)
 sample_taken = 0
 total_iter = 0
 x_init = node(20, 20, 20)
-x_init.parent = x_init
 x_goal = node(40, 10, 30)
+
 filter_size = 0 # 1 = 3x3, 2 = 5x5, 3 = 7x7
 classify = False
 distance_weight = 0.5
@@ -53,7 +60,6 @@ while True:
     e1 = time.time()
     t1 += (e1 - s1)
 
-
     sample_taken += 1
 
     s2 = time.time()
@@ -74,12 +80,19 @@ while True:
 #
 # np.save("data/data0", Graph_data)
 
-e = time.time()
-print("total time : ", e - s,"초")
-print("sampling time : ", t1,"초", (t1*100)/(e-s),"%")
-print("Add_Parent time : ", t2,"초", (t2*100)/(e-s),"%")
-print("Rewire time : ", t3,"초", (t3*100)/(e-s),"%")
-print("Sample_taken : ", sample_taken)
-print("Cost = ",rrt.x_goal.cost)
+# e = time.time()
+# print("total time : ", e - s,"초")
+# print("sampling time : ", t1,"초", (t1*100)/(e-s),"%")
+# print("Add_Parent time : ", t2,"초", (t2*100)/(e-s),"%")
+# print("Rewire time : ", t3,"초", (t3*100)/(e-s),"%")
+# print("Sample_taken : ", sample_taken)
+# print("Cost = ",rrt.x_goal.cost)
 path = rrt.Get_Path()
-rrt.Draw(path, Reshape_map(map))
+# rrt.Draw(path, Reshape_map(map))
+# print(path[0].x)
+# print(path[0].y)
+# print(path[0].y)
+
+# print(path[1].x)
+# print(path[1].y)
+# print(path[1].y)

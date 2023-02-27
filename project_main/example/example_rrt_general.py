@@ -7,8 +7,8 @@ import numpy as np
 import time
 import math
 import matplotlib.pyplot as plt
-from rrt_star_general import node, rrt_star
-from obstacle_space import Obstacle_generater, Obstacle_center, Collision_range, Obstacle_BARN_113
+from planner.rrt_star_general import node, rrt_star
+from map.obstacle_space import Obstacle_generater, Obstacle_center, Collision_range, Obstacle_BARN_113
 
 
 map_size = np.array([0,49])
@@ -29,8 +29,8 @@ collision_range = (2**(1/2))/2
 obstacle, obstacle_center  = Obstacle_BARN_113()
 obs = Obstacle_generater(obstacle)
 
-x_init = node(5, 27)
-x_goal = node(25, 3)
+x_init = node(5, 5)
+x_goal = node(20, 20)
 x_init.parent = x_init
 
 Graph_sample_num = 0
@@ -100,13 +100,13 @@ print("Total time : ", e - s,"초")
 print("Sampling time : ", t1,"초", (t1*100)/(e-s),"%")
 print("Total_sample = ", sample_taken)
 print("Cost : ", rrt.x_goal.cost)
-
-rrt.Draw_obs()
-rrt.Draw_Tree()
-rrt.Draw_path(path)
-plt.gca().invert_yaxis()
-plt.title("RRT")
-plt.show()
+print(path)
+# rrt.Draw_obs()
+# rrt.Draw_Tree()
+# rrt.Draw_path(path)
+# plt.gca().invert_yaxis()
+# plt.title("RRT")
+# plt.show()
 
 # iter = 10
 # total_time = 0
