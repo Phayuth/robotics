@@ -13,6 +13,13 @@ class aabb_obj:
         self.y_max = y_max
         self.z_max = z_max
 
+class sqr_rec_2d_obj:
+    def __init__(self,x,y,h,w):
+        self.x = x
+        self.y = y
+        self.h = h
+        self.w = w
+        
 class point3d_obj:
     def __init__(self,x,y,z):
         self.x = x
@@ -141,6 +148,22 @@ def line_circle_collision(radius,O,P,Q): # https://www.baeldung.com/cs/circle-li
     minimum_distance = 2*trig_area(O,P,Q)/np.linalg.norm(distPQ)
 
     if minimum_distance <= radius:
+        return True
+    else:
+        return False
+
+def intersect_rectangle_v_rectangle(rec1,rec2):
+    r1x = rec1.x
+    r1y = rec1.y
+    r1w = rec1.w
+    r1h = rec1.h
+
+    r2x = rec2.x
+    r2y = rec2.y
+    r2w = rec2.w
+    r2h = rec2.h
+
+    if (r1x + r1w >= r2x) and (r1x <= r2x + r2w) and (r1y + r1h >= r2y) and (r1y <= r2y + r2h) :
         return True
     else:
         return False

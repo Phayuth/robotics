@@ -23,3 +23,8 @@ Q = np.array([[-6],
 
 collide = collision_class.line_circle_collision(r,O,P,Q)
 print(collision)
+
+rec1 = collision_class.sqr_rec_2d_obj(0,0,5,5)
+rec2 = collision_class.sqr_rec_2d_obj(10,10,5,5)
+collision = collision_class.intersect_rectangle_v_rectangle(rec1,rec2)
+print(collision)
