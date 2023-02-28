@@ -4,7 +4,6 @@ author: Atsushi Sakai (@Atsushi_twi)
 Ref:
 https://www.cs.cmu.edu/~motionplanning/lecture/Chap4-Potential-Field_howie.pdf
 """
-
 from collections import deque
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,13 +18,15 @@ OSCILLATIONS_DETECTION_LENGTH = 3
 show_animation = True
 
 
-def calc_potential_field(gx, gy, ox, oy, reso, rr, sx, sy):
+def calc_potential_field(gx, gy, ox, oy, reso, rr, sx, sy): # goal x, goal y, obs x, obs y, resolution, threshold distance, start x, start y
     minx = min(min(ox), sx, gx) - AREA_WIDTH / 2.0
     miny = min(min(oy), sy, gy) - AREA_WIDTH / 2.0
     maxx = max(max(ox), sx, gx) + AREA_WIDTH / 2.0
     maxy = max(max(oy), sy, gy) + AREA_WIDTH / 2.0
     xw = int(round((maxx - minx) / reso))
     yw = int(round((maxy - miny) / reso))
+
+    print(minx,miny,maxx,maxy,xw,yw)
 
     # calc each potential
     pmap = [[0.0 for i in range(yw)] for i in range(xw)]
@@ -44,10 +45,14 @@ def calc_potential_field(gx, gy, ox, oy, reso, rr, sx, sy):
 
 
 def calc_attractive_potential(x, y, gx, gy):
-    return 0.5 * KP * np.hypot(x - gx, y - gy)
+    # U_attr = kattr*(1/2)*D^2, D = sqrt((x-xg)^2 + (y-yg)^2)
+    # return 0.5 * KP * np.hypot(x - gx, y - gy)
+    D = np.sqrt((x-gx)*(x-gx) + (y-gy)*(y-gy))
+    Uattr = KP*(1/2)*D
+    return Uattr
 
 
-def calc_repulsive_potential(x, y, ox, oy, rr):
+def calc_repulsive_potential(x, y, ox, oy, rr): #current x, current y, obstacle x, obstacle y, rr = threshold distant
     # search nearest obstacle
     minid = -1
     dmin = float("inf")
@@ -114,8 +119,7 @@ def potential_field_planning(sx, sy, gx, gy, ox, oy, reso, rr):
     if show_animation:
         draw_heatmap(pmap)
         # for stopping simulation with the esc key.
-        plt.gcf().canvas.mpl_connect('key_release_event',
-                lambda event: [exit(0) if event.key == 'escape' else None])
+        plt.gcf().canvas.mpl_connect('key_release_event', lambda event: [exit(0) if event.key == 'escape' else None])
         plt.plot(ix, iy, "*k")
         plt.plot(gix, giy, "*m")
 
@@ -169,27 +173,24 @@ def main():
 
     sx = 0.0  # start x position [m]
     sy = 10.0  # start y positon [m]
-    gx = 30.0  # goal x position [m]
-    gy = 30.0  # goal y position [m]
+    gx = 50  # goal x position [m]
+    gy = 50  # goal y position [m]
     grid_size = 0.5  # potential grid size [m]
     robot_radius = 5.0  # robot radius [m]
 
-    ox = [15.0, 5.0, 20.0, 25.0]  # obstacle x position list [m]
-    oy = [25.0, 15.0, 26.0, 25.0]  # obstacle y position list [m]
+    ox = [15.0, 5.0, 20.0, 25.0, 10.0, 15.0]  # obstacle x position list [m]
+    oy = [25.0, 15.0, 26.0, 25.0, 10.0, 10.5]  # obstacle y position list [m]
 
     if show_animation:
         plt.grid(True)
         plt.axis("equal")
 
     # path generation
-    _, _ = potential_field_planning(
-        sx, sy, gx, gy, ox, oy, grid_size, robot_radius)
+    _, _ = potential_field_planning(sx, sy, gx, gy, ox, oy, grid_size, robot_radius)
 
     if show_animation:
         plt.show()
 
 
 if __name__ == '__main__':
-    print(__file__ + " start!!")
     main()
-    print(__file__ + " Done!!")
