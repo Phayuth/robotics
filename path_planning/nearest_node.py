@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-
 def nearest_node(node_list,node):
     D = []
     for i in range(len(node_list)):
@@ -18,19 +17,20 @@ def nearest_node(node_list,node):
     nearest_index = np.argmin(D)
     return node_list[nearest_index]
 
+if __name__=="__main__":
 
-list_node = [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5]]
-node = [1,3]
+    list_node = [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5]]
+    node = [1,3]
 
-list_node_array = np.array(list_node)
+    list_node_array = np.array(list_node)
 
-near = nearest_node(list_node,node)
+    near = nearest_node(list_node,node)
 
-x , y = list_node_array[:,0] , list_node_array[:,1]
-x_node, y_node = node[0], node[1]
+    x , y = list_node_array[:,0] , list_node_array[:,1]
+    x_node, y_node = node[0], node[1]
 
-print(near)
+    print(near)
 
-plt.scatter(x,y)
-plt.scatter(x_node,y_node)
-plt.show()
+    plt.scatter(x,y)
+    plt.scatter(x_node,y_node)
+    plt.show()

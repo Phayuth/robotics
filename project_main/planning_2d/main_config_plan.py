@@ -4,114 +4,66 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-import time
 import math
 import matplotlib.pyplot as plt
-from planner.rrt_star2D import node , rrt_star
+from planner.rrtstar_probabilty_2d import node, rrt_star
 from robot.plannar_rr.RobotArm2D import Robot
 from map.generate_map import pmap
 from config_space_2d.generate_config_space import construct_config_space_2d
 
+# Load probability task map = pmap is probability map
+map = pmap() #map()
 
-
-
-#pmap is probability map
-iteration = 1000
-map = pmap()
-# map = map()
+# Load Robot
 base_position = [15, 15]
 link_lenths = [5, 5]
 robot = Robot(base_position, link_lenths)
+
+# Create probability config map
 c_map = construct_config_space_2d(robot, map)
+
+# Create start and goal node
+x_init = node(35, 30)
+x_goal = node(250, 300)
+
+# Create planner
+iteration = 1000
 m = c_map.shape[0] * c_map.shape[1]
 r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
 eta =  r * (math.log(iteration) / iteration)**(1/2)
-
-sample_taken = 0
-total_iter = 0
-x_init = node(35, 30)
-x_goal = node(250, 300)
-x_init.parent = x_init
-
 distance_weight = 0.5
 obstacle_weight = 0.5
 
-Graph_sample_num = 0
-Graph_data = np.array([[0,0]])
+rrt = rrt_star(x_init, x_goal, c_map, eta, distance_weight, obstacle_weight, iteration)
 
-rrt = rrt_star(x_init, x_goal, c_map, eta, distance_weight, obstacle_weight)
-
-
-s = time.time()
+# Seed random value
 np.random.seed(0)
-t1, t2, t3 = 0, 0, 0
 
-while True:
+# Call start planning
+rrt.start_planning()
 
-    s1 = time.time()
-    while True:
-        x_rand = rrt.Sampling()
-        total_iter += 1
-        if total_iter % 100 == 0:
-            print(total_iter, "Iteration")
+# Get path from planner
+path = rrt.Get_Path()
 
-        x_nearest = rrt.Nearest(x_rand)
+# Print time
+rrt.print_time()
 
-        x_new = rrt.Steer(x_rand, x_nearest)
-        b = rrt.New_Check(x_new)
-        if b == True :
-            break
-
-        if total_iter == iteration:
-            break
-    if total_iter == iteration:
-        break
-
-    e1 = time.time()
-    t1 += (e1 - s1)
-
-    sample_taken += 1
-
-    s2 = time.time()
-    x_new = rrt.Add_Parent(x_new, x_nearest)
-    e2 = time.time()
-    t2 += (e2 - s2)
-
-    rrt.nodes.append(x_new)
-    s3 = time.time()
-    rrt.Rewire(x_new)
-    e3 = time.time()
-    t3 += (e3 - s3)
-
-
-e = time.time()
-
+# Plot configuration space and planner
 plt.figure(figsize=(12,10))
 plt.axes().set_aspect('equal')
-
-rrt.Draw_Tree()
-path = rrt.Get_Path()
-print("eta : ", eta)
-print("Total time : ", e - s,"초")
-print("Sampling time : ", t1,"초", (t1*100)/(e-s),"%")
-print("Add_Parent time : ", t2,"초", (t2*100)/(e-s),"%")
-print("Rewire time : ", t3,"초", (t3*100)/(e-s),"%")
-print("Total_sample = ", sample_taken)
-print("Cost : ", rrt.x_goal.cost)
-
+rrt.Draw_Tree() # call to draw tree structure
 plt.imshow(np.transpose(c_map), cmap = "gray", interpolation = 'nearest')
-rrt.Draw_Tree()
 rrt.Draw_path(path)
 plt.colorbar()
 plt.show()
 
+# Plot task space path
 plt.figure(figsize=(10,10))
 plt.axes().set_aspect('equal')
 plt.imshow(np.transpose(map),cmap = "gray", interpolation = 'nearest')
 
 w_path = []
 for i in path:
-
     position = robot.robot_position(i.arr[0], i.arr[1])
     w_path.append(position)
 for i in range(len(w_path)):

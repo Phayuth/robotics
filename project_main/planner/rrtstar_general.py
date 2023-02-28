@@ -1,6 +1,7 @@
 import numpy as np
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
+import time
 
 class node(object):
     def __init__(self, x, y, cost = 0, parent = None ):
@@ -12,7 +13,7 @@ class node(object):
         self.parent = parent
 
 class rrt_star():
-    def __init__(self, map, x_init, x_goal, eta, obs, obstacle_center, collision_range, map_size):
+    def __init__(self, map, x_init, x_goal, eta, obs, obstacle_center, collision_range, map_size, max_iteration):
 
         self.map = map
         self.obs = obs
@@ -23,6 +24,12 @@ class rrt_star():
         self.x_init = x_init
         self.x_goal = x_goal
         self.nodes = [self.x_init]
+
+        self.iteration = max_iteration
+        self.sample_taken = 0
+        self.total_iter = 0
+
+        self.t1, self.t2, self.t3 = 0, 0, 0
 
     def Sampling(self):
 
@@ -100,19 +107,6 @@ class rrt_star():
                 return False
             # num+=1
         return True
-        # seg_length = 0.1
-        # seg_point = int(np.ceil(np.linalg.norm(x_new.arr - x_nearest.arr) / seg_length))
-        # if seg_point == 0:
-        #     return True
-        # else:
-        #     v = (x_new.arr - x_nearest.arr)/seg_point
-        #
-        #     for i in range(seg_point + 1):
-        #         seg = x_nearest.arr + i * v
-        #         if self.Node_collision_check(seg[0],seg[1]) == False :
-        #             return False
-        #
-        #     return True
 
     def Distance_Cost(self, start, end):
 
@@ -266,3 +260,58 @@ class rrt_star():
             self.x_goal.cost = temp_path[0][0]
 
             return self.x_goal.cost
+
+    def start_planning(self):
+        while True:
+
+            s1 = time.time()
+            while True:
+
+                x_rand = self.Sampling()
+
+                self.total_iter += 1
+                if self.total_iter % 100 == 0:
+                    print(self.total_iter, "Iteration")
+
+                x_nearest = self.Nearest(x_rand)
+
+                x_new = self.Steer(x_rand, x_nearest)
+
+                if self.Node_collision_check(x_new):
+                    break
+
+                if self.total_iter == self.iteration:
+                    break
+            e1 = time.time()
+            self.t1 += e1- s1
+
+            if self.total_iter == self.iteration:
+                break
+
+            s2 = time.time()
+            if self.Edge_collision_check(x_nearest, x_new) == False:
+                continue
+
+            self.sample_taken += 1
+
+            x_new, x_nearest = self.Add_Parent(x_new, x_nearest)
+            e2 = time.time()
+            self.t2 += e2 - s2
+
+            self.nodes.append(x_new)
+
+            s3 = time.time()
+            self.Rewire(x_new)
+            e3 = time.time()
+            self.t3 += e3 - s3
+
+            e = time.time()
+
+    def print_time(self):
+        # print("Sampling time : ", self.t1/(iter),"초", (self.t1*100)/total_time,"%")
+        # print("Add_Parent time : ", t2/ (iter),"초", (t2*100)/total_time,"%")
+        # print("Rewire time : ", t3/ (iter),"초", (t3*100)/total_time,"%")
+        # print("Total_time : ", total_time / (iter) , np.std(iter_time))
+        # print("total_sample : ", total_sample / (iter), np.std(sample))
+        # print("total_cost : ", total_cost / (iter-count), np.std(cost))
+        pass

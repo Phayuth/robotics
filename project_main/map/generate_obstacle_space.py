@@ -2,10 +2,12 @@ import os
 import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
-
+import glob
 import numpy as np
 from shapely.geometry import Polygon
 from PIL import Image, ImageDraw
+
+map_list = glob.glob('./map/mapdata/task_space/*.npy')
 
 def Obstacle_generater(obstacle):
 
@@ -37,9 +39,9 @@ def Collision_range(obstacle):
 
     return range
 
-def Obstacle_BARN_113():
+def Obstacle_BARN_113(index):
 
-    map = np.load("./map/mapdata/task_space/grid_113.npy").astype(np.uint8)
+    map = np.load(map_list[index]).astype(np.uint8)
 
     obs_center = []
     obs = []
