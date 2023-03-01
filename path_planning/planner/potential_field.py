@@ -8,23 +8,29 @@ from collections import deque
 import numpy as np
 import matplotlib.pyplot as plt
 
+from mpl_toolkits.mplot3d import Axes3D
+
+
 # Parameters
 KP = 5.0  # attractive potential gain
 ETA = 100.0  # repulsive potential gain
-AREA_WIDTH = 30.0  # potential area width [m]
+AREA_WIDTH = 1  # potential area width [m]
 # the number of previous positions used to check oscillations
 OSCILLATIONS_DETECTION_LENGTH = 3
 
 show_animation = True
 
+def map_val(x, in_min, in_max, out_min, out_max):
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
-def calc_potential_field(gx, gy, ox, oy, reso, rr, sx, sy): # goal x, goal y, obs x, obs y, resolution, threshold distance, start x, start y
+
+def calc_potential_field(gx, gy, ox, oy, reso, rr, sx, sy): # goal x, goal y, obs x, obs y, grid size = reso, robot radius, start x, start y
     minx = min(min(ox), sx, gx) - AREA_WIDTH / 2.0
     miny = min(min(oy), sy, gy) - AREA_WIDTH / 2.0
     maxx = max(max(ox), sx, gx) + AREA_WIDTH / 2.0
     maxy = max(max(oy), sy, gy) + AREA_WIDTH / 2.0
-    xw = int(round((maxx - minx) / reso))
-    yw = int(round((maxy - miny) / reso))
+    xw = int(round((maxx - minx) / reso)) # width of map in x
+    yw = int(round((maxy - miny) / reso)) # width of map in y
 
     print(minx,miny,maxx,maxy,xw,yw)
 
@@ -40,6 +46,21 @@ def calc_potential_field(gx, gy, ox, oy, reso, rr, sx, sy): # goal x, goal y, ob
             uo = calc_repulsive_potential(x, y, ox, oy, rr)
             uf = ug + uo
             pmap[ix][iy] = uf
+    # print(pmap)
+
+    z = np.array(pmap)
+    print(z.shape)
+    x = np.arange(len(z[0]))
+    y = np.arange(len(z[1]))
+
+    x, y = np.meshgrid(x, y)
+
+    # show hight map in 3d
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_surface(x, y, z)
+    plt.title('z as 3d height map')
+    plt.show()
 
     return pmap, minx, miny
 
@@ -88,7 +109,8 @@ def get_motion_model():
     return motion
 
 
-def oscillations_detection(previous_ids, ix, iy):
+def oscillations_detection(previous_ids, ix, iy): 
+    # detect when the goal is arrived then it will oscillate back and forth thus we stop the path finding
     previous_ids.append((ix, iy))
 
     if (len(previous_ids) > OSCILLATIONS_DETECTION_LENGTH):
@@ -108,6 +130,26 @@ def potential_field_planning(sx, sy, gx, gy, ox, oy, reso, rr):
 
     # calc potential field
     pmap, minx, miny = calc_potential_field(gx, gy, ox, oy, reso, rr, sx, sy)
+    pmap_np = np.array(pmap)
+
+    minv = min(pmap_np.flatten())
+    maxv = max(pmap_np.flatten())
+
+    print(minv, maxv)
+    pmap_mapv = np.zeros_like(pmap_np)
+
+    for i in range(len(pmap_mapv[0])):
+        for j in range(len(pmap_mapv[1])):
+            pmap_mapv[i][j] = map_val(pmap_np[i][j],minv,maxv,0,255)
+
+    minv = min(pmap_mapv.flatten())
+    maxv = max(pmap_mapv.flatten())
+
+    print(minv, maxv)
+
+    plt.imshow(pmap_mapv, cmap='viridis')
+    plt.colorbar()
+    plt.show()
 
     # search path
     d = np.hypot(sx - gx, sy - gy)
@@ -130,7 +172,7 @@ def potential_field_planning(sx, sy, gx, gy, ox, oy, reso, rr):
     while d >= reso:
         minp = float("inf")
         minix, miniy = -1, -1
-        for i, _ in enumerate(motion):
+        for i, _ in enumerate(motion): # return "counter number" and "value" inside enumerate
             inx = int(ix + motion[i][0])
             iny = int(iy + motion[i][1])
             if inx >= len(pmap) or iny >= len(pmap[0]) or inx < 0 or iny < 0:
@@ -172,7 +214,7 @@ def main():
     print("potential_field_planning start")
 
     sx = 0.0  # start x position [m]
-    sy = 10.0  # start y positon [m]
+    sy = 0  # start y positon [m]
     gx = 50  # goal x position [m]
     gy = 50  # goal y position [m]
     grid_size = 0.5  # potential grid size [m]
