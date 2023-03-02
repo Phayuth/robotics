@@ -267,7 +267,7 @@ class rrt_star():
         while True:
             s1 = time.time()
             while True:
-                x_rand = self.Sampling()
+                x_rand = self.Sampling() # bias sampling
                 self.total_iter += 1
                 x_nearest = self.Nearest(x_rand)
                 x_new = self.Steer(x_rand, x_nearest)

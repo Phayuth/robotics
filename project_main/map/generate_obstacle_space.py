@@ -39,7 +39,7 @@ def Collision_range(obstacle):
 
     return range
 
-def Obstacle_BARN_113(index):
+def obstacle_generate_from_map(index):
 
     map = np.load(map_list[index]).astype(np.uint8)
 

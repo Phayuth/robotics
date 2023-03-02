@@ -7,7 +7,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from planner.rrtstar_general import node, rrt_star
-from map.generate_obstacle_space import Obstacle_generater, Obstacle_BARN_113, bmap
+from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map, bmap
 
 # Create map
 map = []
@@ -19,7 +19,7 @@ x_goal = node(27, 3)
 
 # Create obstacle
 collision_range = (2**(1/2))/2
-obstacle, obstacle_center  = Obstacle_BARN_113(index=0)#bmap()
+obstacle, obstacle_center  = obstacle_generate_from_map(index=0)#bmap()
 obs = Obstacle_generater(obstacle)
 
 # Create planner
@@ -54,4 +54,3 @@ plt.plot(px,py, 'ro-',linewidth=2)
 # Draw rrt tree
 rrt.Draw_Tree()
 plt.show()
-

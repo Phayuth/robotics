@@ -13,12 +13,11 @@ ETA = 100.0  # repulsive potential gain
 AREA_WIDTH = 30  # potential area width [m]
 OSCILLATIONS_DETECTION_LENGTH = 3 # the number of previous positions used to check oscillations
 
-show_animation = True
 
 def calc_attractive_potential(x, y, gx, gy):
     return 0.5 * KP * np.hypot(x - gx, y - gy)
 
-def calc_repulsive_potential(x, y, ox, oy, rr): #current x, current y, obstacle x, obstacle y, rr = robot radius
+def calc_repulsive_potential(x, y, ox, oy, rr):
     # search nearest obstacle
     minid = -1
     dmin = float("inf")
@@ -53,13 +52,13 @@ def calc_potential_field(map, gx, gy, rr, sx, sy): # goal x, goal y, obs x, obs 
                 oy.append(j)
 
     # calculate max and min potential value for pot map ? maybe ? still guessing
-    minx = min(min(ox), sx, gx) - AREA_WIDTH / 2.0
-    miny = min(min(oy), sy, gy) - AREA_WIDTH / 2.0
-    maxx = max(max(ox), sx, gx) + AREA_WIDTH / 2.0
-    maxy = max(max(oy), sy, gy) + AREA_WIDTH / 2.0
+    minx = min(min(ox), sx, gx)# - AREA_WIDTH / 2.0
+    miny = min(min(oy), sy, gy)# - AREA_WIDTH / 2.0
+    maxx = max(max(ox), sx, gx)# + AREA_WIDTH / 2.0
+    maxy = max(max(oy), sy, gy)# + AREA_WIDTH / 2.0
 
     # for each cell of map, calculate potential force
-    for xcell in range(len(potential_map[0])): 
+    for xcell in range(len(potential_map[0])):
         for ycell in range(len(potential_map[1])):
             ug = calc_attractive_potential(xcell, ycell, gx, gy)
             uo = calc_repulsive_potential(xcell, ycell, ox, oy, rr)

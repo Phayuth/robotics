@@ -7,14 +7,14 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from planner.rrt_general import node, rrt_general
-from map.generate_obstacle_space import Obstacle_generater, Obstacle_BARN_113
+from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map
 
 # Create map
 map_size = np.array([0,49])
 
 # Create obstacle in task space
 collision_range = (2**(1/2))/2
-obstacle, obstacle_center  = Obstacle_BARN_113(index=1)
+obstacle, obstacle_center  = obstacle_generate_from_map(index=1)
 obs = Obstacle_generater(obstacle)
 
 # Create start and end node
