@@ -32,16 +32,19 @@ class planar_rrr:
                         [             0,                  0,    1,          0],
                         [             0,                  0,    0,          1]])
 
-        H04 = H01 @ H12 @ H23 @ H34
+        p1 = H01
+        p2 = H01 @ H12
+        p3 = H01 @ H12 @ H23
+        p4 = H01 @ H12 @ H23 @ H34
 
-        p4 = np.array([[0],[0],[0],[1]])
+        link = np.array([[p1[0,3],p1[1,3]],
+                         [p2[0,3],p2[1,3]],
+                         [p3[0,3],p3[1,3]],
+                         [p4[0,3],p4[1,3]]])
 
-        p0 = H04 @ p4
-
-        return p0
+        return link
     
     def plot_arm(self, theta):
-
         theta1 = theta[0,0]
         theta2 = theta[1,0]
         theta3 = theta[2,0]
@@ -60,7 +63,7 @@ class planar_rrr:
                         [np.sin(theta3),     np.cos(theta3),    0,          0],
                         [             0,                  0,    1,          0],
                         [             0,                  0,    0,          1]])
-            
+
         H34 = np.array([[             1,                  0,    0,    self.a3],
                         [             0,                  1,    0,          0],
                         [             0,                  0,    1,          0],
@@ -70,15 +73,15 @@ class planar_rrr:
         p2 = H01 @ H12
         p3 = H01 @ H12 @ H23
         p4 = H01 @ H12 @ H23 @ H34
-    
+
         # setup plot look
         # plt.axes().set_aspect('equal')
-        plt.axvline(x=0, c="black")
-        plt.axhline(y=0, c="black")
+        # plt.axvline(x=0, c="black")
+        # plt.axhline(y=0, c="black")
 
         # plot data
         plt.plot([p1[0,3],p2[0,3]], [p1[1,3],p2[1,3]],c ="blue")  # link 1
         plt.plot([p2[0,3],p3[0,3]], [p2[1,3],p3[1,3]],c ="red")   # link 2
         plt.plot([p3[0,3],p4[0,3]], [p3[1,3],p4[1,3]],c ="brown") # link 3
 
-        plt.show()
+        # plt.show()
