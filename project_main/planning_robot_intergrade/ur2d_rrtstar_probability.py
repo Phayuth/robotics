@@ -1,85 +1,42 @@
+import os
+import sys
+wd = os.path.abspath(os.getcwd())
+sys.path.append(str(wd))
+
 import numpy as np
-import time
 import math
 import matplotlib.pyplot as plt
-# from path_segment import segment
 from skimage.measure import profile_line
-from rrt_star2D import node , rrt_star
-from RobotUR2D import Robot, map, pmap
+from planner.rrtstar_probabilty_2d import node , rrt_star
+from robot.ur5e.ur5e2d import Robot, pmap
 
-sample = 5000
-iteration = 7000
+# load task space map
 map = pmap()
-base_position = [90, 0]
-robot = Robot(base_position, map)
 
-ss = time.time()
-c_map = np.load("2D-data/config2D(leaf-x).npy")
-# c_map = robot.construct_config_space()
-ee = time.time()
-
-m = c_map.shape[0] * c_map.shape[1] / 2
-r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
-eta =  r * (math.log(sample) / sample)**(1/2)
-
-sample_taken = 0
-total_iter = 0
+# create start and goal node
 x_init = node(180,180)
 x_goal = node(95, 95)
-x_init.parent = x_init
 
+# load robot
+base_position = [90, 0]
+robot = Robot(base_position)
+
+# create config space, but to save time we already create and save into numpy save
+c_map = np.load("./map/mapdata/config_space_data_2d/config2D_leaf-x_map1img.npy")
+
+# create planner
+iteration = 2000
+m = c_map.shape[0] * c_map.shape[1] / 2
+r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
+eta =  r * (math.log(iteration) / iteration)**(1/2)
 distance_weight = 0.5
 obstacle_weight = 0.5
+rrt = rrt_star(c_map, x_init, x_goal, eta, distance_weight, obstacle_weight, iteration)
 
-Graph_sample_num = 0
-Graph_data = np.array([[0,0]])
+# start planner
+rrt.start_planning()
 
-rrt = rrt_star(x_init, x_goal, c_map, eta, distance_weight, obstacle_weight)
-
-s = time.time()
-np.random.seed(5)
-t1, t2, t3 = 0, 0, 0
-
-while True:
-
-    s1 = time.time()
-    while True:
-        x_rand = rrt.Sampling()
-        total_iter += 1
-        if total_iter % 100 == 0:
-            print(total_iter, "Iteration")
-
-        x_nearest = rrt.Nearest(x_rand)
-
-        x_new = rrt.Steer(x_rand, x_nearest)
-        b = rrt.New_Check(x_new)
-        if b == True :
-            break
-
-        if total_iter == iteration:
-            break
-    if total_iter == iteration:
-        break
-
-    e1 = time.time()
-    t1 += (e1 - s1)
-
-    sample_taken += 1
-
-    s2 = time.time()
-    x_new = rrt.Add_Parent(x_new, x_nearest)
-    e2 = time.time()
-    t2 += (e2 - s2)
-
-    rrt.nodes.append(x_new)
-    s3 = time.time()
-    rrt.Rewire(x_new)
-    e3 = time.time()
-    t3 += (e3 - s3)
-
-
-e = time.time()
-
+# get path result
 path = rrt.Get_Path()
 path = np.flip(path, axis=0)
 
@@ -88,17 +45,9 @@ if len(path) >= 2:
     for node in path:
         goal_path = np.append(goal_path, [node.arr], axis=0)
 
-np.save("2D-data/path(leaf-x)-5", goal_path)
+# np.save("path", goal_path)
 
-print("work -> config : ", ee-ss, "초")
-print("eta : ", eta)
-print("Total time : ", e - s,"초")
-print("Sampling time : ", t1,"초", (t1*100)/(e-s),"%")
-print("Add_Parent time : ", t2,"초", (t2*100)/(e-s),"%")
-print("Rewire time : ", t3,"초", (t3*100)/(e-s),"%")
-print("Total_sample = ", sample_taken)
-print("Cost : ", rrt.x_goal.cost)
-
+# plot rrt star in config space
 plt.figure(figsize=(12,10))
 plt.axes().set_aspect('equal')
 plt.imshow(np.transpose(c_map), cmap = "gray", interpolation = 'nearest')
@@ -114,7 +63,7 @@ plt.figure(figsize=(10,5))
 plt.axes().set_aspect('equal')
 plt.imshow(np.transpose(map),cmap = "gray", interpolation = 'nearest')
 
-#
+# plot path and arm in task space
 w_path = []
 for i in path:
 
@@ -139,6 +88,3 @@ plt.plot([w_path[-1][1][0], w_path[-1][2][0]], [w_path[-1][1][1], w_path[-1][2][
 
 plt.gca().invert_yaxis()
 plt.show()
-
-
-

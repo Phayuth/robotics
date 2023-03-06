@@ -17,7 +17,7 @@ classify = True
 map = grid_map_probability(map_index, filter_size, classify)
 
 # Creat start and end pose
-x_init = node(15, 110)
+x_init = node(19.5, 110)
 x_goal = node(110, 17)
 
 # Create planner class
@@ -27,7 +27,7 @@ obstacle_weight = 0.5
 m = map.shape[0] * map.shape[1]
 r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
 eta =  r * (math.log(iteration) / iteration)**(1/2)
-rrt = rrt_star(x_init, x_goal, map, eta, distance_weight, obstacle_weight, iteration)
+rrt = rrt_star(map, x_init, x_goal, eta, distance_weight, obstacle_weight, iteration)
 
 # Seed random
 np.random.seed(1)

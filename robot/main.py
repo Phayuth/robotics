@@ -7,8 +7,10 @@ import numpy as np
 
 # Test
 r = ur5e()
-a = np.array([[0], [0], [0], [0], [0], [0]])
+a = np.array([[3.14], [0.75], [0], [0], [0], [0]])
 current = r.forward_kinematic(a)
 Jac = r.jacobian(a)
 print(current)
 print(Jac)
+
+r.plot_arm(a)

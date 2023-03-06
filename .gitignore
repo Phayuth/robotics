@@ -19,3 +19,6 @@ pyrobotic/
 build/
 dist/
 *.egg-info/
+
+# vscode
+.vscode/

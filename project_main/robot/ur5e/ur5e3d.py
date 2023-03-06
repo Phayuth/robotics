@@ -1,9 +1,72 @@
 import numpy as np
 import plotly.graph_objs as go
-import math
-import time
-from UR5e_DH import T01, T12, T23, T34, T45, T56
 from mesh_gen import draw_mesh
+
+def T01(th_i = 0.):
+    al_i = np.pi/2
+    a_i  = 0.
+    d_i = 16.25
+    th_i = th_i
+    T01 = np.array([[np.cos(th_i), -(np.cos(al_i)*np.sin(th_i)), np.sin(al_i)*np.sin(th_i), a_i*np.cos(th_i)],
+                    [np.sin(th_i), np.cos(al_i)*np.cos(th_i), -(np.sin(al_i)*np.cos(th_i)), a_i*np.sin(th_i)],
+                    [0, np.sin(al_i), np.cos(al_i), d_i],
+                    [0, 0, 0, 1]])
+    return T01
+
+def T12(th_i = 0.):
+    al_i = 0.
+    a_i  = -42.50
+    d_i = 0
+    th_i = th_i
+    T12 = np.array([[np.cos(th_i), -(np.cos(al_i)*np.sin(th_i)), np.sin(al_i)*np.sin(th_i), a_i*np.cos(th_i)],
+                    [np.sin(th_i), np.cos(al_i)*np.cos(th_i), -(np.sin(al_i)*np.cos(th_i)), a_i*np.sin(th_i)],
+                    [0, np.sin(al_i), np.cos(al_i), d_i],
+                    [0, 0, 0, 1]])
+    return T12
+
+def T23(th_i = 0.):
+    al_i = 0.
+    a_i  = -39.22
+    d_i = 0.
+    th_i = th_i
+    T23 = np.array([[np.cos(th_i), -(np.cos(al_i)*np.sin(th_i)), np.sin(al_i)*np.sin(th_i), a_i*np.cos(th_i)],
+                    [np.sin(th_i), np.cos(al_i)*np.cos(th_i), -(np.sin(al_i)*np.cos(th_i)), a_i*np.sin(th_i)],
+                    [0, np.sin(al_i), np.cos(al_i), d_i],
+                    [0, 0, 0, 1]])
+    return T23
+
+def T34(th_i = 0.):
+    al_i = np.pi/2
+    a_i  = 0.
+    d_i = 13.33
+    th_i = th_i
+    T34 = np.array([[np.cos(th_i), -(np.cos(al_i)*np.sin(th_i)), np.sin(al_i)*np.sin(th_i), a_i*np.cos(th_i)],
+                    [np.sin(th_i), np.cos(al_i)*np.cos(th_i), -(np.sin(al_i)*np.cos(th_i)), a_i*np.sin(th_i)],
+                    [0, np.sin(al_i), np.cos(al_i), d_i],
+                    [0, 0, 0, 1]])
+    return T34
+
+def T45(th_i = 0.):
+    al_i = -(np.pi/2)
+    a_i  = 0.
+    d_i = 9.97
+    th_i = th_i
+    T45 = np.array([[np.cos(th_i), -(np.cos(al_i)*np.sin(th_i)), np.sin(al_i)*np.sin(th_i), a_i*np.cos(th_i)],
+                    [np.sin(th_i), np.cos(al_i)*np.cos(th_i), -(np.sin(al_i)*np.cos(th_i)), a_i*np.sin(th_i)],
+                    [0, np.sin(al_i), np.cos(al_i), d_i],
+                    [0, 0, 0, 1]])
+    return T45
+
+def T56(th_i = np.pi): #0
+    al_i = 0.
+    a_i  = 0.
+    d_i = 9.96
+    th_i = th_i
+    T56 = np.array([[np.cos(th_i), -(np.cos(al_i)*np.sin(th_i)), np.sin(al_i)*np.sin(th_i), a_i*np.cos(th_i)],
+                    [np.sin(th_i), np.cos(al_i)*np.cos(th_i), -(np.sin(al_i)*np.cos(th_i)), a_i*np.sin(th_i)],
+                    [0, np.sin(al_i), np.cos(al_i), d_i],
+                    [0, 0, 0, 1]])
+    return T56
 
 def map():
     map = np.zeros([201, 101, 101])

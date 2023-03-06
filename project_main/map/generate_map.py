@@ -5,10 +5,19 @@ from scipy.ndimage import binary_dilation
 
 map_list = glob.glob('./map/mapdata/task_space/*.npy')
 
-def map_2d():
+def map_2d_1():
     map = np.zeros([31, 31])
     map[22:28, 10:21] = 1
     map[4:11, 10:21] = 1
+    return 1 - map
+
+def map_2d_2():
+    map = np.zeros([201, 101])
+
+    map[145:175, 50:70] = 0.5
+    map[50:70, 60:80] = 1
+    map[25:60, 40:60] = 1
+
     return 1 - map
 
 def map_3d():

@@ -51,7 +51,7 @@ def obstacle_generate_from_map(index):
                 obs_center.append([i,j])
                 obs.append(((i-0.5, j-0.5),(i+0.5, j-0.5), (i+0.5, j+0.5), (i-0.5, j+0.5), (i-0.5, j-0.5)))
 
-    return obs, obs_center
+    return map, obs, obs_center
 
 def bmap():
 

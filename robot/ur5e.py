@@ -1,4 +1,7 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
+ax = plt.axes(projection='3d')
 
 class ur5e:
     def __init__(self):
@@ -181,3 +184,43 @@ class ur5e:
         Ja = Ja_mul @ self.jacobian(theta)
 
         return Ja
+
+    def plot_arm(self,theta):
+
+        A1 = self.dh_transformation(theta[0,0],self.alpha[0,0],self.d[0,0],self.a[0,0])
+        A2 = self.dh_transformation(theta[1,0],self.alpha[1,0],self.d[1,0],self.a[1,0])
+        A3 = self.dh_transformation(theta[2,0],self.alpha[2,0],self.d[2,0],self.a[2,0])
+        A4 = self.dh_transformation(theta[3,0],self.alpha[3,0],self.d[3,0],self.a[3,0])
+        A5 = self.dh_transformation(theta[4,0],self.alpha[4,0],self.d[4,0],self.a[4,0])
+        A6 = self.dh_transformation(theta[5,0],self.alpha[5,0],self.d[5,0],self.a[5,0])
+
+        T01 = A1
+        T02 = A1 @ A2
+        T03 = A1 @ A2 @ A3
+        T04 = A1 @ A2 @ A3 @ A4
+        T05 = A1 @ A2 @ A3 @ A4 @ A5
+        T06 = A1 @ A2 @ A3 @ A4 @ A5 @ A6
+
+        plt.figure(figsize=(10,10))
+        plt.axes().set_aspect('equal')
+
+        # plot basic axis
+        ax.plot3D([0, 0.5], [0, 0], [0, 0], 'red', linewidth=4)
+        ax.plot3D([0, 0], [0, 0.5], [0, 0], 'purple', linewidth=4)
+        ax.plot3D([0, 0], [0, 0], [0, 0.5], 'gray', linewidth=4)
+
+        ax.plot3D([        0, T01[0, 3]], [        0, T01[1, 3]], [        0, T01[2, 3]], 'blue', linewidth=4)
+        ax.plot3D([T01[0, 3], T02[0, 3]], [T01[1, 3], T02[1, 3]], [T01[2, 3], T02[2, 3]], 'orange', linewidth=4)
+        ax.plot3D([T02[0, 3], T03[0, 3]], [T02[1, 3], T03[1, 3]], [T02[2, 3], T03[2, 3]], 'brown', linewidth=4)
+        ax.plot3D([T03[0, 3], T04[0, 3]], [T03[1, 3], T04[1, 3]], [T03[2, 3], T04[2, 3]], 'pink', linewidth=4)
+        ax.plot3D([T04[0, 3], T05[0, 3]], [T04[1, 3], T05[1, 3]], [T04[2, 3], T05[2, 3]], 'green', linewidth=4)
+        ax.plot3D([T05[0, 3], T06[0, 3]], [T05[1, 3], T06[1, 3]], [T05[2, 3], T06[2, 3]], 'cyan', linewidth=4)
+
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        # ax.set_xlim(0, 1)
+        # ax.set_ylim(0, 1)
+        # ax.set_zlim(0, 1)
+        
+        plt.show()
