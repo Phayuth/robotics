@@ -18,7 +18,6 @@ class node(object):
         self.cost = cost
         self.parent = parent
 
-
 class rrt_star():
     def __init__(self, map:np.ndarray, x_init:node, x_goal:node, eta:float, w1:float, w2:float, max_interation:int):
         """YeongMin proposed method of planning using RRT*, Bias sampling, Probability Costmap
@@ -39,10 +38,10 @@ class rrt_star():
         self.eta = eta
         self.w1 = w1
         self.w2 = w2
-        self.iteration = max_interation
 
         self.sample_taken = 0
         self.total_iter = 0
+        self.iteration = max_interation
         self.Graph_sample_num = 0
         self.Graph_data = np.array([[0,0]])
 
@@ -186,7 +185,6 @@ class rrt_star():
             x_new  = node(new_x, new_y)
 
         return x_new
-
 
     def Exist_Check(self, x_new:node)-> bool:
         """check if the new node is already exist in the tree

@@ -16,7 +16,7 @@ def polar2cats(r,theta):
 target_theta_list = np.linspace(np.pi/2,3*np.pi/2,90)
 r_inner = 0.5
 r_outer = 1
-offset_from_origin_x = 5
+offset_from_origin_x = 4
 offset_from_origin_y = 2
 
 x_inner, y_inner = polar2cats(r_inner,target_theta_list) 

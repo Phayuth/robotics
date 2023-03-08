@@ -17,7 +17,7 @@ plt.imshow(map)
 plt.show()
 
 # Get obstacle from map
-obstacle, obstacle_center  = obstacle_generate_from_map(index)
+mm, obstacle, obstacle_center  = obstacle_generate_from_map(index)
 obs = Obstacle_generater(obstacle)
 collision_range = (2**(1/2))/2
 

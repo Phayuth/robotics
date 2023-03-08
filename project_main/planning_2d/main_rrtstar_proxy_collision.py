@@ -26,7 +26,7 @@ r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
 eta =  r * (math.log(iteration) / iteration)**(1/2)
 distance_weight = 0.5
 obstacle_weight = 0.5
-rrt = rrt_star(x_init, x_goal, map, eta, distance_weight, obstacle_weight, iteration)
+rrt = rrt_star(map, x_init, x_goal, eta, distance_weight, obstacle_weight, iteration)
 
 # Seed random
 np.random.seed(0)

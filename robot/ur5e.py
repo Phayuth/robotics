@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits import mplot3d
 ax = plt.axes(projection='3d')
 
 class ur5e:
@@ -27,21 +26,7 @@ class ur5e:
         A5 = self.dh_transformation(theta[4,0],self.alpha[4,0],self.d[4,0],self.a[4,0])
         A6 = self.dh_transformation(theta[5,0],self.alpha[5,0],self.d[5,0],self.a[5,0])
 
-        # T01 = A1
-        # T02 = A1 @ A2
-        # T03 = A1 @ A2 @ A3
-        # T04 = A1 @ A2 @ A3 @ A4
-        # T05 = A1 @ A2 @ A3 @ A4 @ A5
         T06 = A1 @ A2 @ A3 @ A4 @ A5 @ A6
-
-        # pe = np.array([[0],[0],[0],[1]]) # the fourth element MUST be equal to 1
-        # p01 = T01 @ pe
-        # p02 = T02 @ pe
-        # p03 = T03 @ pe
-        # p04 = T04 @ pe
-        # p05 = T05 @ pe
-        # p06 = T06 @ pe
-
 
         # https://www.daslhub.org/unlv/courses/me729-sp/week03/lecture/Note_02_Forward_Kinematics.pdf
         # https://robotics.stackexchange.com/questions/8516/getting-pitch-yaw-and-roll-from-rotation-matrix-in-dh-parameter
@@ -146,15 +131,6 @@ class ur5e:
         Jw5 = Z4
         Jw6 = Z5
 
-        # J1 = np.append(Jv1,Jw1,axis=0)
-        # J2 = np.append(Jv2,Jw2,axis=0)
-        # J3 = np.append(Jv3,Jw3,axis=0)
-        # J4 = np.append(Jv4,Jw4,axis=0)
-        # J5 = np.append(Jv5,Jw5,axis=0)
-        # J6 = np.append(Jv6,Jw6,axis=0)
-
-        # J = np.append(np.append(np.append(np.append(np.append(J1,J2,axis=1),J3,axis=1),J4,axis=1),J5,axis=1),J6,axis=1)
-
         J1 = np.vstack((Jv1,Jw1))
         J2 = np.vstack((Jv2,Jw2))
         J3 = np.vstack((Jv3,Jw3))
@@ -224,3 +200,75 @@ class ur5e:
         # ax.set_zlim(0, 1)
         
         plt.show()
+
+    def inverse_kinematic_geo(self,desired_transform_matrix):
+        # not correct yet/ fix later
+        # input as 4x4 transformation matrix
+        # https://github.com/yorgoon/ur5_Final_Project/tree/master/inv_kin
+
+        T06 = desired_transform_matrix
+
+        d1 = 0.1625
+        d2 = 0
+        d3 = 0
+        d4 = 0.1333
+        d5 = 0.0997
+        d6 = 0.0996
+
+        a1 = 0
+        a2 = -0.425
+        a3 = -0.392
+        a4 = 0
+        a5 = 0
+        a6 = 0
+
+        alpha1 = np.pi/2
+        alpha2 = 0
+        alpha3 = 0
+        alpha4 = np.pi/2
+        alpha5 = -np.pi/2
+        alpha6 = 0
+
+        # cal theta1
+        p05 = (T06 @ np.array([[0], [0], [-d6], [1]])) - np.array([[0], [0], [0], [1]])
+        psi = np.arctan2(p05[1,0], p05[0,0])
+        phi = np.arccos(d4 / np.sqrt(p05[0,0]**2 + p05[1,0]**2))
+        theta1 = np.pi/2 + psi + phi # or pi/2 + psi - phi 
+
+        # cal theta5
+        T10 = np.linalg.inv(self.dh_transformation(theta1, alpha1, d1, a1))
+        T16 = T10 @ T06
+        p16z = T16[2,3]
+        theta5 = np.arccos((p16z - d4)/d6) #or -np.arccos((p16z - d4)/d6)
+
+        # cal theta6
+        T01 = self.dh_transformation(theta1, alpha1, d1, a1)
+        T61 = np.linalg.inv(T06) @ T01
+        T61zy = T61[1,2]
+        T61zx = T61[0,2]
+        theta6 = np.arctan2(-T61zy/np.sin(theta5), T61zx/np.sin(theta5))
+
+        # cal theata3
+        T10 = np.linalg.inv(self.dh_transformation(theta1, alpha1, d1, a1))
+        T65 = np.linalg.inv(self.dh_transformation(theta6, alpha6, d6, a6))
+        T54 = np.linalg.inv(self.dh_transformation(theta5, alpha5, d5, a6))
+        T14 = T10 @ T06 @ T65 @ T54
+        p13 = T14 @ np.array([[0], [-d4], [0], [1]]) - np.array([[0],[0],[0],[1]])
+        p13norm_sq = np.linalg.norm(p13)**2
+        theta3 = np.arccos((p13norm_sq - a2*a2 - a3*a3)/(2*a2*a3)) # or -np.arccos((p13norm_sq - a2*a2 - a3*a3)/(2*a2*a3))
+
+        # cal theta2 and theta4
+        T10 = np.linalg.inv(self.dh_transformation(theta1, alpha1, d1, a1))
+        T65 = np.linalg.inv(self.dh_transformation(theta6, alpha6, d6, a6))
+        T54 = np.linalg.inv(self.dh_transformation(theta5, alpha5, d5, a6))
+        T14 = T10 @ T06 @ T65 @ T54
+        p13 = (T14 @ np.array([[0],[-d4],[0],[0]])) - np.array([[0],[0],[0],[1]])
+        p13norm = np.linalg.norm(p13)
+        theta2 = -np.arctan2(p13[1,0], p13[0,0]) + np.arcsin(a3*np.sin(theta3)/p13norm)
+
+        T32 = np.linalg.inv(self.dh_transformation(theta3, alpha3, d3, a3))
+        T21 = np.linalg.inv(self.dh_transformation(theta2, alpha2, d2, a2))
+        T34 = T32 @ T21 @ T14
+        theta4 = np.arctan2(T34[1,0], T34[0,0])
+
+        return np.array([[theta1], [theta2], [theta3], [theta4], [theta5], [theta6]])

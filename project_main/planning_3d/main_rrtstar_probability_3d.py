@@ -8,6 +8,9 @@ from map.generate_map import map_3d, Reshape_map
 import math
 import numpy as np
 
+import matplotlib.pyplot as plt
+ax = plt.axes(projection='3d')
+
 # Creat map
 filter_size = 0  # 1 = 3x3, 2 = 5x5, 3 = 7x7
 classify = False
@@ -25,7 +28,7 @@ r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
 eta = r * (math.log(iteration) / iteration)**(1/2)
 distance_weight = 0.5
 obstacle_weight = 0.5
-rrt = rrt_star(x_init, x_goal, map, eta, distance_weight, obstacle_weight, iteration)
+rrt = rrt_star(map, x_init, x_goal, eta, distance_weight, obstacle_weight, iteration)
 
 # Seed random
 np.random.seed(0)
@@ -39,5 +42,32 @@ path = rrt.Get_Path()
 # Print time
 rrt.print_time()
 
-# print path
-print(path)
+# path
+path_x= []
+path_y= []
+path_z= []
+
+for i in path:
+    x = i.x
+    y = i.y
+    z = i.z
+    path_x.append(x)
+    path_y.append(y)
+    path_z.append(z)
+
+plt.figure(figsize=(10,10))
+plt.axes().set_aspect('equal')
+
+# plot basic axis
+ax.plot3D([0, 5], [0, 0], [0, 0], 'red', linewidth=4)
+ax.plot3D([0, 0], [0, 5], [0, 0], 'purple', linewidth=4)
+ax.plot3D([0, 0], [0, 0], [0, 5], 'gray', linewidth=4)
+
+
+ax.plot3D(path_x,path_y,path_z,'-og',linewidth=4)
+
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+
+plt.show()

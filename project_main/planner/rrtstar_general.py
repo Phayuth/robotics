@@ -108,9 +108,7 @@ class rrt_star():
                 area = abs(AB[0]*AC[1] - AC[0]*AB[1]) / 2
                 r = area/d
             if r <= self.collision_range:
-
                 return False
-            
         return True
 
     def Distance_Cost(self, start:node, end:node)-> float:
@@ -336,7 +334,7 @@ class rrt_star():
                 x_rand = self.Sampling()
                 # update number of iteration
                 self.total_iter += 1
-                # find the nearest node to sampling
+                # find the nearest node from sampling
                 x_nearest = self.Nearest(x_rand)
                 # create new node in the direction of random and nearest to nearest node
                 x_new = self.Steer(x_rand, x_nearest)
