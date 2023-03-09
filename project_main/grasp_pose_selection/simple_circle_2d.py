@@ -13,7 +13,8 @@ def polar2cats(r,theta):
     return x,y
 
 # Create canidate pose
-target_theta_list = np.linspace(np.pi/2,3*np.pi/2,90)
+# target_theta_list = np.linspace(np.pi/2,3*np.pi/2,90)
+target_theta_list = np.linspace(0,2*np.pi,360)
 r_inner = 0.5
 r_outer = 1
 offset_from_origin_x = 4
@@ -32,8 +33,6 @@ r = plannar_rrr.planar_rrr()
 candidate = []
 for i in range(len(x_inner)):
 
-    x_in = x_inner[i]
-    y_in = y_inner[i]
     x_ot = x_outer[i]
     y_ot = y_outer[i]
 
@@ -44,11 +43,11 @@ for i in range(len(x_inner)):
     theta_correction = theta - np.pi
     print("==>> theta_correction: ", theta_correction)
 
-    # from desired pose, create desired pose
+    # from each approach candidate, create desired pose
     desired_pose = np.array([[offset_from_origin_x], [offset_from_origin_y], [theta_correction]]) # input x, y, phi
     try:
         # try to solve for ik for joint config
-        inv_solu = r.inverse_kinematic_geo(desired_pose) # only solve for robot at configuration elbow down
+        inv_solu = r.inverse_kinematic_geo(desired_pose) # try to solve for inverse kinematic
     except:
         pass
 

@@ -97,7 +97,7 @@ class planar_rrr:
         y2 = y - self.a3*np.sin(phi)
 
         t2term = (x2**2 + y2**2 - self.a1**2 - self.a2**2)/(2*self.a1*self.a2)
-        theta2 = np.arccos(t2term)
+        theta2 = -np.arccos(t2term) # positive for elbow down, negative for elbow up
 
         t1term = ((self.a1 + self.a2*np.cos(theta2))*x2 + self.a2*np.sin(theta2)*y2)/(x2**2 + y2**2)
         theta1 = np.arccos(t1term)

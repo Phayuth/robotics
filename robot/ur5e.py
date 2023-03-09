@@ -16,12 +16,12 @@ class ur5e:
 
     def dh_transformation(self,theta,alpha,d,a):
         R = np.array([[np.cos(theta), -np.sin(theta)*np.cos(alpha),  np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
-                      [np.sin(theta),  np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
-                      [            0,                np.sin(alpha),                np.cos(alpha),               d],
-                      [            0,                            0,                            0,               1]])
+                    [  np.sin(theta),  np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
+                    [              0,                np.sin(alpha),                np.cos(alpha),               d],
+                    [              0,                            0,                            0,               1]])
         return R
 
-    def forward_kinematic(self,theta):
+    def forward_kinematic(self, theta, return_full_H=False, return_each_H=False):
 
         A1 = self.dh_transformation(theta[0,0],self.alpha[0,0],self.d[0,0],self.a[0,0])
         A2 = self.dh_transformation(theta[1,0],self.alpha[1,0],self.d[1,0],self.a[1,0])
@@ -45,13 +45,21 @@ class ur5e:
         yaw  = np.arctan2(T06[1,0],T06[0,0])
 
         x_current = np.array([[T06[0, 3]],
-                              [T06[1, 3]],
-                              [T06[2, 3]],
-                                   [roll],
-                                  [pitch],
-                                    [yaw]])
-
-        return x_current, T06
+                            [  T06[1, 3]],
+                            [  T06[2, 3]],
+                            [       roll],
+                            [      pitch],
+                            [        yaw]])
+        
+        # option to return transformation from base to end effector
+        if return_full_H:
+            return T06
+        # option to return all transformation
+        if return_each_H:
+            return A1, A2, A3, A4, A5, A6
+        if not return_each_H and not return_each_H:
+            return x_current
+    
 
     def jacobian(self,theta):
 
@@ -165,7 +173,7 @@ class ur5e:
 
         return Ja
 
-    def plot_arm(self,theta):
+    def plot_arm(self,theta, plt_basis=False, plt_show=False):
 
         A1 = self.dh_transformation(theta[0,0],self.alpha[0,0],self.d[0,0],self.a[0,0])
         A2 = self.dh_transformation(theta[1,0],self.alpha[1,0],self.d[1,0],self.a[1,0])
@@ -184,26 +192,25 @@ class ur5e:
         plt.figure(figsize=(10,10))
         plt.axes().set_aspect('equal')
 
+        if plt_basis:
         # plot basic axis
-        ax.plot3D([0, 0.5], [0, 0], [0, 0], 'red', linewidth=4)
-        ax.plot3D([0, 0], [0, 0.5], [0, 0], 'purple', linewidth=4)
-        ax.plot3D([0, 0], [0, 0], [0, 0.5], 'gray', linewidth=4)
+            ax.plot3D([0, 0.5], [0, 0], [0, 0], 'red', linewidth=4)
+            ax.plot3D([0, 0], [0, 0.5], [0, 0], 'purple', linewidth=4)
+            ax.plot3D([0, 0], [0, 0], [0, 0.5], 'gray', linewidth=4)
 
-        ax.plot3D([        0, T01[0, 3]], [        0, T01[1, 3]], [        0, T01[2, 3]], 'blue', linewidth=4)
-        ax.plot3D([T01[0, 3], T02[0, 3]], [T01[1, 3], T02[1, 3]], [T01[2, 3], T02[2, 3]], 'orange', linewidth=4)
-        ax.plot3D([T02[0, 3], T03[0, 3]], [T02[1, 3], T03[1, 3]], [T02[2, 3], T03[2, 3]], 'brown', linewidth=4)
-        ax.plot3D([T03[0, 3], T04[0, 3]], [T03[1, 3], T04[1, 3]], [T03[2, 3], T04[2, 3]], 'pink', linewidth=4)
-        ax.plot3D([T04[0, 3], T05[0, 3]], [T04[1, 3], T05[1, 3]], [T04[2, 3], T05[2, 3]], 'green', linewidth=4)
-        ax.plot3D([T05[0, 3], T06[0, 3]], [T05[1, 3], T06[1, 3]], [T05[2, 3], T06[2, 3]], 'cyan', linewidth=4)
+        ax.plot3D([        0, T01[0, 3]], [        0, T01[1, 3]], [        0, T01[2, 3]], 'blue', linewidth=8)
+        ax.plot3D([T01[0, 3], T02[0, 3]], [T01[1, 3], T02[1, 3]], [T01[2, 3], T02[2, 3]], 'orange', linewidth=8)
+        ax.plot3D([T02[0, 3], T03[0, 3]], [T02[1, 3], T03[1, 3]], [T02[2, 3], T03[2, 3]], 'brown', linewidth=8)
+        ax.plot3D([T03[0, 3], T04[0, 3]], [T03[1, 3], T04[1, 3]], [T03[2, 3], T04[2, 3]], 'pink', linewidth=8)
+        ax.plot3D([T04[0, 3], T05[0, 3]], [T04[1, 3], T05[1, 3]], [T04[2, 3], T05[2, 3]], 'green', linewidth=8)
+        ax.plot3D([T05[0, 3], T06[0, 3]], [T05[1, 3], T06[1, 3]], [T05[2, 3], T06[2, 3]], 'cyan', linewidth=8)
 
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
-        # ax.set_xlim(0, 1)
-        # ax.set_ylim(0, 1)
-        # ax.set_zlim(0, 1)
-        
-        plt.show()
+
+        if plt_show:
+            plt.show()
 
     def inverse_kinematic_geo(self,desired_transform_matrix):
         # not correct yet/ fix later
