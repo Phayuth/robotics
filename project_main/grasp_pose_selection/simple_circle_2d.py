@@ -13,8 +13,8 @@ def polar2cats(r,theta):
     return x,y
 
 # Create canidate pose
-# target_theta_list = np.linspace(np.pi/2,3*np.pi/2,90)
-target_theta_list = np.linspace(0,2*np.pi,360)
+target_theta_list = np.linspace(np.pi/2,3*np.pi/2,90)
+# target_theta_list = np.linspace(0,2*np.pi,180)
 r_inner = 0.5
 r_outer = 1
 offset_from_origin_x = 4
@@ -23,8 +23,10 @@ offset_from_origin_y = 2
 x_inner, y_inner = polar2cats(r_inner,target_theta_list) 
 x_outer, y_outer = polar2cats(r_outer,target_theta_list)
 
-x_inner, y_inner = x_inner + offset_from_origin_x, y_inner + offset_from_origin_y
-x_outer, y_outer = x_outer + offset_from_origin_x, y_outer + offset_from_origin_y
+x_inner = x_inner + offset_from_origin_x 
+y_inner = y_inner + offset_from_origin_y
+x_outer = x_outer + offset_from_origin_x
+y_outer = y_outer + offset_from_origin_y
 
 # create robot instance
 r = plannar_rrr.planar_rrr()
@@ -39,12 +41,12 @@ for i in range(len(x_inner)):
     a = [x_ot - offset_from_origin_x, y_ot - offset_from_origin_y]
     b = [1,0]
     dot = np.dot(a,b)
-    theta = np.arccos(dot/(np.linalg.norm(a)*np.linalg.norm(b)))
-    theta_correction = theta - np.pi
-    print("==>> theta_correction: ", theta_correction)
+    alpha_candidate = np.arccos(dot/(np.linalg.norm(a)*np.linalg.norm(b)))
+    desired_angle_joint = alpha_candidate - np.pi
+    print("==>> desired_angle_joint: ", desired_angle_joint)
 
     # from each approach candidate, create desired pose
-    desired_pose = np.array([[offset_from_origin_x], [offset_from_origin_y], [theta_correction]]) # input x, y, phi
+    desired_pose = np.array([[offset_from_origin_x], [offset_from_origin_y], [desired_angle_joint]]) # input x, y, phi
     try:
         # try to solve for ik for joint config
         inv_solu = r.inverse_kinematic_geo(desired_pose) # try to solve for inverse kinematic

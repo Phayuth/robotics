@@ -12,8 +12,9 @@ def superellipse(theta):
 
     return x,y
 
-theta = np.linspace(0,2*np.pi,360)
-x,y = superellipse(theta)
+if __name__=="__main__":
+    theta = np.linspace(0,2*np.pi,360)
+    x,y = superellipse(theta)
 
-plt.plot(x,y)
-plt.show()
+    plt.plot(x,y)
+    plt.show()
