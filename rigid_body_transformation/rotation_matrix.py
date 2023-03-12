@@ -6,7 +6,6 @@ def rotation_2d(theta):
                   [np.sin(theta),  np.cos(theta)]])
     return R
 
-
 # 3d rotation
 def rotation_3d_x_axis(theta):
     R = np.array([[1,             0,              0],

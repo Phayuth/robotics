@@ -38,7 +38,18 @@ class planar_rrr:
 
         p0 = H04 @ p4
 
-        return p0
+        # return 
+        return np.array([[p0[0,0], p0[1,0]]])
+    
+    # def jacobian(self,theta):
+    #     theta1 = theta[0,0]
+    #     theta2 = theta[1,0]
+    #     theta3 = theta[2,0]
+
+    # to be implement
+
+       
+    #     return J
     
     def plot_arm(self, theta):
 
@@ -77,8 +88,8 @@ class planar_rrr:
         plt.axhline(y=0, c="black")
 
         # plot data
-        plt.plot([p1[0,3],p2[0,3]], [p1[1,3],p2[1,3]],c ="blue")  # link 1
-        plt.plot([p2[0,3],p3[0,3]], [p2[1,3],p3[1,3]],c ="red")   # link 2
-        plt.plot([p3[0,3],p4[0,3]], [p3[1,3],p4[1,3]],c ="brown") # link 3
+        plt.plot([p1[0,3], p2[0,3]], [p1[1,3], p2[1,3]], c ="blue")  # link 1
+        plt.plot([p2[0,3], p3[0,3]], [p2[1,3], p3[1,3]], c ="red")   # link 2
+        plt.plot([p3[0,3], p4[0,3]], [p3[1,3], p4[1,3]], c ="brown") # link 3
 
         plt.show()

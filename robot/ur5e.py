@@ -5,14 +5,14 @@ ax = plt.axes(projection='3d')
 class ur5e:
     def __init__(self):
         # DH parameter is from https://www.researchgate.net/publication/347021253_Mathematical_Modelling_and_Simulation_of_Human-Robot_Collaboration
-        # self.a     = np.array([      [0], [-0.425], [-0.3922],       [0],        [0],      [0]])
-        # self.alpha = np.array([[np.pi/2],      [0],       [0], [np.pi/2], [-np.pi/2],      [0]])
-        # self.d     = np.array([ [0.1625],      [0],       [0],  [0.1333],   [0.0997], [0.0996]])
-
-        # DH parameter is from https://github.com/yorgoon/ur5_Final_Project/tree/master/inv_kin
         self.a     = np.array([      [0], [-0.425], [-0.3922],       [0],        [0],      [0]])
         self.alpha = np.array([[np.pi/2],      [0],       [0], [np.pi/2], [-np.pi/2],      [0]])
-        self.d     = np.array([ [0.0892],      [0],       [0],  [0.1093],   [0.0947], [0.0825]])
+        self.d     = np.array([ [0.1625],      [0],       [0],  [0.1333],   [0.0997], [0.0996]])
+
+        # DH parameter is from https://github.com/yorgoon/ur5_Final_Project/tree/master/inv_kin
+        # self.a     = np.array([      [0], [-0.425], [-0.3922],       [0],        [0],      [0]])
+        # self.alpha = np.array([[np.pi/2],      [0],       [0], [np.pi/2], [-np.pi/2],      [0]])
+        # self.d     = np.array([ [0.0892],      [0],       [0],  [0.1093],   [0.0947], [0.0825]])
 
     def dh_transformation(self,theta,alpha,d,a):
         R = np.array([[np.cos(theta), -np.sin(theta)*np.cos(alpha),  np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
@@ -32,8 +32,7 @@ class ur5e:
 
         T06 = A1 @ A2 @ A3 @ A4 @ A5 @ A6
 
-        # https://www.daslhub.org/unlv/courses/me729-sp/week03/lecture/Note_02_Forward_Kinematics.pdf
-        # https://robotics.stackexchange.com/questions/8516/getting-pitch-yaw-and-roll-from-rotation-matrix-in-dh-parameter
+        
         # x - y - z sequence
         # tan(roll) = r32/r33
         # tan(pitch)= -r31/(sqrt(r32^2 + r33^2))

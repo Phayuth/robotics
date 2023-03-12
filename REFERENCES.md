@@ -1,9 +1,11 @@
 ## Papers
 
-### Inverse Kinematic
+### Kinematic
 
 - [Introduction To Inverse Kinematics With Jacobian Transpose, Pseudoinverse And Damped Least Squares Methods](http://graphics.cs.cmu.edu/nsp/course/15-464/Spring11/handouts/iksurvey.pdf)
 - [Selectively Damped Least Square For Inverse Kinematic](https://mathweb.ucsd.edu/~sbuss/ResearchWeb/ikmethods/SdlsPaper.pdf)
+- [Forward Kinematic](https://www.daslhub.org/unlv/courses/me729-sp/week03/lecture/Note_02_Forward_Kinematics.pdf)
+- [roll pitch yaw from dh matrix](https://robotics.stackexchange.com/questions/8516/getting-pitch-yaw-and-roll-from-rotation-matrix-in-dh-parameter)
 
 ### Collision Detection
 
