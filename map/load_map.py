@@ -4,14 +4,14 @@ from scipy.ndimage import binary_dilation
 
 map_list = glob.glob('./map/mapdata/task_space/*.npy')
 
-def grid_map_binary(index): 
+def grid_map_binary(index):
     # load map from task_space folder in binary form
     map = np.load(map_list[index]).astype(np.uint8)
     map = 1 - map
 
     return map
 
-def grid_map_probability(index, size, classify): 
+def grid_map_probability(index, size, classify):
     # load map from task_space folder and convert to probability form
     map = np.load(map_list[index]).astype(np.uint8)
     map = np.repeat(map, 4, axis=1)

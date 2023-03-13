@@ -10,7 +10,7 @@ from planner.research_rrtstar.rrtstar_general import node, rrt_star
 from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map, bmap
 
 # Map and Create obstacle
-map, obstacle, obstacle_center  = obstacle_generate_from_map(index=0)#bmap()
+map, obstacle, obstacle_center = obstacle_generate_from_map(index=0)
 obs = Obstacle_generater(obstacle)
 collision_range = (2**(1/2))/2
 
@@ -22,7 +22,7 @@ x_goal = node(27, 3)
 iteration = 500
 m = (map.shape[0]) * (map.shape[1])
 r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
-eta =  r * (math.log(iteration) / iteration)**(1/2)
+eta = r*(math.log(iteration) / iteration)**(1/2)
 rrt = rrt_star(map, x_init, x_goal, eta, obs, obstacle_center, collision_range, iteration)
 
 # Seed random
@@ -49,4 +49,5 @@ plt.plot(px,py, 'ro-',linewidth=2)
 # Draw rrt tree
 rrt.Draw_Tree()
 rrt.Draw_obs()
+rrt.Draw_path(path)
 plt.show()

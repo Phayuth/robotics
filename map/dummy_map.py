@@ -19,7 +19,7 @@ def map_3d():
     map[0:51, 25:51, 0:51] = 0
     return map
 
-def pmap():# 
+def pmap():
     image_size = 30
     box_size = 4
     no_box = 10

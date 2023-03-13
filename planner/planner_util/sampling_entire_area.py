@@ -43,5 +43,5 @@ x_node, y_node = node[0], node[1]
 print(neg)
 
 plt.scatter(x,y)
-plt.scatter(x_node,y_node)
+plt.scatter(x_node,y_node,c="red")
 plt.show()

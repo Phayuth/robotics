@@ -1,5 +1,11 @@
+import os
+import sys
+wd = os.path.abspath(os.getcwd())
+sys.path.append(str(wd))
+
 import numpy as np
 import matplotlib.pyplot as plt
+from rigid_body_transformation.homogeneous_transformation import inverse_hom_trans as invht
 ax = plt.axes(projection='3d')
 
 class ur5e:
@@ -32,7 +38,6 @@ class ur5e:
 
         T06 = A1 @ A2 @ A3 @ A4 @ A5 @ A6
 
-        
         # x - y - z sequence
         # tan(roll) = r32/r33
         # tan(pitch)= -r31/(sqrt(r32^2 + r33^2))
@@ -44,23 +49,21 @@ class ur5e:
         yaw  = np.arctan2(T06[1,0],T06[0,0])
 
         x_current = np.array([[T06[0, 3]],
-                            [  T06[1, 3]],
-                            [  T06[2, 3]],
-                            [       roll],
-                            [      pitch],
-                            [        yaw]])
+                              [T06[1, 3]],
+                              [T06[2, 3]],
+                              [     roll],
+                              [    pitch],
+                              [      yaw]])
         
-        # option to return transformation from base to end effector
-        if return_full_H:
+        if return_full_H: # option to return transformation from base to end effector
             return T06
-        # option to return all transformation
-        if return_each_H:
+        if return_each_H: # option to return all transformation
             return A1, A2, A3, A4, A5, A6
         if not return_each_H and not return_each_H:
             return x_current
     
 
-    def jacobian(self,theta):
+    def jacobian(self, theta):
 
         A1 = self.dh_transformation(theta[0,0],self.alpha[0,0],self.d[0,0],self.a[0,0])
         A2 = self.dh_transformation(theta[1,0],self.alpha[1,0],self.d[1,0],self.a[1,0])
@@ -153,7 +156,7 @@ class ur5e:
 
         return J
 
-    def jacobian_analytical(self,theta,roll,pitch,yaw):
+    def jacobian_analytical(self, theta, roll, pitch, yaw):
 
         B = np.array([[np.cos(yaw)*np.sin(pitch), -np.sin(yaw), 0],
                       [np.sin(yaw)*np.sin(pitch),  np.cos(yaw), 0],
@@ -172,7 +175,7 @@ class ur5e:
 
         return Ja
 
-    def plot_arm(self,theta, plt_basis=False, plt_show=False):
+    def plot_arm(self, theta, plt_basis=False, plt_show=False):
 
         A1 = self.dh_transformation(theta[0,0],self.alpha[0,0],self.d[0,0],self.a[0,0])
         A2 = self.dh_transformation(theta[1,0],self.alpha[1,0],self.d[1,0],self.a[1,0])
@@ -211,7 +214,7 @@ class ur5e:
         if plt_show:
             plt.show()
 
-    def inverse_kinematic_geo(self,desired_transform_matrix):
+    def inverse_kinematic_geo(self, desired_transform_matrix):
         # not correct yet/ fix later
         # https://github.com/yorgoon/ur5_Final_Project/tree/master/inv_kin
         T06 = desired_transform_matrix # input as 4x4 transformation matrix
@@ -223,38 +226,38 @@ class ur5e:
         theta1 = np.pi/2 + psi + phi # or pi/2 + psi - phi 
 
         # calculate theta5
-        T10 = np.linalg.inv(self.dh_transformation(theta1, self.alpha[0,0], self.d[0,0], self.a[0,0]))
+        T10 = invht(self.dh_transformation(theta1, self.alpha[0,0], self.d[0,0], self.a[0,0]))
         T16 = T10 @ T06
         p16z = T16[2,3]
         theta5 = np.arccos((p16z - self.d[3,0])/self.d[5,0]) #or -np.arccos((p16z - self.d[3,0])/self.d[5,0])
 
         # calculate theta6
         T01 = self.dh_transformation(theta1, self.alpha[0,0], self.d[0,0], self.a[0,0])
-        T61 = np.linalg.inv(T06) @ T01
+        T61 = invht(T06) @ T01
         T61zy = T61[1,2]
         T61zx = T61[0,2]
         theta6 = np.arctan2(-T61zy/np.sin(theta5), T61zx/np.sin(theta5))
 
         # calculate theata3
-        T10 = np.linalg.inv(self.dh_transformation(theta1, self.alpha[0,0], self.d[0,0], self.a[0,0]))
-        T65 = np.linalg.inv(self.dh_transformation(theta6, self.alpha[5,0], self.d[5,0], self.a[5,0]))
-        T54 = np.linalg.inv(self.dh_transformation(theta5, self.alpha[4,0], self.d[4,0], self.a[5,0]))
+        T10 = invht(self.dh_transformation(theta1, self.alpha[0,0], self.d[0,0], self.a[0,0]))
+        T65 = invht(self.dh_transformation(theta6, self.alpha[5,0], self.d[5,0], self.a[5,0]))
+        T54 = invht(self.dh_transformation(theta5, self.alpha[4,0], self.d[4,0], self.a[5,0]))
         T14 = T10 @ T06 @ T65 @ T54
         p13 = T14 @ np.array([[0], [-self.d[3,0]], [0], [1]]) - np.array([[0],[0],[0],[1]])
         p13norm_sq = np.linalg.norm(p13)**2
         theta3 = np.arccos((p13norm_sq - self.a[1,0]*self.a[1,0] - self.a[2,0]*self.a[2,0])/(2*self.a[1,0]*self.a[2,0])) # or -np.arccos((p13norm_sq - self.a[1,0]*self.a[1,0] - self.a[2,0]*self.a[2,0])/(2*self.a[1,0]*self.a[2,0]))
 
         # calculate theta2 and theta4
-        T10 = np.linalg.inv(self.dh_transformation(theta1, self.alpha[0,0], self.d[0,0], self.a[0,0]))
-        T65 = np.linalg.inv(self.dh_transformation(theta6, self.alpha[5,0], self.d[5,0], self.a[5,0]))
-        T54 = np.linalg.inv(self.dh_transformation(theta5, self.alpha[4,0], self.d[4,0], self.a[5,0]))
+        T10 = invht(self.dh_transformation(theta1, self.alpha[0,0], self.d[0,0], self.a[0,0]))
+        T65 = invht(self.dh_transformation(theta6, self.alpha[5,0], self.d[5,0], self.a[5,0]))
+        T54 = invht(self.dh_transformation(theta5, self.alpha[4,0], self.d[4,0], self.a[5,0]))
         T14 = T10 @ T06 @ T65 @ T54
         p13 = (T14 @ np.array([[0],[-self.d[3,0]],[0],[0]])) - np.array([[0],[0],[0],[1]])
         p13norm = np.linalg.norm(p13)
         theta2 = -np.arctan2(p13[1,0], p13[0,0]) + np.arcsin(self.a[2,0]*np.sin(theta3)/p13norm)
 
-        T32 = np.linalg.inv(self.dh_transformation(theta3, self.alpha[2,0], self.d[2,0], self.a[2,0]))
-        T21 = np.linalg.inv(self.dh_transformation(theta2, self.alpha[1,0], self.d[1,0], self.a[1,0]))
+        T32 = invht(self.dh_transformation(theta3, self.alpha[2,0], self.d[2,0], self.a[2,0]))
+        T21 = invht(self.dh_transformation(theta2, self.alpha[1,0], self.d[1,0], self.a[1,0]))
         T34 = T32 @ T21 @ T14
         theta4 = np.arctan2(T34[1,0], T34[0,0])
 
