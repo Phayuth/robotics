@@ -3,12 +3,11 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-import numpy as np
 import math
 import matplotlib.pyplot as plt
 from planner.research_rrtstar.rrtstar_probabilty_bias_sampling import node, rrt_star
 from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map
-from map.generate_map import grid_map_binary
+from map.load_map import grid_map_binary
 
 # Create map
 index = 0

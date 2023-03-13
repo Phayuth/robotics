@@ -3,7 +3,7 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-from map.generate_map import grid_map_binary
+from map.load_map import grid_map_binary
 from collections import deque
 import numpy as np
 import matplotlib.pyplot as plt

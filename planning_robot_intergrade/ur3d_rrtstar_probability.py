@@ -1,10 +1,10 @@
 import numpy as np
 import time
 import math
-from map.generate_map import map, Reshape_map
+from map.load_map import map, Reshape_map
 from planner.research_rrtstar.rrtstar_probabilty_3d import node, rrt_star
 from robot_used.ur5e.ur5e3d import Robot, map, draw_map, h_map
-from mesh_gen import draw_mesh
+from robot_used.ur5e.mesh_gen import draw_mesh
 import plotly.graph_objs as go
 
 sample = 10000

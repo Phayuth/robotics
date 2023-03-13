@@ -26,9 +26,7 @@ iteration = 2000
 m = (map_size[1]+1) * (map_size[1]+1)
 r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
 eta = r*(math.log(iteration) / iteration)**(1/2)
-sample_taken = 0
-total_iter = 0
-rrt = rrt_general(map, x_init, x_goal, eta, obs, obstacle_center, collision_range, map_size, iteration)
+rrt = rrt_general(map, x_init, x_goal, eta, obs, obstacle_center, collision_range, iteration)
 
 # Seed random
 np.random.seed(0)
@@ -38,10 +36,10 @@ rrt.start_planning()
 
 # Get path afte planing
 path = rrt.Get_Path()
-print(path)
 
 # Print time statistic
 rrt.print_time()
-
+rrt.Draw_obs()
 rrt.Draw_Tree()
+rrt.Draw_path(path)
 plt.show()

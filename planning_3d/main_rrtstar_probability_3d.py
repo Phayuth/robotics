@@ -4,7 +4,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 from planner.research_rrtstar.rrtstar_probabilty_3d import node, rrt_star
-from map.generate_map import map_3d, Reshape_map
+# from map.load_map import map_3d, Reshape_map
 import math
 import numpy as np
 
@@ -71,3 +71,5 @@ ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 
 plt.show()
+
+print(path_x,path_y,path_z)

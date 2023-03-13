@@ -9,7 +9,7 @@ import math
 import matplotlib.pyplot as plt
 from planner.rrtstar_general import node, rrt_star
 from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map, bmap
-from map.generate_map import grid_map_binary, pmap
+from map.load_map import grid_map_binary, pmap
 
 map_size = np.array([0,29])
 iteration = 1000

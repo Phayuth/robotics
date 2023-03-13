@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from robot_used.plannar_rr import RobotArm2D
-from map import generate_map
+from map import dummy_map
 from generate_config_space import construct_config_space_2d
 
 # Create map
-map = generate_map.map_2d_1()
+map = dummy_map.map_2d_1()
 
 # Create robot
 base_position = [15, 15]

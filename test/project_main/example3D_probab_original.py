@@ -6,7 +6,7 @@ sys.path.append(str(wd))
 import numpy as np
 import time
 import math
-from map.generate_map import map_3d, Reshape_map
+from map.load_map import map_3d, Reshape_map
 from planner.rrt_star3D import node, rrt_star
 
 # Creat map

@@ -2,8 +2,8 @@ import os
 import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
-from planner.potential_field import calc_potential_field, potential_field_planning
-from map.generate_map import grid_map_binary
+from planner.research_potfield.potential_field import calc_potential_field, potential_field_planning
+from map.load_map import grid_map_binary
 import matplotlib.pyplot as plt
 import numpy as np
 

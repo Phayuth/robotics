@@ -13,13 +13,13 @@ class node(object):
         self.parent = parent
 
 class rrt_general():
-    def __init__(self, map, x_init, x_goal, eta, obs, obstacle_center, collision_range, map_size, max_iteration):
+    def __init__(self, map, x_init, x_goal, eta, obs, obstacle_center, collision_range, max_iteration):
 
         self.map = map
         self.obs = obs
         self.obstacle_center = obstacle_center
         self.collision_range = collision_range
-        self.map_size = map_size
+        self.map_size = self.map.shape[0]
         self.eta = eta
         self.x_init = x_init
         self.x_goal = x_goal
@@ -35,30 +35,12 @@ class rrt_general():
 
     def Sampling(self):
 
-        x = np.random.uniform(low=self.map_size[0], high=self.map_size[1])
-        y = np.random.uniform(low=self.map_size[0], high=self.map_size[1])
+        x = np.random.uniform(low=0, high=self.map_size)
+        y = np.random.uniform(low=0, high=self.map_size)
 
         x_rand = node(x, y)
 
         return x_rand
-
-    def New_Check(self, x_new):
-
-        x_pob = np.array([x_new.x, x_new.y])
-        x_pob = np.around(x_pob)
-
-        if x_pob[0] >= self.map.shape[0]:
-            x_pob[0] = self.map.shape[0] - 1
-        if x_pob[1] >= self.map.shape[1]:
-            x_pob[1] = self.map.shape[1] - 1
-
-        x_pob = self.map[int(x_pob[0]), int(x_pob[1])]
-        p = np.random.uniform(0, 1)
-
-        if x_pob > p and self.Exist_Check(x_new):
-            return True
-        else:
-            return False
 
     def Node_collision_check(self, sample):
 
@@ -134,40 +116,6 @@ class rrt_general():
             x_new  = node(new_x, new_y)
 
         return x_new
-
-    def Exist_Check(self, x_new):
-
-        for x_near in self.nodes:
-            if x_new.x == x_near.x and x_new.y == x_near.y :
-                return False
-            else :
-                return True
-
-    def Add_Parent(self, x_new, x_nearest):
-
-        x_new.cost = x_nearest.cost + self.Line_Cost(x_nearest, x_new)
-        x_new.parent = x_nearest
-        for x_near in self.nodes:
-            if self.Distance_Cost(x_near, x_new) <= self.eta and self.Edge_collision_check(x_near, x_new) :
-                if  x_near.cost + self.Line_Cost(x_near, x_new) < x_nearest.cost + self.Line_Cost(x_nearest, x_new):
-
-                    x_nearest = x_near
-                    x_new.cost = x_nearest.cost + self.Line_Cost(x_nearest, x_new)
-                    x_new.parent = x_nearest
-
-        return x_new, x_nearest
-
-    def Rewire(self, x_new):
-
-        for x_near in self.nodes:
-            if x_near is not x_new.parent:
-                if self.Distance_Cost(x_near, x_new) <= self.eta and self.Edge_collision_check(x_new, x_near) :
-                    if x_new.cost + self.Line_Cost(x_new, x_near) < x_near.cost:
-
-                        x_near.parent = x_new
-                        x_near.cost = x_new.cost + self.Line_Cost(x_new, x_near)
-
-        return
 
     def Get_Path(self):
 

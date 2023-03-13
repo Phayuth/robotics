@@ -7,7 +7,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-from map.generate_map import grid_map_probability
+from map.load_map import grid_map_probability
 from planner.research_rrtstar.rrtstar_probabilty_2d import node, rrt_star
 
 # Load Map
