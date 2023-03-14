@@ -408,10 +408,9 @@ class rrt_star():
         self.e = time.time()
         
     def print_time(self):
-        print(self.e-self.s, "second")
         print("Total time : ", self.e - self.s,"second")
-        print("Sampling time : ", self.t1,"second", (self.t1*100)/(self.e-self.s),"%")
-        print("Add_Parent time : ", self.t2,"second", (self.t2*100)/(self.e-self.s),"%")
-        print("Rewire time : ", self.t3,"second", (self.t3*100)/(self.e-self.s),"%")
+        print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
+        print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")
+        print("Rewire time : ", self.rewire_elapsed,"second", (self.rewire_elapsed*100)/(self.e-self.s),"%")
         print("Total_iteration = ", self.total_iter)
         print("Cost : ", self.x_goal.cost)

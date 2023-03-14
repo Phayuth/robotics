@@ -404,7 +404,6 @@ class rrt_star():
         self.e = time.time()
 
     def print_time(self):
-        print(self.e-self.s, "second")
         print("Total time : ", self.e - self.s,"second")
         print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
         print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")

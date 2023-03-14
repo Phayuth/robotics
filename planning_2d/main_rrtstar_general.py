@@ -33,21 +33,9 @@ rrt.start_planning()
 
 # Get path
 path = rrt.Get_Path()
-all_path = []
-for i in path:
-    point = [i.x,i.y]
-    all_path.append(point)
 
-px = []
-py = []
-
-for j in all_path:
-    px.append(j[0])
-    py.append(j[1])
-
-plt.plot(px,py, 'ro-',linewidth=2)
 # Draw rrt tree
-rrt.Draw_Tree()
 rrt.Draw_obs()
+rrt.Draw_Tree()
 rrt.Draw_path(path)
 plt.show()

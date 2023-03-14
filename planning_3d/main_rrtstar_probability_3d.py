@@ -9,7 +9,6 @@ import math
 import numpy as np
 
 import matplotlib.pyplot as plt
-ax = plt.axes(projection='3d')
 
 # Creat map
 filter_size = 0  # 1 = 3x3, 2 = 5x5, 3 = 7x7
@@ -22,7 +21,7 @@ x_init = node(0, 0, 0)
 x_goal = node(40, 10, 30)
 
 # Create planner
-iteration = 100
+iteration = 1000
 m = map.shape[0] * map.shape[1] * map.shape[2]
 r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)
 eta = r * (math.log(iteration) / iteration)**(1/2)
@@ -41,35 +40,6 @@ path = rrt.Get_Path()
 
 # Print time
 rrt.print_time()
-
-# path
-path_x= []
-path_y= []
-path_z= []
-
-for i in path:
-    x = i.x
-    y = i.y
-    z = i.z
-    path_x.append(x)
-    path_y.append(y)
-    path_z.append(z)
-
-plt.figure(figsize=(10,10))
-plt.axes().set_aspect('equal')
-
-# plot basic axis
-ax.plot3D([0, 5], [0, 0], [0, 0], 'red', linewidth=4)
-ax.plot3D([0, 0], [0, 5], [0, 0], 'purple', linewidth=4)
-ax.plot3D([0, 0], [0, 0], [0, 5], 'gray', linewidth=4)
-
-
-ax.plot3D(path_x,path_y,path_z,'-og',linewidth=4)
-
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-
+rrt.Draw_tree()
+rrt.Draw_path(path)
 plt.show()
-
-print(path_x,path_y,path_z)

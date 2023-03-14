@@ -8,13 +8,15 @@ import math
 import matplotlib.pyplot as plt
 
 from map.load_map import grid_map_probability
+from map.dummy_map import map_2d_empty
 from planner.research_rrtstar.rrtstar_probabilty_2d import node, rrt_star
 
 # Load Map
 map_index = 2
 filter_size = 3 # 1 = 3x3, 2 = 5x5, 3 = 7x7
 classify = True
-map = grid_map_probability(map_index, filter_size, classify)
+# map = grid_map_probability(map_index, filter_size, classify)
+map = map_2d_empty()
 
 # Creat start and end pose
 x_init = node(19.5, 110)
@@ -37,6 +39,7 @@ rrt.start_planning()
 
 # Get path from planner
 path = rrt.Get_Path()
+print("==>> path len: \n", len(path))
 
 # Print time
 rrt.print_time()
@@ -46,6 +49,6 @@ plt.figure(figsize=(10,10))
 plt.axes().set_aspect('equal')
 rrt.Draw_Tree()
 rrt.Draw_path(path)
-plt.imshow(np.transpose(1-map),cmap = "jet", interpolation = 'nearest')
+plt.imshow(np.transpose(1-map),cmap = "jet", interpolation = 'nearest', origin="lower")
 plt.title("Probability map(same type)")
 plt.show()

@@ -43,3 +43,12 @@ def inverse_hom_trans(hom_trans):
     T_inv = np.vstack((upper,lower))
 
     return T_inv
+
+if __name__ == "__main__":
+    gs = hom_rotation_x_axis(theta=1)
+
+    gs_iv = inverse_hom_trans(gs)
+    print("==>> gs_iv: \n", gs_iv)
+
+    check = gs @ gs_iv # return Identity Matrix
+    print("==>> check: \n", check)

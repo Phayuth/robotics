@@ -14,9 +14,17 @@ def map_2d_2():
     map[25:60, 40:60] = 1
     return 1 - map
 
+def map_2d_empty():
+    map = np.zeros([300, 300])
+    return 1 - map
+
 def map_3d():
     map = np.ones((51,51,51))
     map[0:51, 25:51, 0:51] = 0
+    return map
+
+def map_3d_empty():
+    map = np.ones((51,51,51))
     return map
 
 def pmap():

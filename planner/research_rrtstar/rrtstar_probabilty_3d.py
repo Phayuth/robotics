@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+ax = plt.axes(projection='3d')
+
 
 class node(object):
     def __init__(self, x:float, y:float, z:float, cost:float = 0, parent = None):
@@ -45,7 +47,7 @@ class rrt_star():
         self.total_iter = 0
         self.iteration = max_interation
         self.Graph_sample_num = 0
-        self.Graph_data = np.array([[0,0,0]])
+        self.Graph_data = np.array([[0,0]])
 
         self.s = time.time()
         self.e = None
@@ -332,46 +334,25 @@ class rrt_star():
             self.x_goal.cost = temp_path[0][0]
 
             return self.x_goal.cost
+        
+    def Draw_tree(self):
+        """draw rrt tree on plot
+        """
 
-    # def Draw(self, path, map): # Use plotly for plotting
+        for i in self.nodes:
+            if i is not self.x_init:
+                ax.plot3D([i.x, i.parent.x], [i.y, i.parent.y], [i.z, i.parent.z], "blue")
 
-    #     goal_path = np.empty((0,3))
-    #     data = []
-    #     obs = []
+    def Draw_path(self, path:list):
+        """draw result path on plot
 
-    #     for i in range(len(map)): # Draw map
-    #         if map[i][3] != 1:
-    #             obs.append(map[i])
+        Args:
+            path (list): list of node obtain from result Get Path function
+        """
 
-    #     print(len(obs))
-    #     obs = np.array(obs)
-
-    #     trace1 = go.Scatter3d(x=obs[:, 0], y=obs[:, 1], z=obs[:, 2], marker=dict(color=['rgb({},{},{})'.format(r, g, b) for r, g, b in zip(255 * obs[:, 3], 255 * obs[:, 3], 255 * obs[:, 3])], size=2),mode='markers')
-    #     data.append(trace1)
-
-    #     for node in self.nodes: # Draw tree
-    #         if node is not self.x_init:
-    #             trace2 = go.Scatter3d(x=[node.x,node.parent.x], y=[node.y,node.parent.y], z=[node.z,node.parent.z], line=dict(color="blue", width=1),
-    #                                   mode='lines')
-    #             data.append(trace2)
-
-    #     if len(path) >= 2:
-    #         for node in path: # Draw optimal path
-    #             goal_path = np.append(goal_path, [node.arr], axis = 0)
-
-    #         trace3 = go.Scatter3d(x=goal_path[:, 0], y=goal_path[:, 1], z=goal_path[:, 2], line=dict(color="red", width=10),
-    #                             mode='lines')
-    #         data.append(trace3)
-
-    #     trace4 = go.Scatter3d(x=[self.x_goal.x], y=[self.x_goal.y], z=[self.x_goal.z], marker=dict(size=5, color="red"), mode="markers")
-    #     data.append(trace4)
-
-    #     trace5 = go.Scatter3d(x=[self.x_init.x], y=[self.x_init.y], z=[self.x_init.z], marker=dict(size=5, color="green"), mode="markers")
-    #     data.append(trace5)
-
-    #     layout = go.Layout(title='3D Planning', showlegend=False)
-    #     fig = go.Figure(data = data, layout = layout)
-    #     fig.show()
+        for i in path:
+            if i is not self.x_init:
+                ax.plot3D([i.x, i.parent.x], [i.y, i.parent.y], [i.z, i.parent.z], "r", linewidth=2.5)
 
     def start_planning(self):
         """start planning loop
@@ -435,7 +416,6 @@ class rrt_star():
         self.e = time.time()
 
     def print_time(self):
-        print(self.e-self.s, "second")
         print("Total time : ", self.e - self.s,"second")
         print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
         print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")

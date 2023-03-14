@@ -10,7 +10,7 @@ from planner.research_rrtstar.rrt_general import node, rrt_general
 from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map
 
 # Create obstacle in task space
-map, obstacle, obstacle_center = obstacle_generate_from_map(index=1)
+map, obstacle, obstacle_center = obstacle_generate_from_map(index=0)
 obs = Obstacle_generater(obstacle)
 collision_range = (2**(1/2))/2
 
@@ -38,5 +38,5 @@ path = rrt.Get_Path()
 rrt.print_time()
 rrt.Draw_obs()
 rrt.Draw_Tree()
-plt.show()
 rrt.Draw_path(path)
+plt.show()

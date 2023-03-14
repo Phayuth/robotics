@@ -4,8 +4,15 @@ import matplotlib.pyplot as plt
 import time
 
 class node(object):
-    def __init__(self, x, y, cost = 0, parent = None ):
+    def __init__(self, x:float, y:float, cost:float = 0, parent = None):
+        """node class
 
+        Args:
+            x (float): configuration x
+            y (float): configuration y
+            cost (float, optional): cost value. Defaults to 0.
+            parent (numpy array, optional): parent node. Defaults to None.
+        """
         self.x = x
         self.y = y
         self.arr = np.array([self.x, self.y])
@@ -13,37 +20,64 @@ class node(object):
         self.parent = parent
 
 class rrt_general():
-    def __init__(self, map, x_init, x_goal, eta, obs, obstacle_center, collision_range, max_iteration):
+    def __init__(self, map:np.ndarray, x_init:node, x_goal:node, eta:float, obs:list, obstacle_center:list, collision_range:float, max_iteration:int):
+        """General RRT star method of planning with Uniform sampling
 
+        Args:
+            map (np.ndarray): occupancy grid map
+            x_init (node): start configuration node
+            x_goal (node): end configuration node
+            eta (float): RRT* constants
+            obs (list): list of obstacle generate from [generate obstcle from map]
+            obstacle_center (list): list of obstacle center generate from [generate obstcle from map]
+            collision_range (float): range of obstacle generate from [generate obstcle from map]
+            max_iteration (int): maximum of iteration
+        """
         self.map = map
-        self.obs = obs
-        self.obstacle_center = obstacle_center
-        self.collision_range = collision_range
-        self.map_size = self.map.shape[0]
-        self.eta = eta
         self.x_init = x_init
         self.x_goal = x_goal
         self.nodes = [self.x_init]
-
+        self.obs = obs
+        self.obstacle_center = obstacle_center
+        self.collision_range = collision_range
+        self.eta = eta
         self.iteration = max_iteration
-        self.total_iter = 0
+
         self.sample_taken = 0
+        self.total_iter = 0
+        self.Graph_sample_num = 0
+        self.Graph_data = np.array([[0,0]])
 
         self.s = time.time()
         self.e = None
-        self.t1, self.t2, self.t3 = 0, 0, 0
+        self.sampling_elapsed = 0
+        self.addparent_elapsed = 0
 
-    def Sampling(self):
+        # self.t1, self.t2, self.t3 = 0, 0, 0
 
-        x = np.random.uniform(low=0, high=self.map_size)
-        y = np.random.uniform(low=0, high=self.map_size)
+    def Sampling(self)-> node:
+        """uniform sampling method
+
+        Returns:
+            node: random uniform sampling node
+        """
+
+        x = np.random.uniform(low=0, high=self.map.shape[0])
+        y = np.random.uniform(low=0, high=self.map.shape[1])
 
         x_rand = node(x, y)
 
         return x_rand
 
-    def Node_collision_check(self, sample):
+    def Node_collision_check(self, sample:node)-> bool:
+        """geometry collision detection. check if the input node is in collision with obstacle
 
+        Args:
+            sample (node): input node sample
+
+        Returns:
+            bool: return True if it collide with obstacle, False if not
+        """
         p = Point(sample.x, sample.y)
 
         for o in self.obs:
@@ -51,8 +85,16 @@ class rrt_general():
                 return False
         return True
 
-    def Edge_collision_check(self,x_nearest, x_new):
+    def Edge_collision_check(self, x_nearest:node, x_new:node)-> bool:
+        """geometry collision detection. check if a line between 2 nodes x_nearest and x_new is in collision with obstacle or not.
+        check with obstacle in obstacle center list
+        Args:
+            x_nearest (node): nearest node in tree to x rand
+            x_new (node): new node in tree created in directoin of x rand
 
+        Returns:
+            bool: return True if a segment of line is collide, False if not
+        """
         for c in self.obstacle_center:
 
             AC = c - x_nearest.arr
@@ -67,30 +109,50 @@ class rrt_general():
             else:
                 area = abs(AB[0]*AC[1] - AC[0]*AB[1]) / 2
                 r = area/d
-            # num = 0
-
-            if r <= self.collision_range: #self.collision_range[num]:
-
+            if r <= self.collision_range:
                 return False
-            # num+=1
         return True
 
-    def Distance_Cost(self, start, end):
+    def Distance_Cost(self, start:node, end:node)-> float:
+        """calculate distance from one node to other node based on euclidean distance norm
+        [note] = yeongmin name this incorrectly. to get distance cost, it must divide by eta which done in function line cost
+        
+        Args:
+            start (node): start pose with node class
+            end (node): end pose with node class
 
+        Returns:
+            float: norm value between 2 point
+        """
         distance_cost = np.linalg.norm(start.arr - end.arr)
 
         return distance_cost
 
-    def Line_Cost(self, start, end):
+    def Line_Cost(self, start:node, end:node)-> float:
+        """calculate cost for node based on distance euclidean norm
+
+        Args:
+            start (node): start pse with node class
+            end (node): end pose with node class
+
+        Returns:
+            float: node cost
+        """
 
         cost = self.Distance_Cost(start, end)/(self.eta)
 
         return cost
 
-    def Nearest(self, x_rand):
+    def Nearest(self, x_rand:node)-> node:
+        """Find the nearest node in the tree that is the nearest to the random node
 
+        Args:
+            x_rand (node): a random node from bias sampling
+
+        Returns:
+            node: the nearest node in tree nearest to the random node x_rand
+        """
         vertex = []
-        v = []
         i = 0
         for x_near in self.nodes:
 
@@ -103,7 +165,16 @@ class rrt_general():
 
         return x_nearest
 
-    def Steer(self, x_rand, x_nearest):
+    def Steer(self, x_rand:node, x_nearest:node)-> node:
+        """steer function to create a new node that is in the direction of x_rand node and near to x_nearest node
+
+        Args:
+            x_rand (node): a random node from bias sampling
+            x_nearest (node): the nearest node that already in the tree to the random node x_rand
+
+        Returns:
+            node: a new node that is near the x_nearest in the direction of x_rand
+        """
 
         d = self.Distance_Cost(x_rand, x_nearest)
 
@@ -117,29 +188,30 @@ class rrt_general():
 
         return x_new
 
-    def Get_Path(self):
+    def Get_Path(self)-> list:
+        """get a list of path from start to end if path is found, else None
+
+        Returns:
+            list: list of path
+        """
 
         temp_path = []
         path = []
         n = 0
         for i in self.nodes:
-            if self.Distance_Cost(i, self.x_goal) <= 3:
+            if self.Distance_Cost(i, self.x_goal) <= self.eta: #3
                 cost = i.cost + self.Line_Cost(self.x_goal, i)
                 temp_path.append([cost,n, i])
                 n += 1
         temp_path.sort()
 
-
         if temp_path == []:
-
             print("cannot find path")
-
             return None
 
         else:
             closest_node = temp_path[0][2]
             i = closest_node
-
             self.x_goal.cost = temp_path[0][0]
 
             while i is not self.x_init:
@@ -153,20 +225,27 @@ class rrt_general():
             return path
 
     def Draw_Tree(self):
-
+        """draw rrt tree on plot
+        """
         for i in self.nodes:
             if i is not self.x_init:
                 plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "blue")
 
     def Draw_obs(self):
+        """draw obstacle on plot
+        """
 
         fig, axs = plt.subplots(figsize=(10, 10))
         for o in self.obs:
-
             x, y = o.exterior.xy
             axs.fill(x, y, fc="black", ec="none")
 
-    def Draw_path(self, path):
+    def Draw_path(self, path:list):
+        """draw result path on plot
+
+        Args:
+            path (list): list of node obtain from result Get Path function
+        """
 
         for i in path:
             if i is not self.x_init:
@@ -195,47 +274,65 @@ class rrt_general():
             return self.x_goal.cost
 
     def start_planning(self):
+        """start planning loop
+        """
         while True:
-
-            s1 = time.time()
+            # start record sampling time
+            time_sampling_start = time.time()
             while True:
-
+                # create random node by start uniform sampling
                 x_rand = self.Sampling()
-
+                # update number of iteration
                 self.total_iter += 1
-                if self.total_iter % 100 == 0:
-                    print(self.total_iter, "Iteration")
-
+                # find the nearest node from sampling
                 x_nearest = self.Nearest(x_rand)
-
+                # create new node in the direction of random and nearest to nearest node
                 x_new = self.Steer(x_rand, x_nearest)
-
+                # check whether to add new node to tree or not
                 if self.Node_collision_check(x_new):
                     break
-
-                if self.total_iter > self.iteration:
+                # stop if the sampling iteration reach maximum
+                if self.total_iter == self.iteration:
                     break
-
-            if self.total_iter > self.iteration:
+            # stop record sampling time
+            time_sampling_end = time.time()
+            # determine sampling time elapsed
+            self.sampling_elapsed += time_sampling_end - time_sampling_start
+            # stop the entire planner if iteraton reach maximum
+            if self.total_iter == self.iteration:
                 break
+            # update sample taken number
+            self.sample_taken += 1
+            print("==>> self.sample_taken: ", self.sample_taken)
 
-            e1 = time.time()
-            self.t1 += (e1 - s1)
-
+            # start record addparent time
+            time_addparent_start = time.time()
+            # check if line segment between x_nearest and x_new is in collision with obstacle or not
             if self.Edge_collision_check(x_nearest, x_new) == False:
                 continue
-
-            self.sample_taken += 1
-
+            # create xnew node with xnearest as its parent
             x_new.cost = x_nearest.cost + self.Line_Cost(x_nearest, x_new)
             x_new.parent = x_nearest
-
+            # add xnew to rrt tree nodes
+            # stop record addparent time
+            time_addparent_end = time.time()
+            # determine addparent time elapsed
+            self.addparent_elapsed += time_addparent_end - time_addparent_start
+            # add xnew to rrt tree nodes
             self.nodes.append(x_new)
 
+            # record graph cost data
+            self.Graph_sample_num += 1
+            if self.Graph_sample_num%100 == 0:
+                Graph_cost = self.Cost_Graph()
+                self.Graph_data = np.append(self.Graph_data,np.array([[self.Graph_sample_num, Graph_cost]]), axis = 0)
+
+        # record end of planner loop
         self.e = time.time()
 
     def print_time(self):
-        print("Total time : ", self.e - self.s,"초")
-        print("Sampling time : ", self.t1,"초", (self.t1*100)/(self.e-self.s),"%")
-        print("Total_sample = ", self.sample_taken)
+        print("Total time : ", self.e - self.s,"second")
+        print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
+        print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")
+        print("Total_iteration = ", self.total_iter)
         print("Cost : ", self.x_goal.cost)

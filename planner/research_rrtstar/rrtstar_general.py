@@ -186,21 +186,6 @@ class rrt_star():
 
         return x_new
 
-    def Exist_Check(self, x_new:node)-> bool:
-        """check if the new node is already exist in the tree
-
-        Args:
-            x_new (node): new created node from Steer function
-
-        Returns:
-            bool: True if already in the tree, False if not
-        """
-        for x_near in self.nodes:
-            if x_new.x == x_near.x and x_new.y == x_near.y:
-                return False
-            else :
-                return True
-
     def Add_Parent(self, x_new:node, x_nearest:node)-> tuple[node,node]:
         """function for adding parent node to x_new node
 
@@ -388,7 +373,6 @@ class rrt_star():
         self.e = time.time()
 
     def print_time(self):
-        print(self.e-self.s, "second")
         print("Total time : ", self.e - self.s,"second")
         print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
         print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")
