@@ -11,9 +11,9 @@ class spatial_rr:
 
     def dh_transformation(theta,alpha,d,a):
         R = np.array([[np.cos(theta), -np.sin(theta)*np.cos(alpha),  np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
-                    [np.sin(theta),  np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
-                    [            0,                np.sin(alpha),                np.cos(alpha),               d],
-                    [            0,                            0,                            0,               1]])
+                      [np.sin(theta),  np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
+                      [            0,                np.sin(alpha),                np.cos(alpha),               d],
+                      [            0,                            0,                            0,               1]])
         return R
 
     def forward_kinematic(self,theta):
@@ -25,6 +25,6 @@ class spatial_rr:
 
         T = A1 @ A2
         p2 = np.array([[0],[0],[0],[1]]) # the fourth element MUST be equal to 1
-        p0 = T@p2
+        p0 = T @ p2
 
         return p0

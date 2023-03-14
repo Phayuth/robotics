@@ -174,6 +174,119 @@ class ur5e:
         Ja = Ja_mul @ self.jacobian(theta)
 
         return Ja
+    
+    def inverse_kinematic_geometry(self, goal_desired):
+        # given 4x4 transformation
+        T06 = goal_desired
+
+        d1 = self.d[0,0]
+        d2 = self.d[1,0]
+        d3 = self.d[2,0]
+        d4 = self.d[3,0]
+        d5 = self.d[4,0]
+        d6 = self.d[5,0]
+
+        a1 = self.a[0,0]
+        a2 = self.a[1,0]
+        a3 = self.a[2,0]
+        a4 = self.a[3,0]
+        a5 = self.a[4,0]
+        a6 = self.a[5,0]
+
+        alpha1 = self.alpha[0,0]
+        alpha2 = self.alpha[1,0]
+        alpha3 = self.alpha[2,0]
+        alpha4 = self.alpha[3,0]
+        alpha5 = self.alpha[4,0]
+        alpha6 = self.alpha[5,0]
+
+        theta = np.zeros((6,8))
+        P05 = T06 @ np.array([[0],[0],[-d6],[1]]) - np.array([[0],[0],[0],[1]])
+
+        # theta 1
+        p05y = P05[1,0]
+        p05x = P05[0,0]
+        psi = np.arctan2(p05y, p05x)
+        phi = np.arccos(d4 / np.sqrt(p05x**2 + p05y**2))
+        #The two solutions for theta1 correspond to the shoulder being either left or right
+        theta[0, 0:4] = np.pi/2 + psi + phi
+        theta[0, 4:8] = np.pi/2 + psi - phi
+        theta = theta.real
+
+        # theta 5 # wrist up or down
+        cl = [0, 4]
+        for i in range(0,len(cl)):
+            c = cl[i]
+            T10 = invht(self.dh_transformation(theta[0,c], alpha1, d1, a1))
+            T16 = T10 @ T06
+            p16z = T16[2,3]
+            theta[4, c:c+2]   =   np.arccos((p16z-d4)/d6)
+            theta[4, c+2:c+4] = - np.arccos((p16z-d4)/d6)
+        theta = theta.real
+
+        # theta 6
+        # theta6 is not well-defined when sin(theta5) = 0 or when T16(1,3), T16(2,3) = 0.
+
+        cl = [0, 2, 4, 6]
+        for i in range(0,len(cl)):
+            c = cl[i]
+            T01 = self.dh_transformation(theta[0,c], alpha1, d1, a1)
+            T10 = invht(T01)
+            T16 = T06 @ T10
+            zy = T16[1,2]
+            zx = T16[0,2]
+            term1 = -zy/np.sin(theta[4,c])
+            term2 =  zx/np.sin(theta[4,c])
+            theta[5, c:c+2] = np.arctan2(term1, term2)
+        theta = theta.real
+
+        # theta 3
+        cl = [0, 2, 4, 6]
+        for i in range(0,len(cl)):
+            c = cl[i]
+            T01 = self.dh_transformation(theta[0,c], alpha1, d1, a1)
+            T10 = invht(T01)
+            T56 = self.dh_transformation(theta[5,c], alpha6, d6, a6)
+            T65 = invht(T56)
+            T45 = self.dh_transformation(theta[4,c], alpha5, d5, a5)
+            T54 = invht(T45)
+
+            T14 = T10 @ T06 @ T65 @ T54
+
+            p13 = T14 @ np.array([[0],[-d4],[0],[1]]) - np.array([[0],[0],[0],[1]])
+            
+            term = (np.linalg.norm(p13)**2 - a2**2 - a3**2)/(2*a2*a3)
+            theta[2, c] = np.arccos(term)
+            theta[2, c+1] = -np.arccos(term)
+        theta = theta.real
+
+        #theta 2 and theta 4
+        cl = [0, 1, 2, 3, 4, 5, 6, 7]
+        for i in range(0,len(cl)):
+            c = cl[i]
+            T01 = self.dh_transformation(theta[0,c], alpha1, d1, a1)
+            T10 = invht(T01)
+            T56 = self.dh_transformation(theta[5,c], alpha6, d6, a6)
+            T65 = invht(T56)
+            T45 = self.dh_transformation(theta[4,c], alpha5, d5, a5)
+            T54 = invht(T45)
+
+            T14 = T10 @ T06 @ T65 @ T54
+            p13 = T14 @ np.array([[0],[-d4],[0],[1]]) - np.array([[0],[0],[0],[1]])
+
+            # theta 2 
+            theta[1, c] = -np.arctan2(p13[1], -p13[0]) + np.arcsin(a3*np.sin(theta[2,c])/np.linalg.norm(p13))
+
+            # theta 4
+            T23 = self.dh_transformation(theta[2,c], alpha3, d3, a3)
+            T32 = invht(T23)
+            T12 = self.dh_transformation(theta[1,c], alpha2, d2, a2)
+            T21 = invht(T12)
+            T34 = T32 @ T21 @ T14
+            theta[3, c] = np.arctan2(T34[1,0], T34[0,0])
+        theta = theta.real
+
+        return theta
 
     def plot_arm(self, theta, plt_basis=False, plt_show=False):
 

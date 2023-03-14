@@ -45,7 +45,7 @@ class planar_rr:
 
         T = A1 @ A2
         p2 = np.array([[0],[0],[0],[1]]) # the fourth element MUST be equal to 1
-        p0 = T@p2
+        p0 = T @ p2
 
         return p0
 
