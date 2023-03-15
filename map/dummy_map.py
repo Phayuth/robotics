@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 
 def map_2d_1():
@@ -52,3 +53,21 @@ def pmap():
     map = 1 - map
 
     return map
+
+if __name__ == "__main__":
+    
+    fig, axs = plt.subplots(2, 2)
+
+    axs[0, 0].imshow(map_2d_1())
+    axs[0, 0].set_title(map_2d_1.__name__)
+
+    axs[0, 1].imshow(map_2d_2())
+    axs[0, 1].set_title(map_2d_2.__name__)
+
+    axs[1, 0].imshow(map_2d_empty())
+    axs[1, 0].set_title(map_2d_empty.__name__)
+
+    axs[1, 1].imshow(pmap())
+    axs[1, 1].set_title(pmap.__name__)
+
+    plt.show()

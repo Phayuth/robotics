@@ -7,7 +7,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from planner.research_rrtstar.rrtstar_general import node, rrt_star
-from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map, bmap
+from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map
 
 # Map and Create obstacle
 map, obstacle, obstacle_center = obstacle_generate_from_map(index=0)

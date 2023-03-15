@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import glob
 from scipy.ndimage import binary_dilation
 
@@ -8,7 +9,6 @@ def grid_map_binary(index):
     # load map from task_space folder in binary form
     map = np.load(map_list[index]).astype(np.uint8)
     map = 1 - map
-
     return map
 
 def grid_map_probability(index, size, classify):
@@ -52,3 +52,17 @@ def grid_map_probability(index, size, classify):
     kernel_map = np.reshape(kernel_map, (map.shape[0] - 2 * size, map.shape[1] - 2 * size))
 
     return kernel_map
+
+if __name__ == "__main__":
+    # load binary map
+    index = 2
+    map = grid_map_binary(index)
+    plt.imshow(map)
+    plt.show()
+
+    # Load Probability map conversion
+    filter_size = 3 # 1 = 3x3, 2 = 5x5, 3 = 7x7
+    classify = True
+    map = grid_map_probability(index,filter_size,classify)
+    plt.imshow(map)
+    plt.show()

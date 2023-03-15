@@ -7,8 +7,8 @@ class planar_rr:
         self.alpha2 = 0
         self.d1 = 0
         self.d2 = 0
-        self.a1 = 1
-        self.a2 = 1
+        self.a1 = 8
+        self.a2 = 8
 
     def dh_transformation(theta,alpha,d,a):
         R = np.array([[np.cos(theta), -np.sin(theta)*np.cos(alpha),  np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
@@ -17,16 +17,50 @@ class planar_rr:
                       [            0,                            0,                            0,               1]])
         return R
 
-    def forward_kinematic(self, theta):
+    def forward_kinematic(self, theta, return_link_pos=False):
         theta1 = theta[0,0]
         theta2 = theta[1,0]
 
         x = self.a1*np.cos(theta1) + self.a2*np.cos(theta1+theta2)
         y = self.a1*np.sin(theta1) + self.a2*np.sin(theta1+theta2)
 
-        x = np.array([[x],[y]])
+        if return_link_pos:
 
-        return x
+            # option for return link end pose. normally used for collision checking
+            link_end_pose = []
+            link_end_pose.append([0,0])
+            
+            # link 1 pose
+            x1 = self.a1*np.cos(theta1)
+            y1 = self.a1*np.sin(theta1)
+            link_end_pose.append([x1, y1])
+            
+            # link 2 pose
+            x2 = self.a1*np.cos(theta1) + self.a2*np.cos(theta1+theta2)
+            y2 = self.a1*np.sin(theta1) + self.a2*np.sin(theta1+theta2)
+            link_end_pose.append([x2, y2])
+
+            return link_end_pose
+        
+        else:
+            return np.array([[x],[y]])
+    
+    def inverse_kinematic_geometry(self, desired_pose, elbow_option):
+        x = desired_pose[0,0]
+        y = desired_pose[1,0]
+
+        if elbow_option == 0:
+            sign = -1
+        elif elbow_option == 1:
+            sign = 1
+
+        D = (x**2 + y**2 - self.a1**2 - self.a2**2)/(2*self.a1*self.a2)
+
+        theta2 = np.arctan(sign*np.sqrt(1-D**2)/D)
+
+        theta1 = np.arctan(y/x) - np.arctan((self.a2*np.sin(theta2))/(self.a1+self.a2*np.cos(theta2)))
+
+        return np.array([[theta1], [theta2]])
 
     def jacobian(self, theta):
         theta1 = theta[0,0]
@@ -43,11 +77,9 @@ class planar_rr:
         A1 = self.dh_transformation(theta1,self.alpha1,self.d1,self.a1)
         A2 = self.dh_transformation(theta2,self.alpha2,self.d2,self.a2)
 
-        T = A1 @ A2
-        p2 = np.array([[0],[0],[0],[1]]) # the fourth element MUST be equal to 1
-        p0 = T @ p2
+        T02 = A1 @ A2
 
-        return p0
+        return T02
 
     def jacobian_dh(self,theta):
         theta1 = theta[0,0]
@@ -90,7 +122,7 @@ class planar_rr:
 
         return J
     
-    def plot_arm(self, theta, *args, **kwargs):
+    def plot_arm(self, theta, plt_show=False, *args, **kwargs):
         theta1 = theta[0,0]
         theta2 = theta[1,0]
 
@@ -105,16 +137,16 @@ class planar_rr:
         plt.plot(elbow[0], elbow[1], 'ro')
         plt.plot(wrist[0], wrist[1], 'ro')
         
+        # title = kwargs.get('title', None)
+        # plt.annotate("X pos = "+str(wrist[0]), xy=(0, 1.8+2), xycoords="data",va="center", ha="center")
+        # plt.annotate("Y pos = "+str(wrist[1]), xy=(0, 1.5+2), xycoords="data",va="center", ha="center")
         
-        title = kwargs.get('title', None)
-        plt.annotate("X pos = "+str(wrist[0]), xy=(0, 1.8+2), xycoords="data",va="center", ha="center")
-        plt.annotate("Y pos = "+str(wrist[1]), xy=(0, 1.5+2), xycoords="data",va="center", ha="center")
+        # circle1 = plt.Circle((0, 0), self.a1+self.a2,alpha=0.5, edgecolor='none')
+        # plt.gca().add_patch(circle1)
+        # plt.title(title)
         
-        circle1 = plt.Circle((0, 0), self.a1+self.a2,alpha=0.5, edgecolor='none')
-        plt.gca().add_patch(circle1)
-        plt.title(title)
-        
-        plt.xlim(-3, 3)
-        plt.ylim(-2, 4)
+        # plt.xlim(-3, 3)
+        # plt.ylim(-2, 4)
 
-        plt.show()
+        if plt_show:
+            plt.show()

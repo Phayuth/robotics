@@ -23,8 +23,7 @@ def construct_config_space_2d(robot, map, grid = 361):
 
             configuration_space.append([i, j, prob])
 
-            if i*j %1000 == 0:
-                print("done")
+            print(f"At theta 1: {i} | At theta 2: {j}")
 
     c_map = np.zeros((361,361))
     for i in range(361):

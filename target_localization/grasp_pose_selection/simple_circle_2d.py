@@ -5,7 +5,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from robot_used.plannar_rrr import plannar_rrr
+from robot.planar_rrr import planar_rrr
 
 def polar2cats(r,theta):
     x = r*np.cos(theta)
@@ -29,7 +29,7 @@ x_outer = x_outer + offset_from_origin_x
 y_outer = y_outer + offset_from_origin_y
 
 # create robot instance
-r = plannar_rrr.planar_rrr()
+r = planar_rrr()
 
 # search for pose candidate
 candidate = []
@@ -54,7 +54,6 @@ for i in range(len(x_inner)):
         pass
 
     candidate.append(inv_solu)
-
 
 # setup plot look
 plt.axes().set_aspect('equal')

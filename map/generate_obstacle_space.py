@@ -16,7 +16,7 @@ def Obstacle_generater(obstacle):
     for o in obstacle:
         obs.append(Polygon(o))
 
-    return  obs
+    return obs
 
 def Obstacle_center(obstacle):
 
@@ -68,16 +68,14 @@ def bmap():
     for i in range(no_box):
         xy = np.random.randint(image_size, size=2)
         rgb = np.random.randint(155, size=3)
-        # print(rgb)
-        # print(xy)
         d.rectangle([xy[0], xy[1], xy[0] + box_size, xy[1] + box_size], fill=(rgb[0], rgb[1], rgb[2]))
 
     d.rectangle([11, 50, 18, 20], fill=(255, 255, 255))
     d.rectangle([11, 10, 18, 0], fill=(255, 255, 255))
     d.rectangle([32, 50, 39, 40], fill=(255, 255, 255))
     d.rectangle([32, 30, 39, 0], fill=(255, 255, 255))
-    # image.show()
     imgArray = np.array(image)
+    # image.show()
 
     obs_center = []
     obs = []
@@ -89,3 +87,7 @@ def bmap():
                             (j - 0.5, i - 0.5)))
 
     return obs, obs_center
+
+if __name__=="__main__":
+
+    bmap()
