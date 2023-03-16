@@ -7,8 +7,8 @@ class planar_rr:
         self.alpha2 = 0
         self.d1 = 0
         self.d2 = 0
-        self.a1 = 8
-        self.a2 = 8
+        self.a1 = 2
+        self.a2 = 2
 
     def dh_transformation(theta,alpha,d,a):
         R = np.array([[np.cos(theta), -np.sin(theta)*np.cos(alpha),  np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
@@ -122,7 +122,7 @@ class planar_rr:
 
         return J
     
-    def plot_arm(self, theta, plt_show=False, *args, **kwargs):
+    def plot_arm(self, theta, plt_show=False):
         theta1 = theta[0,0]
         theta2 = theta[1,0]
 
@@ -130,23 +130,12 @@ class planar_rr:
         elbow = shoulder + np.array([self.a1 * np.cos(theta1), self.a1 * np.sin(theta1)])
         wrist = elbow + np.array([self.a2 * np.cos(theta1 + theta2), self.a2 * np.sin(theta1 + theta2)])
 
-        plt.plot([shoulder[0], elbow[0]], [shoulder[1], elbow[1]], 'k-')
-        plt.plot([elbow[0], wrist[0]], [elbow[1], wrist[1]], 'k-')
+        plt.plot([shoulder[0], elbow[0]], [shoulder[1], elbow[1]], 'blue', linewidth=3)
+        plt.plot([elbow[0], wrist[0]], [elbow[1], wrist[1]], 'cyan', linewidth=3)
 
         plt.plot(shoulder[0], shoulder[1], 'ro')
         plt.plot(elbow[0], elbow[1], 'ro')
         plt.plot(wrist[0], wrist[1], 'ro')
-        
-        # title = kwargs.get('title', None)
-        # plt.annotate("X pos = "+str(wrist[0]), xy=(0, 1.8+2), xycoords="data",va="center", ha="center")
-        # plt.annotate("Y pos = "+str(wrist[1]), xy=(0, 1.5+2), xycoords="data",va="center", ha="center")
-        
-        # circle1 = plt.Circle((0, 0), self.a1+self.a2,alpha=0.5, edgecolor='none')
-        # plt.gca().add_patch(circle1)
-        # plt.title(title)
-        
-        # plt.xlim(-3, 3)
-        # plt.ylim(-2, 4)
 
         if plt_show:
             plt.show()

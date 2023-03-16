@@ -8,7 +8,7 @@ import math
 import matplotlib.pyplot as plt
 
 from map.load_map import grid_map_probability
-from map.dummy_map import map_2d_empty
+from map.taskmap_img_format import map_2d_empty
 from planner.research_rrtstar.rrtstar_probabilty_2d import node, rrt_star
 
 # Load Map

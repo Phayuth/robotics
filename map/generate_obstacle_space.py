@@ -5,6 +5,7 @@ sys.path.append(str(wd))
 
 import glob
 import numpy as np
+import matplotlib.pyplot as plt
 from shapely.geometry import Polygon
 from PIL import Image, ImageDraw
 
@@ -88,6 +89,17 @@ def bmap():
 
     return obs, obs_center
 
+def Draw_obs(obs):
+    fig, axs = plt.subplots(figsize=(10, 10))
+    for o in obs:
+        x, y = o.exterior.xy
+        axs.fill(x, y, fc="black", ec="none")
+
 if __name__=="__main__":
 
-    bmap()
+    map, obstacle, obstacle_center = obstacle_generate_from_map(index=0)
+    obs = Obstacle_generater(obstacle)
+    collision_range = (2**(1/2))/2
+
+    Draw_obs(obs)
+    plt.show()

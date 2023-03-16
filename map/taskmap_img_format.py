@@ -2,6 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 
+# task space map represented in numpy or image format
+# thus can not directly use it
+# must convert into continuous coordinate format
+
 def map_2d_1():
     map = np.zeros([31, 31])
     map[22:28, 10:21] = 1

@@ -43,4 +43,4 @@ theta_solution = ik_sd.selectively_damped_least_square_fast(theta,x_desired)
 
 # Show Solution
 print(theta_solution)
-robot.plot_arm(theta_solution)
+robot.plot_arm(theta_solution, plt_show=True)

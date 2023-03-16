@@ -3,6 +3,7 @@
 # https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 class aabb_obj:
     def __init__(self,x_min,y_min,z_min,x_max,y_max,z_max):
@@ -19,6 +20,12 @@ class sqr_rec_2d_obj:
         self.y = y
         self.h = h
         self.w = w
+
+    def plot(self):
+        plt.plot([self.x,self.x+self.w], [self.y,self.y], c="b")
+        plt.plot([self.x,self.x], [self.y,self.y+self.h],c="b")
+        plt.plot([self.x,self.x+self.w], [self.y+self.h,self.y+self.h],c="b")
+        plt.plot([self.x+self.w,self.x+self.w], [self.y,self.y+self.h],c="b")
         
 class point3d_obj:
     def __init__(self,x,y,z):
@@ -30,7 +37,20 @@ class point2d_obj:
     def __init__(self,x,y):
         self.x = x
         self.y = y
+    
+    def plot(self):
+        plt.scatter(self.x, self.y)
 
+class line_obj:
+    def __init__(self, xs, ys, xe, ye):
+        self.xs = xs
+        self.ys = ys
+        self.xe = xe
+        self.ye = ye
+
+    def plot(self):
+        plt.plot([self.xs,self.xe],[self.ys,self.ye])
+        
 class sphere_obj:
     def __init__(self,x,y,z,r):
         self.x = x
@@ -164,6 +184,35 @@ def intersect_rectangle_v_rectangle(rec1,rec2):
     r2h = rec2.h
 
     if (r1x + r1w >= r2x) and (r1x <= r2x + r2w) and (r1y + r1h >= r2y) and (r1y <= r2y + r2h) :
+        return True
+    else:
+        return False
+
+def line_v_line(line1, line2):
+    x1 = line1.xs
+    y1 = line1.ys
+    x2 = line1.xe
+    y2 = line1.ye
+
+    x3 = line2.xs
+    y3 = line2.ys
+    x4 = line2.xe
+    y4 = line2.ye
+
+    uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
+    uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1))
+
+    if (uA >= 0 and uA <= 1 and uB >= 0 and uB <= 1):
+        return True
+    return False
+
+def line_v_rectangle(line, rec):
+    l1 = line_obj(rec.x, rec.y, rec.x+rec.w, rec.y)
+    l2 = line_obj(rec.x, rec.y, rec.x, rec.y+rec.h)
+    l3 = line_obj(rec.x, rec.y+rec.h, rec.x+rec.w, rec.y+rec.h)
+    l4 = line_obj(rec.x+rec.w, rec.y, rec.x+rec.w, rec.y+rec.h)
+
+    if (line_v_line(line, l1) or line_v_line(line, l2) or line_v_line(line, l3) or line_v_line(line, l4)):
         return True
     else:
         return False
