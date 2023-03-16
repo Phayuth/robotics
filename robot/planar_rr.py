@@ -49,6 +49,13 @@ class planar_rr:
         x = desired_pose[0,0]
         y = desired_pose[1,0]
 
+        # check if the desired pose is inside of task space or not
+        rd = np.sqrt(x**2 + y**2)
+        link_length = self.a1 + self.a2
+        if rd > link_length:
+            print("The desired pose is outside of taskspace")
+            return None
+
         if elbow_option == 0:
             sign = -1
         elif elbow_option == 1:
@@ -56,9 +63,9 @@ class planar_rr:
 
         D = (x**2 + y**2 - self.a1**2 - self.a2**2)/(2*self.a1*self.a2)
 
-        theta2 = np.arctan(sign*np.sqrt(1-D**2)/D)
+        theta2 = np.arctan2(sign*np.sqrt(1-D**2),D)
 
-        theta1 = np.arctan(y/x) - np.arctan((self.a2*np.sin(theta2))/(self.a1+self.a2*np.cos(theta2)))
+        theta1 = np.arctan2(y,x) - np.arctan2((self.a2*np.sin(theta2)),(self.a1+self.a2*np.cos(theta2)))
 
         return np.array([[theta1], [theta2]])
 
@@ -98,12 +105,12 @@ class planar_rr:
                        [                       0                             ]])
 
         Z0 = np.array([[0],
-                      [0],
-                      [1]])
+                       [0],
+                       [1]])
 
         Z1 = np.array([[0],
-                      [0],
-                      [1]])
+                       [0],
+                       [1]])
 
         # joint 1
         # first transpose both row vector , then do cross product , the transpose to column vector back. 
