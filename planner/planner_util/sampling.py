@@ -4,7 +4,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from map.load_map import grid_map_probability
+from map.map_loader import grid_map_probability
 import matplotlib.pyplot as plt
 
 def bias_sampling(map):

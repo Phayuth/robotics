@@ -7,7 +7,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-from map.load_map import grid_map_binary
+from map.map_loader import grid_map_binary
 from planner.research_rrtstar.rrtstar_probabilty_proxy_collision import node , rrt_star
 
 # Create map

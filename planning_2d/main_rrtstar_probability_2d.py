@@ -7,7 +7,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-from map.load_map import grid_map_probability
+from map.map_loader import grid_map_probability
 from map.taskmap_img_format import map_2d_empty
 from planner.research_rrtstar.rrtstar_probabilty_2d import node, rrt_star
 
@@ -15,8 +15,7 @@ from planner.research_rrtstar.rrtstar_probabilty_2d import node, rrt_star
 map_index = 2
 filter_size = 3 # 1 = 3x3, 2 = 5x5, 3 = 7x7
 classify = True
-# map = grid_map_probability(map_index, filter_size, classify)
-map = map_2d_empty()
+map = grid_map_probability(map_index, filter_size, classify)
 
 # Creat start and end pose
 x_init = node(19.5, 110)
