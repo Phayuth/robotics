@@ -13,21 +13,6 @@ def grid_map_probability(index, size, classify):
 
     map = binary_dilation(map).astype(map.dtype)
 
-    # if classify == True:
-    #     for i in range(30, 80):
-    #         for j in range(60, 100):
-    #             map[i, j] = 0.2 * map[i, j]
-
-    #     for i in range(80,100):
-    #         for j in range(40, 60):
-    #             map[i, j] = 0.2 * map[i, j]
-
-    #     for i in range(90,110):
-    #         for j in range(17, 40):
-    #             map[i, j] = 0.2 * map[i, j]
-                
-    # map = 1 - map
-
     f1 = np.zeros((map.shape[0], 1))
     for i in range(size):
         map = np.hstack((map, f1))
@@ -49,25 +34,32 @@ def grid_map_probability(index, size, classify):
 
 if __name__ == "__main__":
     index = 2
-    # # Load Probability map conversion
-    # filter_size = 3 # 1 = 3x3, 2 = 5x5, 3 = 7x7
-    # classify = True
-    # map = grid_map_probability(index,filter_size,classify)
-    # plt.imshow(map)
-    # plt.show()
-
-    # map = np.load(map_list[index]).astype(np.uint8)
-    # map = np.repeat(map, 4, axis=1)
-    # map = np.repeat(map, 4, axis=0)
-
-    # map = binary_dilation(map).astype(map.dtype)
-
-    map = np.load(map_list[index]).astype(np.uint8)
-
-    for i in range(map.shape[0]):
-        for j in range(map.shape[1]):
-            map[i, j] = 0.2 * map[i, j]
-    
+    map = np.load(map_list[index]).astype(np.float64)
     plt.imshow(map)
     plt.show()
-    # map = 1 - map
+    size = 4
+    f1 = np.zeros((map.shape[0], 1))  # it just padding map with zero, all four size of map
+    for i in range(size):
+        map = np.hstack((map, f1))
+        map = np.hstack((f1, map))
+    plt.imshow(map)
+    plt.show()
+
+
+    f2 = np.zeros((1, map.shape[1])) # it just padding map with zero, all four size of map
+    for i in range(size):
+        map = np.vstack((map, f2))
+        map = np.vstack((f2, map))
+    plt.imshow(map)
+    plt.show()
+
+    kernel_map = np.array([])
+    for i in range(size, map.shape[0] - size):
+        for j in range(size, map.shape[1] - size):
+            tt = np.sum(map[i - size:i + size + 1, j - size:j + size + 1]) / ((2 * size + 1) ** 2)
+            kernel_map = np.append(kernel_map, tt)
+
+    kernel_map = np.reshape(kernel_map, (map.shape[0] - 2 * size, map.shape[1] - 2 * size))
+
+    plt.imshow(kernel_map)
+    plt.show()

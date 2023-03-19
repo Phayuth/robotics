@@ -11,58 +11,77 @@ def grid_map_binary(index):
     map = 1 - map
     return map
 
-def grid_map_probability(index, size, classify):
-    # load map from task_space folder and convert to probability form
-    map = np.load(map_list[index]).astype(np.uint8)
-    map = np.repeat(map, 4, axis=1)
-    map = np.repeat(map, 4, axis=0)
+def increase_map_size(map, multiplier):
+    map = np.repeat(map, multiplier, axis=1)
+    map = np.repeat(map, multiplier, axis=0)
+    return map
 
+def obs_dilation(map):
     map = binary_dilation(map).astype(map.dtype)
+    return map
 
-    if classify == True:
-        for i in range(30, 80):
-            for j in range(60, 100):
-                map[i, j] = 0.2 * map[i, j]
-
-        for i in range(80,100):
-            for j in range(40, 60):
-                map[i, j] = 0.2 * map[i, j]
-
-        for i in range(90,110):
-            for j in range(17, 40):
-                map[i, j] = 0.2 * map[i, j]
-
-    map = 1 - map
-
+def padding_four_size(map, size):
     f1 = np.zeros((map.shape[0], 1))
-    for i in range(size):
+    for _ in range(size):
         map = np.hstack((map, f1))
         map = np.hstack((f1, map))
 
     f2 = np.zeros((1, map.shape[1]))
-    for i in range(size):
+    for _ in range(size):
         map = np.vstack((map, f2))
         map = np.vstack((f2, map))
+    return map
 
+def probabilitizer(map, size):
+    # I think this function is to calculate obstacle distance (distance from current cell to near obstacle)
+    # load map and convert map from binary to probability
+    # map = 1 - map # in case of the value is switch
     kernel_map = np.array([])
     for i in range(size, map.shape[0] - size):
         for j in range(size, map.shape[1] - size):
-            kernel_map = np.append(kernel_map, np.sum(map[i - size:i + size + 1, j - size:j + size + 1]) / ((2 * size + 1) ** 2))
-
+            cell_value = np.sum(map[i - size:i + size + 1, j - size:j + size + 1]) / ((2 * size + 1) ** 2)
+            kernel_map = np.append(kernel_map, cell_value)
     kernel_map = np.reshape(kernel_map, (map.shape[0] - 2 * size, map.shape[1] - 2 * size))
-
     return kernel_map
 
+def grid_map_probability(index, size):
+    map = np.load(map_list[index]).astype(np.uint8)
+    map = increase_map_size(map, 4)
+    map = obs_dilation(map)
+    map = 1 - map
+    map = padding_four_size(map, size)
+    map = probabilitizer(map, size)
+    return map
+
 if __name__ == "__main__":
+
     # load binary map
     index = 2
     map = grid_map_binary(index)
+    plt.title("Original Map")
     plt.imshow(map)
     plt.show()
 
-    # Load Probability map conversion
-    filter_size = 3 # 1 = 3x3, 2 = 5x5, 3 = 7x7
-    classify = True
-    map = grid_map_probability(index,filter_size,classify)
+    # increase map size
+    map = increase_map_size(map, multiplier=4)
+    plt.title("Increase Map size")
+    plt.imshow(map)
+    plt.show()
+
+    # dilation of obstacle
+    map = obs_dilation(1- map)
+    plt.title("Dilation Map")
+    plt.imshow(map)
+    plt.show()
+
+    # probabilitize map
+    map = probabilitizer(map, size=3)
+    plt.title("Probability Map")
+    plt.imshow(map)
+    plt.show()
+
+    # Full set of all operation above in one function
+    filter_size = 3
+    map = grid_map_probability(index, filter_size)
     plt.imshow(map)
     plt.show()

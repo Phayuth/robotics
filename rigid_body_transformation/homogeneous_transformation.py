@@ -1,4 +1,5 @@
 import numpy as np
+np.set_printoptions(suppress=True)
 
 def hom_rotation_x_axis(theta):
     R = np.array([[1,             0,              0,    0],
@@ -46,9 +47,19 @@ def inverse_hom_trans(hom_trans):
 
 if __name__ == "__main__":
     gs = hom_rotation_x_axis(theta=1)
-
     gs_iv = inverse_hom_trans(gs)
-    print("==>> gs_iv: \n", gs_iv)
-
     check = gs @ gs_iv # return Identity Matrix
-    print("==>> check: \n", check)
+
+    tac = np.array([[ np.cos(np.deg2rad(90)),np.cos(np.deg2rad(120)), np.cos(np.deg2rad(30)), 3],
+                    [ np.cos(np.deg2rad(90)), np.cos(np.deg2rad(30)), np.cos(np.deg2rad(60)), 0],
+                    [np.cos(np.deg2rad(180)), np.cos(np.deg2rad(90)), np.cos(np.deg2rad(90)), 2],
+                    [                      0,                      0,                      0, 1]])
+    tca = inverse_hom_trans(tac)
+    tac_rotation_mat = tac[0:3,0:3]
+    tca_rotation_mat = tca[0:3,0:3]
+
+    tcb = np.array([[ np.cos(np.deg2rad(90+90-36.9)),np.cos(np.deg2rad(90+36.9)), np.cos(np.deg2rad(90)), 3],
+                    [ np.cos(np.deg2rad(90)), np.cos(np.deg2rad(90)), np.cos(np.deg2rad(0)), 2],
+                    [np.cos(np.deg2rad(90+36.9)), np.cos(np.deg2rad(36.9)), np.cos(np.deg2rad(90)), 0],
+                    [                      0,                      0,                      0, 1]])
+    tcb_rotation_mat = tcb[0:3,0:3]

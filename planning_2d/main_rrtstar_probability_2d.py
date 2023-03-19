@@ -14,8 +14,7 @@ from planner.research_rrtstar.rrtstar_probabilty_2d import node, rrt_star
 # Load Map
 map_index = 2
 filter_size = 3 # 1 = 3x3, 2 = 5x5, 3 = 7x7
-classify = True
-map = grid_map_probability(map_index, filter_size, classify)
+map = grid_map_probability(map_index, filter_size)
 
 # Creat start and end pose
 x_init = node(19.5, 110)

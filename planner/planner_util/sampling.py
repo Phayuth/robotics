@@ -45,9 +45,9 @@ def start_sampling(map, number_sampling, sampling_mode):
 
 if __name__=="__main__":
 
-    map1 = grid_map_probability(0, 0, False)
-    map2 = grid_map_probability(0, 3, False)
-    map3 = grid_map_probability(0, 3, True)
+    map1 = grid_map_probability(0, 0)
+    map2 = grid_map_probability(0, 3)
+    map3 = grid_map_probability(0, 3)
 
     print("starting sampling")
     start_sampling(map3, number_sampling=1000, sampling_mode="uniform")

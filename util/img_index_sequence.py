@@ -19,3 +19,7 @@ axs[0, 1].imshow(array2)
 axs[1, 0].imshow(array3)
 axs[1, 1].imshow(array4)
 plt.show()
+
+img_range = 0.1*np.arange(100).reshape(100,1)
+plt.imshow(img_range)
+plt.show()
