@@ -16,3 +16,10 @@ axs[1, 1].set_title('Axis [1, 1]')
 axs[1, 1].imshow(np.load(map_list[4]))
 axs[1, 1].set_title('Axis [1, 1]')
 plt.show()
+
+# plot config space in 3d #slow
+map = np.load('./map/mapdata/config_space_data_3d/config3D.npy')
+print("==>> map.shape: \n", map.shape)
+ax = plt.figure().add_subplot(projection='3d')
+ax.voxels(map,  edgecolor='k')
+plt.show()

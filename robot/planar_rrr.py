@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 
 class planar_rrr:
     def __init__(self):
-        self.a1 = 2
-        self.a2 = 2
-        self.a3 = 2
+        self.a1 = 1
+        self.a2 = 1
+        self.a3 = 0.5
         
-    def forward_kinematic(self, theta):
+    def forward_kinematic(self, theta, return_link_pos=False):
         theta1 = theta[0,0]
         theta2 = theta[1,0]
         theta3 = theta[2,0]
@@ -35,7 +35,31 @@ class planar_rrr:
         H04 = H01 @ H12 @ H23 @ H34
         phi = theta1 + theta2 + theta3
 
-        return np.array([[H04[0,3], H04[1,3], phi]])
+        if return_link_pos:
+
+            # option for return link end pose. normally used for collision checking
+            link_end_pose = []
+            link_end_pose.append([0,0])
+            
+            # link 1 pose
+            x1 = self.a1*np.cos(theta1)
+            y1 = self.a1*np.sin(theta1)
+            link_end_pose.append([x1, y1])
+            
+            # link 2 pose
+            x2 = self.a1*np.cos(theta1) + self.a2*np.cos(theta1+theta2)
+            y2 = self.a1*np.sin(theta1) + self.a2*np.sin(theta1+theta2)
+            link_end_pose.append([x2, y2])
+
+            # link 3 pose
+            x3 = self.a1*np.cos(theta1) + self.a2*np.cos(theta1+theta2) + self.a3*np.cos(theta1+theta2+theta3)
+            y3 = self.a1*np.sin(theta1) + self.a2*np.sin(theta1+theta2) + self.a3*np.sin(theta1+theta2+theta3)
+            link_end_pose.append([x3,y3])
+
+            return link_end_pose
+
+        else:
+            return np.array([[H04[0,3], H04[1,3], phi]])
     
     def jacobian(self,theta):
         theta1 = theta[0,0]

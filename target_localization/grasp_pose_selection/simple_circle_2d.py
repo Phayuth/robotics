@@ -15,10 +15,10 @@ def polar2cats(r,theta):
 # Create canidate pose
 target_theta_list = np.linspace(np.pi/2,3*np.pi/2,90)
 # target_theta_list = np.linspace(0,2*np.pi,180)
-r_inner = 0.5
-r_outer = 1
-offset_from_origin_x = 4
-offset_from_origin_y = 2
+r_inner = 0.1
+r_outer = r_inner + 0.1
+offset_from_origin_x = 1.5
+offset_from_origin_y = 1.5
 
 x_inner, y_inner = polar2cats(r_inner,target_theta_list) 
 x_outer, y_outer = polar2cats(r_outer,target_theta_list)

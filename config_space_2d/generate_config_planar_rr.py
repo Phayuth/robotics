@@ -29,10 +29,9 @@ def configuration_generate_plannar_rr(robot, obs_list):
             col = []
             for i in obs_list:
                 col1 = collision_class.line_v_rectangle(linearm1, i)
-                col.append(col1)
                 col2 = collision_class.line_v_rectangle(linearm2, i)
-                col.append(col2)
-            
+                col.extend((col1,col2))
+
             if True in col:
                 config_array_row.append(True)
             else:
