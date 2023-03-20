@@ -3,7 +3,7 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-from planner.research_rrtstar.rrtstar_probabilty_3d import node, rrt_star
+from planner.research_rrtstar_3d.rrtstar_probabilty_3d import node, rrt_star
 from map.taskmap_img_format import map_3d_empty
 import math
 import numpy as np

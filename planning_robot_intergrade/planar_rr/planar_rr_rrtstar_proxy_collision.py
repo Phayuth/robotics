@@ -80,7 +80,6 @@ rrt.Draw_Tree()
 rrt.Draw_path(path)
 plt.show()
 
-
 # plot task space motion
 plt.axes().set_aspect('equal')
 plt.axvline(x=0, c="green")

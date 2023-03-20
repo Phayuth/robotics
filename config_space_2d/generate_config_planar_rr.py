@@ -15,13 +15,14 @@ def configuration_generate_plannar_rr(robot, obs_list):
     theta1 = np.linspace(-np.pi, np.pi, grid_size)
     theta2 = np.linspace(-np.pi, np.pi, grid_size)
 
-    config_array = []
-    config_array_row = []
+    # config_array = []
+    # config_array_row = []
+    grid_map = np.zeros((grid_size, grid_size))
 
-    for j in theta1:
-        for k in theta2:
-            print(f"at theta1 {j} | at theta2 {k}")
-            theta = np.array([[j],[k]])
+    for j in range(len(theta1)):
+        for k in range(len(theta2)):
+            print(f"at theta1 {theta1[j]} | at theta2 {theta2[k]}")
+            theta = np.array([[theta1[j]],[theta2[k]]])
             link_pose = robot.forward_kinematic(theta, return_link_pos=True)
             linearm1 = collision_class.line_obj(link_pose[0][0], link_pose[0][1], link_pose[1][0], link_pose[1][1])
             linearm2 = collision_class.line_obj(link_pose[1][0], link_pose[1][1], link_pose[2][0], link_pose[2][1])
@@ -33,15 +34,9 @@ def configuration_generate_plannar_rr(robot, obs_list):
                 col.extend((col1,col2))
 
             if True in col:
-                config_array_row.append(True)
-            else:
-                config_array_row.append(False)
-        config_array.append(config_array_row)
-        config_array_row = []
+                grid_map[j,k] = 1
 
-    grid_np = np.array(config_array).astype(int)
-
-    return 1 - grid_np
+    return 1 - grid_map
 
 if __name__=="__main__":
     r = planar_rr()

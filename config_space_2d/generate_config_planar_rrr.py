@@ -38,12 +38,12 @@ def configuration_generate_plannar_rrr(robot, obs_list):
                 if True in col:
                     grid_map[j,k,l] = 1
 
-    return grid_map
+    return 1 - grid_map
 
 if __name__=="__main__":
     r = planar_rrr()
     obs = task_rectangle_obs_3()
     map = configuration_generate_plannar_rrr(r, obs)
     ax = plt.figure().add_subplot(projection='3d')
-    ax.voxels(map,  edgecolor='k')
+    ax.voxels(map, edgecolor='k')
     plt.show()
