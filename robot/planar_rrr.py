@@ -72,7 +72,7 @@ class planar_rrr:
        
         return J
     
-    def plot_arm(self, theta):
+    def plot_arm(self, theta, plt_basis=False, plt_show=False):
 
         theta1 = theta[0,0]
         theta2 = theta[1,0]
@@ -103,19 +103,21 @@ class planar_rrr:
         p3 = H01 @ H12 @ H23
         p4 = H01 @ H12 @ H23 @ H34
 
-        # setup plot look
-        # plt.axes().set_aspect('equal')
-        # plt.axvline(x=0, c="black")
-        # plt.axhline(y=0, c="black")
+        if plt_basis:
+            plt.axes().set_aspect('equal')
+            plt.axvline(x=0, c="black")
+            plt.axhline(y=0, c="black")
 
-        # plot data
-        plt.plot([p1[0,3],p2[0,3]], [p1[1,3],p2[1,3]],c ="blue")  # link 1
-        plt.plot([p2[0,3],p3[0,3]], [p2[1,3],p3[1,3]],c ="red")   # link 2
-        plt.plot([p3[0,3],p4[0,3]], [p3[1,3],p4[1,3]],c ="brown") # link 3
+        plt.plot([p1[0,3],p2[0,3]], [p1[1,3],p2[1,3]], c ="blue", linewidth=3)  # link 1
+        plt.plot([p2[0,3],p3[0,3]], [p2[1,3],p3[1,3]], c ="red", linewidth=3)   # link 2
+        plt.plot([p3[0,3],p4[0,3]], [p3[1,3],p4[1,3]], c ="brown", linewidth=3) # link 3
 
-        # plt.show()
+        plt.scatter([p1[0,3], p2[0,3], p3[0,3], p4[0,3]] , [p1[1,3], p2[1,3], p3[1,3], p4[1,3]], color='red')
 
-    def inverse_kinematic_geo(self, desired_config, elbow_option=0):
+        if plt_show:
+            plt.show()
+
+    def inverse_kinematic_geometry(self, desired_config, elbow_option=0):
         # https://www.youtube.com/watch?v=NjAAKruKiQM
         # https://github.com/AymenHakim99/Forward-and-Inverse-Kinematics-for-3-DOF-Robotic-arm
         x = desired_config[0,0]

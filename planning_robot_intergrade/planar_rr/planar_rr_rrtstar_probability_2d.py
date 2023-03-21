@@ -4,7 +4,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import matplotlib.pyplot as plt
-from map.taskmap_geo_format import task_rectangle_obs_1
+from map.taskmap_geo_format import task_rectangle_obs_5
 from robot.planar_rr import planar_rr
 import numpy as np
 from map.map_value_range import map_val
@@ -12,16 +12,18 @@ from config_space_2d.generate_config_planar_rr import configuration_generate_pla
 from planner.research_rrtstar.rrtstar_probabilty_2d import node , rrt_star
 from util.extract_path_class import extract_path_class_2d
 
-plt.axes().set_aspect('equal')
-plt.axvline(x=0, c="green")
-plt.axhline(y=0, c="green")
-
 # robot, inverse kinematic and plot
 robot = planar_rr()
 
 # define task space init point and goal point
-init_pose = np.array([[1.8],[3.3]])
-desired_pose = np.array([[3.5],[1.8]])
+# init_pose = np.array([[1.8],[3.3]])
+# desired_pose = np.array([[3.5],[1.8]])
+
+# case obstacle around target
+# init_pose = np.array([[1.91],[1.27]])
+desired_pose = np.array([[4],[0]])
+init_pose = np.array([[1.6],[2.15]])
+
 
 # using inverse kinematic, determine the theta configuration space in continuous space
 theta_init = robot.inverse_kinematic_geometry(init_pose, elbow_option=0)
@@ -40,9 +42,9 @@ theta1_goal_index = int(map_val(theta1_goal, -np.pi, np.pi, 0, 360))
 theta2_goal_index = int(map_val(theta2_goal, -np.pi, np.pi, 0, 360))
 
 # task space plot view
-robot.plot_arm(theta_init)
+robot.plot_arm(theta_init, plt_basis=True)
 robot.plot_arm(theta_goal)
-obs_list = task_rectangle_obs_1()
+obs_list = task_rectangle_obs_5()
 for obs in obs_list:
     obs.plot()
 plt.show()
@@ -85,7 +87,7 @@ plt.show()
 plt.axes().set_aspect('equal')
 plt.axvline(x=0, c="green")
 plt.axhline(y=0, c="green")
-obs_list = task_rectangle_obs_1()
+obs_list = task_rectangle_obs_5()
 for obs in obs_list:
     obs.plot()
 

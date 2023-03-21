@@ -11,8 +11,8 @@ import numpy as np
 robot = planar_rrr()
 desired_pose = np.array([[1],[1],[0]])
 # find ik
-theta_up = robot.inverse_kinematic_geo(desired_pose, elbow_option=0)
-theta_down = robot.inverse_kinematic_geo(desired_pose, elbow_option=1)
+theta_up = robot.inverse_kinematic_geometry(desired_pose, elbow_option=0)
+theta_down = robot.inverse_kinematic_geometry(desired_pose, elbow_option=1)
 # plot
 robot.plot_arm(theta_up)
 robot.plot_arm(theta_down)

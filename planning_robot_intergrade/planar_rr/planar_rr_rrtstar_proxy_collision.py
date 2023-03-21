@@ -12,10 +12,6 @@ from config_space_2d.generate_config_planar_rr import configuration_generate_pla
 from planner.research_rrtstar.rrtstar_probabilty_proxy_collision import node , rrt_star
 from util.extract_path_class import extract_path_class_2d
 
-plt.axes().set_aspect('equal')
-plt.axvline(x=0, c="green")
-plt.axhline(y=0, c="green")
-
 # robot, inverse kinematic and plot
 robot = planar_rr()
 
@@ -40,7 +36,7 @@ theta1_goal_index = int(map_val(theta1_goal, -np.pi, np.pi, 0, 360))
 theta2_goal_index = int(map_val(theta2_goal, -np.pi, np.pi, 0, 360))
 
 # task space plot view
-robot.plot_arm(theta_init)
+robot.plot_arm(theta_init, plt_basis=True)
 robot.plot_arm(theta_goal)
 obs_list = task_rectangle_obs_1()
 for obs in obs_list:

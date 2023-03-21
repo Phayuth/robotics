@@ -1,5 +1,4 @@
 import numpy as np
-from shapely.geometry import Point
 import matplotlib.pyplot as plt
 import time
 
@@ -20,31 +19,32 @@ class node(object):
         self.parent = parent
 
 class rrt_star():
-    def __init__(self, map:np.ndarray, x_init:node, x_goal:node, eta:float, obs:list, obstacle_center:list, collision_range:float, max_iteration:int):
-        """General RRT star method of planning with Bias sampling
-
+    def __init__(self, map:np.ndarray, x_init:node, x_goal:node, alpha:float, eta:float, w1:float, w2:float, w3:float, max_interation:int):
+        """YeongMin proposed method of planning using RRT*, Bias sampling, Probability Costmap
+        with my modify angle cost/ not working yet just mess around first
         Args:
-            map (np.ndarray): occupancy grid map
-            x_init (node): start configuration node
-            x_goal (node): end configuration node
+            map (np.ndarray): occupancy grid map with probability value instead pure 0(obs) and 1(free)
+            x_init (node): start configuraton node
+            x_goal (node): end configuratoin node
             eta (float): RRT* constants
-            obs (list): list of obstacle generate from [generate obstcle from map]
-            obstacle_center (list): list of obstacle center generate from [generate obstcle from map]
-            collision_range (float): range of obstacle generate from [generate obstcle from map]
-            max_iteration (int): maximum of iteration
+            w1 (float): distance weight
+            w2 (float): obstacle weight
+            w3 (float): angle weight
+            max_interation (int): maximum of iteration
         """
         self.map = map
         self.x_init = x_init
         self.x_goal = x_goal
         self.nodes = [self.x_init]
-        self.obs = obs
-        self.obstacle_center = obstacle_center
-        self.collision_range = collision_range
+        self.alpha = alpha
         self.eta = eta
-        self.iteration = max_iteration
+        self.w1 = w1
+        self.w2 = w2
+        self.w3 = w3
 
         self.sample_taken = 0
         self.total_iter = 0
+        self.iteration = max_interation
         self.Graph_sample_num = 0
         self.Graph_data = np.array([[0,0]])
 
@@ -54,7 +54,7 @@ class rrt_star():
         self.addparent_elapsed = 0
         self.rewire_elapsed = 0
 
-    def Bias_sampling(self)-> node:
+    def Sampling(self)-> node:
         """bias sampling method
 
         Returns:
@@ -76,52 +76,7 @@ class rrt_star():
 
         return x_rand
 
-    def Node_collision_check(self, sample:node)-> bool:
-        """geometry collision detection. check if the input node is in collision with obstacle
-
-        Args:
-            sample (node): input node sample
-
-        Returns:
-            bool: return True if it collide with obstacle, False if not
-        """
-        p = Point(sample.x, sample.y)
-
-        for o in self.obs:
-            if p.within(o):
-                return False
-        return True
-
-    def Edge_collision_check(self, x_nearest:node, x_new:node)-> bool:
-        """geometry collision detection. check if a line between 2 nodes x_nearest and x_new is in collision with obstacle or not.
-        check with obstacle in obstacle center list
-        Args:
-            x_nearest (node): nearest node in tree to x rand
-            x_new (node): new node in tree created in directoin of x rand
-
-        Returns:
-            bool: return True if a segment of line is collide, False if not
-        """
-        for c in self.obstacle_center:
-
-            AC = c - x_nearest.arr
-            AB = x_new.arr - x_nearest.arr
-            d = np.linalg.norm(x_new.arr - x_nearest.arr)
-            v = np.dot(AB,AC) / d
-
-            if v < 0 :
-                r = np.linalg.norm(c - x_nearest.arr)
-            elif v > d :
-                r = np.linalg.norm(c - x_new.arr)
-            else:
-                area = abs(AB[0]*AC[1] - AC[0]*AB[1]) / 2
-                r = area/d
-
-            if r <= self.collision_range:
-                return False
-        return True
-
-    def Distance_Cost(self, start:node, end:node)-> float:
+    def Distance_cost(self, start:node, end:node)-> float:
         """calculate distance from one node to other node based on euclidean distance norm
         [note] = yeongmin name this incorrectly. to get distance cost, it must divide by eta which done in function line cost
         
@@ -133,21 +88,65 @@ class rrt_star():
             float: norm value between 2 point
         """
         distance_cost = np.linalg.norm(start.arr - end.arr)
-
+        
         return distance_cost
 
-    def Line_Cost(self, start:node, end:node)-> float:
-        """calculate cost for node based on distance euclidean norm
+    def Obstacle_cost(self, start:node, end:node)-> float:
+        """calculate cost for obstacle node
 
         Args:
-            start (node): start pse with node class
+            start (node): start pose with node class
             end (node): end pose with node class
 
         Returns:
-            float: node cost
+            float: cost of obstacle
+        """
+        seg_length = 1
+        seg_point = int(np.ceil(np.linalg.norm(start.arr - end.arr) / seg_length))
+
+        value = 0
+        if seg_point > 1:
+            v = (end.arr - start.arr) / (seg_point)
+
+            for i in range(seg_point + 1):
+                seg = start.arr + i * v
+                seg = np.around(seg)
+                if 1 - self.map[int(seg[0]), int(seg[1])] == 1 :
+                    cost = 1e10
+
+                    return cost
+                else:
+                    value += 1 - self.map[int(seg[0]), int(seg[1])]
+
+            cost = value / (seg_point + 1)
+
+            return cost
+
+        else:
+
+            value = self.map[int(start.arr[0]), int(start.arr[1])] + self.map[int(end.arr[0]), int(end.arr[1])]
+            cost = value / 2
+
+            return cost
+        
+    def Angle_cost(self, start:node, end:node)-> float:
+
+        angle_cost = (self.alpha - (np.sum(start.arr) - np.sum(end.arr)))
+
+        return angle_cost
+
+    def Line_cost(self, start:node, end:node)-> float:
+        """calculate line cost. if the path crosses an obstacle, it has a high cost
+
+        Args:
+            start (node): start pose with node class
+            end (node): end pose with node class
+
+        Returns:
+            float: line cost = (distance weight * cost distance) + (obstacle weight * obstacle distance) 
         """
 
-        cost = self.Distance_Cost(start, end)/(self.eta)
+        cost = self.w1*(self.Distance_cost(start, end)/self.eta) + self.w2*(self.Obstacle_cost(start, end)) + self.w3*self.Angle_cost(start, end)
 
         return cost
 
@@ -164,7 +163,7 @@ class rrt_star():
         i = 0
         for x_near in self.nodes:
 
-            dist = self.Distance_Cost(x_near, x_rand)
+            dist = self.Distance_cost(x_near, x_rand)
             vertex.append([dist, i, x_near])
             i+=1
 
@@ -184,13 +183,13 @@ class rrt_star():
             node: a new node that is near the x_nearest in the direction of x_rand
         """
 
-        d = self.Distance_Cost(x_rand, x_nearest)
+        d = self.Distance_cost(x_rand, x_nearest)
 
         if d < self.eta :
             x_new = node(x_rand.x, x_rand.y)
         else:
-            new_x = x_nearest.x + self.eta * ((x_rand.x - x_nearest.x)/d)
-            new_y = x_nearest.y + self.eta * ((x_rand.y - x_nearest.y)/d)
+            new_x = x_nearest.x + self.eta*((x_rand.x - x_nearest.x)/d)
+            new_y = x_nearest.y + self.eta*((x_rand.y - x_nearest.y)/d)
 
             x_new  = node(new_x, new_y)
 
@@ -206,12 +205,39 @@ class rrt_star():
             bool: True if already in the tree, False if not
         """
         for x_near in self.nodes:
-            if x_new.x == x_near.x and x_new.y == x_near.y :
+            if x_new.x == x_near.x and x_new.y == x_near.y:
                 return False
             else :
                 return True
 
-    def Add_Parent(self, x_new:node, x_nearest:node)-> tuple[node,node]:
+    def New_Check(self, x_new:node)-> bool:
+        """new yeongmin proposed to Check whether or not to add to the tree.
+        check probability cost of node a long with exist node check
+
+        Args:
+            x_new (node): new created node from Steer function
+
+        Returns:
+            bool: True if already in the tree and the probability is low (i guess ?), False if not
+        """
+
+        x_pob = np.array([x_new.x, x_new.y])
+        x_pob = np.around(x_pob)
+
+        if x_pob[0] >= self.map.shape[0]:
+            x_pob[0] = self.map.shape[0] - 1
+        if x_pob[1] >= self.map.shape[1]:
+            x_pob[1] = self.map.shape[1] - 1
+
+        x_pob = self.map[int(x_pob[0]), int(x_pob[1])]
+        p = np.random.uniform(0, 1)
+
+        if x_pob > p and self.Exist_Check(x_new):
+            return True
+        else:
+            return False
+
+    def Add_Parent(self, x_new:node, x_nearest:node)-> node:
         """function for adding parent node to x_new node
 
         Args:
@@ -219,23 +245,24 @@ class rrt_star():
             x_nearest (node): nearest node in the tree nearest to the x_new
 
         Returns:
-            tuple[node,node]: x_new node that has x_nearest as its parent and cost, x_nearest
+            node: x_new node that has x_nearest as its parent and cost  
         """
 
-        x_new.cost = x_nearest.cost + self.Line_Cost(x_nearest, x_new)
-        x_new.parent = x_nearest
+        x_min = x_nearest
+        c_min = x_min.cost + self.Line_cost(x_min, x_new)
+
         for x_near in self.nodes:
-            if self.Distance_Cost(x_near, x_new) <= self.eta and self.Edge_collision_check(x_near, x_new) :
-                if  x_near.cost + self.Line_Cost(x_near, x_new) < x_nearest.cost + self.Line_Cost(x_nearest, x_new):
+            if self.Distance_cost(x_near, x_new) <= self.eta :
+                if x_near.cost + self.Line_cost(x_near, x_new) < c_min:
+                    x_min = x_near
+                    c_min = x_near.cost + self.Line_cost(x_near, x_new)
+            x_new.parent = x_min
+            x_new.cost = c_min
 
-                    x_nearest = x_near
-                    x_new.cost = x_nearest.cost + self.Line_Cost(x_nearest, x_new)
-                    x_new.parent = x_nearest
-
-        return x_new, x_nearest
+        return x_new
 
     def Rewire(self, x_new:node):
-        """reconstruct rrt tree
+        """recontruct rrt tree
 
         Args:
             x_new (node): new node
@@ -243,10 +270,10 @@ class rrt_star():
 
         for x_near in self.nodes:
             if x_near is not x_new.parent:
-                if self.Distance_Cost(x_near, x_new) <= self.eta and self.Edge_collision_check(x_new, x_near) :
-                    if x_new.cost + self.Line_Cost(x_new, x_near) < x_near.cost:
+                if self.Distance_cost(x_near, x_new) <= self.eta:
+                    if x_new.cost + self.Line_cost(x_new, x_near) < x_near.cost:
                         x_near.parent = x_new
-                        x_near.cost = x_new.cost + self.Line_Cost(x_new, x_near)
+                        x_near.cost = x_new.cost + self.Line_cost(x_new, x_near)
 
     def Get_Path(self)-> list:
         """get a list of path from start to end if path is found, else None
@@ -254,13 +281,12 @@ class rrt_star():
         Returns:
             list: list of path
         """
-
         temp_path = []
         path = []
         n = 0
         for i in self.nodes:
-            if self.Distance_Cost(i, self.x_goal) <= 3:
-                cost = i.cost + self.Line_Cost(self.x_goal, i)
+            if self.Distance_cost(i, self.x_goal) < self.eta: #5
+                cost = i.cost + self.Line_cost(self.x_goal, i)
                 temp_path.append([cost,n, i])
                 n += 1
         temp_path.sort()
@@ -272,7 +298,6 @@ class rrt_star():
         else:
             closest_node = temp_path[0][2]
             i = closest_node
-
             self.x_goal.cost = temp_path[0][0]
 
             while i is not self.x_init:
@@ -285,42 +310,13 @@ class rrt_star():
 
             return path
 
-    def Draw_Tree(self):
-        """draw rrt tree on plot
-        """
-        for i in self.nodes:
-            if i is not self.x_init:
-                plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "blue")
-
-    def Draw_obs(self):
-        """draw obstacle on plot
-        """
-
-        fig, axs = plt.subplots(figsize=(10, 10))
-        for o in self.obs:
-
-            x, y = o.exterior.xy
-            axs.fill(x, y, fc="black", ec="none")
-
-    def Draw_path(self, path:list):
-        """draw result path on plot
-
-        Args:
-            path (list): list of node obtain from result Get Path function
-        """
-
-        for i in path:
-            if i is not self.x_init:
-                plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "r", linewidth=2.5)
-
     def Cost_Graph(self):
 
         temp_path = []
-        path = []
         n = 0
         for i in self.nodes:
-            if self.Distance_Cost(i, self.x_goal) < 5:
-                cost = i.cost + self.Line_Cost(self.x_goal, i)
+            if self.Distance_cost(i, self.x_goal) < 3:
+                cost = i.cost + self.Line_cost(self.x_goal, i)
                 temp_path.append([cost, n, i])
                 n += 1
         temp_path.sort()
@@ -335,6 +331,25 @@ class rrt_star():
 
             return self.x_goal.cost
 
+    def Draw_Tree(self):
+        """draw rrt tree on plot
+        """
+
+        for i in self.nodes:
+            if i is not self.x_init:
+                plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "b")
+
+    def Draw_path(self, path:list):
+        """draw result path on plot
+
+        Args:
+            path (list): list of node obtain from result Get Path function
+        """
+
+        for i in path:
+            if i is not self.x_init:
+                plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "r", linewidth=2.5)
+
     def start_planning(self):
         """start planning loop
         """
@@ -342,16 +357,17 @@ class rrt_star():
             # start record sampling time
             time_sampling_start = time.time()
             while True:
-                # create random node by starting to sample bias
-                x_rand = self.Bias_sampling()
+                # create random node by start bias sampling
+                x_rand = self.Sampling()
                 # update number of iteration
                 self.total_iter += 1
-                # find nearest node from sampling 
+                # find the nearest node to sampling
                 x_nearest = self.Nearest(x_rand)
-                # create a new node in the direction of random and nearest to nearest node
+                # create new node in the direction of random and nearest to nearest node
                 x_new = self.Steer(x_rand, x_nearest)
-                # check whether to add new node to tree or not
-                if self.Node_collision_check(x_new):
+                # check whether to add new node to tree or not, if yes then add and breeak out of sampling loop, if not then continue sampling loop
+                b = self.New_Check(x_new)
+                if b == True :
                     break
                 # stop if the sampling iteration reach maximum
                 if self.total_iter == self.iteration:
@@ -360,7 +376,7 @@ class rrt_star():
             time_sampling_end = time.time()
             # determine sampling time elapsed
             self.sampling_elapsed += time_sampling_end - time_sampling_start
-            # stop the entire planner if iteraton reach maximum
+            # stop the entire planner if iteration reach maximum
             if self.total_iter == self.iteration:
                 break
             # update sample taken number
@@ -369,15 +385,12 @@ class rrt_star():
 
             # start record addparent time
             time_addparent_start = time.time()
-            # check if line segment between x_nearest and x_new is in collision with obstacle or not
-            if self.Edge_collision_check(x_nearest, x_new) == False:
-                continue
             # create xnew node with xnearest as its parent
-            x_new, x_nearest = self.Add_Parent(x_new, x_nearest)
+            x_new = self.Add_Parent(x_new, x_nearest)
             # stop record addparent time
             time_addparent_end = time.time()
             # determine addparent time elapsed
-            self.addparent_elapsed += time_addparent_end - time_addparent_start
+            self.addparent_elapsed += (time_addparent_end - time_addparent_start)
             # add xnew to rrt tree nodes
             self.nodes.append(x_new)
 
@@ -385,16 +398,17 @@ class rrt_star():
             time_rewire_start = time.time()
             # start rewire tree
             self.Rewire(x_new)
+            # stop record rewire time
             time_rewire_end = time.time()
             # determine rewire time elapsed
-            self.rewire_elapsed += time_rewire_end - time_rewire_start
+            self.rewire_elapsed += (time_rewire_end - time_rewire_start)
 
             # record graph cost data
             self.Graph_sample_num += 1
             if self.Graph_sample_num%100 == 0:
                 Graph_cost = self.Cost_Graph()
                 self.Graph_data = np.append(self.Graph_data,np.array([[self.Graph_sample_num, Graph_cost]]), axis = 0)
-        
+    
         # record end of planner loop
         self.e = time.time()
 

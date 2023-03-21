@@ -4,7 +4,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import matplotlib.pyplot as plt
-from map.taskmap_geo_format import task_rectangle_obs_3
+from map.taskmap_geo_format import task_rectangle_obs_6
 from robot.planar_rrr import planar_rrr
 import numpy as np
 from map.map_value_range import map_val
@@ -21,32 +21,36 @@ robot = planar_rrr()
 
 # define task space init point and goal point
 init_pose = np.array([[2.5],[0],[0]])
-desired_pose = np.array([[0.9],[0.9],[0]])
+# desired_pose = np.array([[0.9],[0.9],[0]])
+desired_pose = np.array([[1.5],[1],[0]])
 
 # using inverse kinematic, determine the theta configuration space in continuous space
-theta_init = robot.inverse_kinematic_geo(init_pose, elbow_option=0)
-theta_goal = robot.inverse_kinematic_geo(desired_pose, elbow_option=0)
+theta_init = robot.inverse_kinematic_geometry(init_pose, elbow_option=0)
+theta_goal = robot.inverse_kinematic_geometry(desired_pose, elbow_option=0)
+
+# grid size
+grid_size = 75
 
 # calculate theta init index inside confuration 
 theta1_init = theta_init[0,0]
 theta2_init = theta_init[1,0]
 theta3_init = theta_init[2,0]
-theta1_init_index = int(map_val(theta1_init, -np.pi, np.pi, 0, 75)) 
-theta2_init_index = int(map_val(theta2_init, -np.pi, np.pi, 0, 75))
-theta3_init_index = int(map_val(theta3_init, -np.pi, np.pi, 0, 75))
+theta1_init_index = int(map_val(theta1_init, -np.pi, np.pi, 0, grid_size)) 
+theta2_init_index = int(map_val(theta2_init, -np.pi, np.pi, 0, grid_size))
+theta3_init_index = int(map_val(theta3_init, -np.pi, np.pi, 0, grid_size))
 
 # calculate theta goal index
 theta1_goal = theta_goal[0,0]
 theta2_goal = theta_goal[1,0]
 theta3_goal = theta_goal[2,0]
-theta1_goal_index = int(map_val(theta1_goal, -np.pi, np.pi, 0, 75)) 
-theta2_goal_index = int(map_val(theta2_goal, -np.pi, np.pi, 0, 75))
-theta3_goal_index = int(map_val(theta3_goal, -np.pi, np.pi, 0, 75))
+theta1_goal_index = int(map_val(theta1_goal, -np.pi, np.pi, 0, grid_size)) 
+theta2_goal_index = int(map_val(theta2_goal, -np.pi, np.pi, 0, grid_size))
+theta3_goal_index = int(map_val(theta3_goal, -np.pi, np.pi, 0, grid_size))
 
 # task space plot view
 robot.plot_arm(theta_init)
 robot.plot_arm(theta_goal)
-obs_list = task_rectangle_obs_3()
+obs_list = task_rectangle_obs_6()
 for obs in obs_list:
     obs.plot()
 plt.show()
@@ -80,15 +84,14 @@ path = rrt.Get_Path()
 
 # Draw rrt tree
 rrt.Draw_tree()
-# rrt.Draw_path(path)
+rrt.Draw_path(path)
 plt.show()
-
 
 # plot task space motion
 plt.axes().set_aspect('equal')
 plt.axvline(x=0, c="green")
 plt.axhline(y=0, c="green")
-obs_list = task_rectangle_obs_3()
+obs_list = task_rectangle_obs_6()
 for obs in obs_list:
     obs.plot()
 
@@ -99,9 +102,9 @@ print("==>> pathz: ", pathz)
 
 for i in range(len(path)):
     # map index image to theta
-    theta1 = map_val(pathx[i], 0, 75, -np.pi, np.pi)
-    theta2 = map_val(pathy[i], 0, 75, -np.pi, np.pi)
-    theta3 = map_val(pathz[i], 0, 75, -np.pi, np.pi)
+    theta1 = map_val(pathx[i], 0, grid_size, -np.pi, np.pi)
+    theta2 = map_val(pathy[i], 0, grid_size, -np.pi, np.pi)
+    theta3 = map_val(pathz[i], 0, grid_size, -np.pi, np.pi)
     robot.plot_arm(np.array([[theta1], [theta2], [theta3]]))
     plt.pause(1)
 plt.show()

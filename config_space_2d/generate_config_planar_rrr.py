@@ -5,7 +5,7 @@ sys.path.append(str(wd))
 
 import matplotlib.pyplot as plt
 from collision_check_geometry import collision_class
-from map.taskmap_geo_format import task_rectangle_obs_3
+from map.taskmap_geo_format import task_rectangle_obs_3, task_rectangle_obs_6
 from robot.planar_rrr import planar_rrr
 import numpy as np
 
@@ -42,8 +42,12 @@ def configuration_generate_plannar_rrr(robot, obs_list):
 
 if __name__=="__main__":
     r = planar_rrr()
-    obs = task_rectangle_obs_3()
+    obs = task_rectangle_obs_6()
     map = configuration_generate_plannar_rrr(r, obs)
-    ax = plt.figure().add_subplot(projection='3d')
-    ax.voxels(map, edgecolor='k')
+    # ax = plt.figure().add_subplot(projection='3d')
+    # ax.voxels(map, edgecolor='k')
+    # plt.show()
+
+    # plt view of each index slice 3D into 2D image
+    plt.imshow(map[0,:,:])
     plt.show()

@@ -129,7 +129,7 @@ class planar_rr:
 
         return J
     
-    def plot_arm(self, theta, plt_show=False):
+    def plot_arm(self, theta, plt_basis=False, plt_show=False):
         theta1 = theta[0,0]
         theta2 = theta[1,0]
 
@@ -137,6 +137,11 @@ class planar_rr:
         elbow = shoulder + np.array([self.a1 * np.cos(theta1), self.a1 * np.sin(theta1)])
         wrist = elbow + np.array([self.a2 * np.cos(theta1 + theta2), self.a2 * np.sin(theta1 + theta2)])
 
+        if plt_basis:
+            plt.axes().set_aspect('equal')
+            plt.axvline(x=0, c="green")
+            plt.axhline(y=0, c="green")
+            
         plt.plot([shoulder[0], elbow[0]], [shoulder[1], elbow[1]], 'blue', linewidth=3)
         plt.plot([elbow[0], wrist[0]], [elbow[1], wrist[1]], 'cyan', linewidth=3)
 

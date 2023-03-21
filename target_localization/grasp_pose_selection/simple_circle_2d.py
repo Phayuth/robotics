@@ -49,7 +49,7 @@ for i in range(len(x_inner)):
     desired_pose = np.array([[offset_from_origin_x], [offset_from_origin_y], [desired_angle_joint]]) # input x, y, phi
     try:
         # try to solve for ik for joint config
-        inv_solu = r.inverse_kinematic_geo(desired_pose) # try to solve for inverse kinematic
+        inv_solu = r.inverse_kinematic_geometry(desired_pose) # try to solve for inverse kinematic
     except:
         pass
 
