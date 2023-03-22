@@ -3,91 +3,34 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-import glob
-import numpy as np
-import matplotlib.pyplot as plt
 from shapely.geometry import Polygon
-from PIL import Image, ImageDraw
+import matplotlib.pyplot as plt
+import numpy as np
+import glob
 
 map_list = glob.glob('./map/mapdata/task_space/*.npy')
 
 def Obstacle_generater(obstacle):
-
     obs = []
     for o in obstacle:
         obs.append(Polygon(o))
-
     return obs
 
 def Obstacle_center(obstacle):
-
     center = []
     for o in obstacle:
         c_x = (o[0][0] + o[2][0]) / 2
         c_y = (o[0][1] + o[2][1]) / 2
-
         c = [c_x, c_y]
         center.append(c)
-
     return center
 
 def Collision_range(obstacle):
-
     range = []
     for o in obstacle:
-
         d = np.linalg.norm(np.array(o[2]) - np.array(o[0]))
         range.append(d/2)
-
     return range
-
-def obstacle_generate_from_map(index):
-
-    map = np.load(map_list[index]).astype(np.uint8)
-
-    obs_center = []
-    obs = []
-    for i in range(map.shape[0]):
-        for j in range(map.shape[1]):
-            if map[i][j] == 1:
-                obs_center.append([i,j])
-                obs.append(((i-0.5, j-0.5),(i+0.5, j-0.5), (i+0.5, j+0.5), (i-0.5, j+0.5), (i-0.5, j-0.5)))
-
-    return map, obs, obs_center
-
-def bmap():
-
-    # img = Image.open('map/map01.png')
-    # imgArray = np.array(img)
-    image_size = 50
-    box_size = 3
-    no_box = 20
-    image = Image.new('RGB', (image_size, image_size))
-    d = ImageDraw.Draw(image)
-
-    np.random.seed(6)  # 6
-    for i in range(no_box):
-        xy = np.random.randint(image_size, size=2)
-        rgb = np.random.randint(155, size=3)
-        d.rectangle([xy[0], xy[1], xy[0] + box_size, xy[1] + box_size], fill=(rgb[0], rgb[1], rgb[2]))
-
-    d.rectangle([11, 50, 18, 20], fill=(255, 255, 255))
-    d.rectangle([11, 10, 18, 0], fill=(255, 255, 255))
-    d.rectangle([32, 50, 39, 40], fill=(255, 255, 255))
-    d.rectangle([32, 30, 39, 0], fill=(255, 255, 255))
-    imgArray = np.array(image)
-    # image.show()
-
-    obs_center = []
-    obs = []
-    for i in range(imgArray.shape[0]):
-        for j in range(imgArray.shape[1]):
-            if imgArray[i][j][0] != 0 or imgArray[i][j][1] != 0 or imgArray[i][j][2] != 0:
-                obs_center.append([j, i])
-                obs.append(((j - 0.5, i - 0.5), (j + 0.5, i - 0.5), (j + 0.5, i + 0.5), (j - 0.5, i + 0.5),
-                            (j - 0.5, i - 0.5)))
-
-    return obs, obs_center
 
 def Draw_obs(obs):
     fig, axs = plt.subplots(figsize=(10, 10))
@@ -95,11 +38,46 @@ def Draw_obs(obs):
         x, y = o.exterior.xy
         axs.fill(x, y, fc="black", ec="none")
 
-if __name__=="__main__":
+def obstacle_generate_from_map(index):
+    map = np.load(map_list[index]).astype(np.uint8)
+    obs_center = []
+    obs = []
+    for i in range(map.shape[0]):
+        for j in range(map.shape[1]):
+            if map[i][j] == 1:
+                obs_center.append([i, j])
+                obs.append(((i-0.5, j-0.5), (i+0.5, j-0.5), (i+0.5, j+0.5), (i-0.5, j+0.5), (i-0.5, j-0.5)))
+    return map, obs, obs_center
+
+def obstacle_generate_from_map_rgb(imgArray):
+    obs_center = []
+    obs = []
+    for i in range(imgArray.shape[0]):
+        for j in range(imgArray.shape[1]):
+            if imgArray[i][j][0] != 0 or imgArray[i][j][1] != 0 or imgArray[i][j][2] != 0:
+                obs_center.append([j, i])
+                obs.append(((j-0.5, i-0.5), (j+0.5, i-0.5), (j+0.5, i+0.5), (j-0.5, i+0.5), (j-0.5, i-0.5)))
+    return imgArray, obs, obs_center
+
+
+if __name__ == "__main__":
+    
+    from taskmap_img_format import bmap, pmap
 
     map, obstacle, obstacle_center = obstacle_generate_from_map(index=0)
     obs = Obstacle_generater(obstacle)
     collision_range = (2**(1/2))/2
 
+    plt.imshow(map)
+    plt.show()
+    Draw_obs(obs)
+    plt.show()
+
+    rgb_map = bmap(return_rgb=True)
+    map, obstacle, obstacle_center = obstacle_generate_from_map_rgb(rgb_map)
+    obs = Obstacle_generater(obstacle)
+
+    plt.imshow(rgb_map)
+    plt.show()
     Draw_obs(obs)
     plt.show()
