@@ -23,7 +23,7 @@ alpha = np.arctan2(x_init.arr[1], x_init.arr[0])
 # Create planner class
 iteration = 1000
 distance_weight = 0.5
-obstacle_weight = 0.5
+obstacle_weight = 10000
 angle_weight = 0.5
 m = map.shape[0] * map.shape[1]
 r = (2 * (1 + 1/2)**(1/2)) * (m/math.pi)**(1/2)

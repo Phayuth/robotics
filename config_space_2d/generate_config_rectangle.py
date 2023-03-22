@@ -4,9 +4,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-import matplotlib.pyplot as plt
 from collision_check_geometry.collision_class import sqr_rec_2d_obj, intersect_rectangle_v_rectangle
-from map.taskmap_geo_format import task_rectangle_obs_2
 
 # This is to demonstate a sampling of state-space of robot
 
@@ -38,6 +36,9 @@ def configuration_generate_rectangle(obs_list):
     return 1 - grid_np
 
 if __name__=="__main__":
+    import matplotlib.pyplot as plt
+    from map.taskmap_geo_format import task_rectangle_obs_2
+
     obs_list = task_rectangle_obs_2()
     grid_np = configuration_generate_rectangle(obs_list)
     print(grid_np.shape)

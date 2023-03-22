@@ -145,9 +145,10 @@ class rrt_star():
         Returns:
             float: line cost = (distance weight * cost distance) + (obstacle weight * obstacle distance) 
         """
-
-        cost = self.w1*(self.Distance_cost(start, end)/self.eta) + self.w2*(self.Obstacle_cost(start, end)) + self.w3*self.Angle_cost(start, end)
-
+        cost1 = self.w1*(self.Distance_cost(start, end)/self.eta)
+        cost2 = self.w2*(self.Obstacle_cost(start, end))
+        cost3 = self.w3*self.Angle_cost(start, end)
+        cost = cost1 + cost2 + cost3
         return cost
 
     def Nearest(self, x_rand:node)-> node:
