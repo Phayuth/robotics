@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from map.taskmap_geo_format import task_rectangle_obs_6
 from robot.planar_rrr import planar_rrr
 import numpy as np
-from map.map_value_range import map_val
+from map.map_value_range import map_val, map_multi_val
 from config_space_2d.generate_config_planar_rrr import configuration_generate_plannar_rrr
 from planner.research_rrtstar_3d.rrtstar_probabilty_3d import node , rrt_star
 from util.extract_path_class import extract_path_class_3d
@@ -30,22 +30,11 @@ theta_goal = robot.inverse_kinematic_geometry(desired_pose, elbow_option=0)
 
 # grid size
 grid_size = 75
-
 # calculate theta init index inside confuration 
-theta1_init = theta_init[0,0]
-theta2_init = theta_init[1,0]
-theta3_init = theta_init[2,0]
-theta1_init_index = int(map_val(theta1_init, -np.pi, np.pi, 0, grid_size)) 
-theta2_init_index = int(map_val(theta2_init, -np.pi, np.pi, 0, grid_size))
-theta3_init_index = int(map_val(theta3_init, -np.pi, np.pi, 0, grid_size))
-
+theta_init_index = (map_multi_val(theta_init, -np.pi, np.pi, 0, grid_size)).astype(int)
 # calculate theta goal index
-theta1_goal = theta_goal[0,0]
-theta2_goal = theta_goal[1,0]
-theta3_goal = theta_goal[2,0]
-theta1_goal_index = int(map_val(theta1_goal, -np.pi, np.pi, 0, grid_size)) 
-theta2_goal_index = int(map_val(theta2_goal, -np.pi, np.pi, 0, grid_size))
-theta3_goal_index = int(map_val(theta3_goal, -np.pi, np.pi, 0, grid_size))
+theta_goal_index = (map_multi_val(theta_goal, -np.pi, np.pi, 0, grid_size)).astype(int)
+
 
 # task space plot view
 robot.plot_arm(theta_init)
@@ -60,11 +49,9 @@ map = configuration_generate_plannar_rrr(robot, obs_list)
 # np.save('config_rrr.npy', map)
 # map = np.load('.\map\mapdata\config_rrr.npy')
 
-# Create start and end node
-x_init = node(theta1_init_index, theta2_init_index, theta3_init_index)
-x_goal = node(theta1_goal_index, theta2_goal_index, theta3_goal_index)
-
-# Create planner
+# Planing
+x_init = node(theta_init_index[0,0], theta_init_index[1,0], theta_init_index[2,0])
+x_goal = node(theta_goal_index[0,0], theta_goal_index[1,0], theta_goal_index[2,0])
 iteration = 1000
 m = map.shape[0] * map.shape[1] * map.shape[2]
 r = (2 * (1 + 1/2)**(1/2)) * (m/np.pi)**(1/2)
@@ -72,14 +59,8 @@ eta = r * (np.log(iteration) / iteration)**(1/2)
 distance_weight = 0.5
 obstacle_weight = 0.5
 rrt = rrt_star(map, x_init, x_goal, eta, distance_weight, obstacle_weight, iteration)
-
-# Seed random
 np.random.seed(0)
-
-# Start planner
 rrt.start_planning()
-
-# Get path
 path = rrt.Get_Path()
 
 # Draw rrt tree

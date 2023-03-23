@@ -9,7 +9,7 @@ import numpy as np
 
 # create class robot
 robot = planar_rrr()
-desired_pose = np.array([[1],[1],[0]])
+desired_pose = np.array([[1],[1],[0.2]])
 # find ik
 theta_up = robot.inverse_kinematic_geometry(desired_pose, elbow_option=0)
 theta_down = robot.inverse_kinematic_geometry(desired_pose, elbow_option=1)
