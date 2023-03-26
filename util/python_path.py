@@ -5,10 +5,9 @@ import pathlib
 file_path = os.path.realpath(__file__)
 print(file_path)
 
-#
+# add path
 path = pathlib.Path('./')
 print(path)
-
 
 # add path so python script can back up one level and go to another different dir to find another file
 import sys

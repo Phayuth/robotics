@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 ax = plt.axes(projection='3d')
 
-def plot_frame_2d(rotation_matrix_2d, translation, plt_basis=False, plt_show=False):
+def plot_frame_2d(rotmat_2d, translation, plt_basis=False, plt_show=False):
 
     r1 = np.array([[0],[0]])
     r2 = np.array([[1],[0]])
@@ -16,9 +16,9 @@ def plot_frame_2d(rotation_matrix_2d, translation, plt_basis=False, plt_show=Fal
     d4 = np.array([[dx],[dy]])
 
     # rnew = Rotation @ rold + d
-    r1new = rotation_matrix_2d @ r1 + d1
-    r2new = rotation_matrix_2d @ r2 + d2
-    r4new = rotation_matrix_2d @ r4 + d4
+    r1new = rotmat_2d @ r1 + d1
+    r2new = rotmat_2d @ r2 + d2
+    r4new = rotmat_2d @ r4 + d4
 
     plt.axes().set_aspect('equal')
     if plt_basis:

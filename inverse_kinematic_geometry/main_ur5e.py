@@ -5,7 +5,7 @@ sys.path.append(str(wd))
 
 from robot.ur5e import ur5e
 import numpy as np
-from rigid_body_transformation.rotation_matrix import rotation_3d_x_axis, rotation_3d_y_axis, rotation_3d_z_axis
+from rigid_body_transformation.rotation_matrix import rotx, roty, rotz
 
 # Test
 r = ur5e()

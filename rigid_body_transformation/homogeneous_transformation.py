@@ -1,28 +1,28 @@
 import numpy as np
 np.set_printoptions(suppress=True)
 
-def hom_rotation_x_axis(theta):
+def hrotx(theta):
     R = np.array([[1,             0,              0,    0],
                   [0, np.cos(theta), -np.sin(theta),    0],
                   [0, np.sin(theta),  np.cos(theta),    0],
                   [0,             0,              0,    1]])
     return R
 
-def hom_rotation_y_axis(theta):
+def hroty(theta):
     R = np.array([[np.cos(theta),  0,  np.sin(theta),    0],
                   [            0,  1,              0,    0],
                   [-np.sin(theta), 0,  np.cos(theta),    0],
                   [0,              0,              0,    1]])
     return R
 
-def hom_rotation_z_axis(theta):
+def hrotz(theta):
     R = np.array([[np.cos(theta), -np.sin(theta),  0,    0],
                   [np.sin(theta),  np.cos(theta),  0,    0],
                   [            0,              0,  1,    0],
                   [            0,              0,  0,    1]])
     return R
 
-def hom_pure_translation(x,y,z):
+def htrn(x,y,z):
     R = np.array([[            1,              0,  0,    x],
                   [            0,              1,  0,    y],
                   [            0,              0,  1,    z],
@@ -46,7 +46,7 @@ def inverse_hom_trans(hom_trans):
     return T_inv
 
 if __name__ == "__main__":
-    gs = hom_rotation_x_axis(theta=1)
+    gs = hrotx(theta=1)
     gs_iv = inverse_hom_trans(gs)
     check = gs @ gs_iv # return Identity Matrix
 
