@@ -7,11 +7,13 @@ import numpy as np
 import torch.nn as nn
 import torch
 import torch.optim as optim
+from torch.utils.data import Dataset, DataLoader
 from robot.planar_rr import planar_rr
 from planar_rr_kinematic_dataset import planar_rr_generate_dataset
 
 # the result is obviously wrong, but this is just a foundation of research methodology, we can find another training model that work
 
+# forward dynamic model
 class forwd_model(nn.Module):
     def __init__(self):
         super(forwd_model, self).__init__()
@@ -27,20 +29,35 @@ class forwd_model(nn.Module):
         x = self.fc3(x)
         return x    
 
+# check if cuda is availble to train on
 def check_cuda():
     if torch.cuda.is_available():
         return "cuda"
     else:
         return "cpu"
 
+# dataset loader
+class CustomDataset(Dataset):
+    def __init__(self, datainput, datalabel):
+        self.data = datainput
+        self.label = datalabel
+        
+    def __len__(self):
+        return len(self.data)
+    
+    def __getitem__(self, idx):
+        x = torch.from_numpy(self.data[idx]).to(check_cuda()).float()
+        y = torch.from_numpy(self.label[idx]).to(check_cuda()).float()
+        return (x,y)
 
 robot = planar_rr()
 
 def train_arc():
     
+    # create dataset and load data
     X, y = planar_rr_generate_dataset(robot)
-    X = torch.from_numpy(X).to(check_cuda()).float() # ==>> X.shape:  (129600, 2)
-    y = torch.from_numpy(y).to(check_cuda()).float() # ==>> y.shape:  (129600, 2)
+    dataset = CustomDataset(X, y)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
 
     # Creat Model
     model = forwd_model().to(check_cuda())
@@ -50,46 +67,49 @@ def train_arc():
     optimizer = optim.SGD(model.parameters(), lr=0.01)
 
     # Create Training Function
-    def training(X, y, model, loss_func, opt):
+
+    def training(dataloader, model, loss_func, opt):
+        size = len(dataloader.dataset)
         model.train()
-        for index in range(len(X)):
-
-            xx = X[index]
-
-            # 1st prediction compt
-            pred = model(xx)
-            yy = y[index]
+        for batch, (X,y) in enumerate(dataloader):
             
-            # 2nd loss compt
-            loss = loss_func(pred,yy)
+            # 1st-step prediction compute
+            pred = model(X)
             
-            # 3rd Back prog
+            # 2nd-step loss compute
+            loss = loss_func(pred,y)
+            
+            # 3rd-step Back propagation
             opt.zero_grad()
             loss.backward()
             opt.step()
-
-            print(f"index : {index}, loss = {loss.item()}")
             
+            if batch % 100 == 0:
+                loss, current = loss.item(), batch * len(X)
+                print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            
+    epochs = 20
+    for t in range(epochs):
+        print(f"Epoch {t+1}\n-------------------------------")
+        training(dataloader, model, criterion, optimizer)
+    print("Done!")
 
-    # start training
-    for epoch in range(1):
-        training(X, y, model, criterion, optimizer)
-        
     # Save model
-    # torch.save(model, "./kinedyna_learn/forward_kinematic_nn.pth")
+    torch.save(model, "./kinedyna_learn/planar_rr_train/forward_kinematic_nn.pth") # actually give ok result for a neural network approach
 
 
 def eval_arc():
-    model_load = torch.load("./kinedyna_learn/forward_kinematic_nn.pth")    
+    model_load = torch.load("./kinedyna_learn/planar_rr_train/forward_kinematic_nn.pth")    
     model_load.eval()
 
     with torch.no_grad():
-        theta = torch.tensor([0.2,0.2],dtype=float).to(check_cuda())
+        theta = torch.tensor([0.0,0.0]).to(check_cuda())
         predt_ee_pose = model_load(theta)
         print("==>> predt: ", predt_ee_pose)
 
     robot.plot_arm(np.array(theta.cpu()).reshape(2,1), plt_basis=True, plt_show=True)
 
+
 if __name__=="__main__":
-    train_arc()
-    # eval_arc()
+    # train_arc()
+    eval_arc()
