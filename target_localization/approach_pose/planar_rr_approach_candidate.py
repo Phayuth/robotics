@@ -10,11 +10,12 @@ from config_space_2d.generate_config_planar_rr import configuration_generate_pla
 from map.taskmap_geo_format import task_rectangle_obs_1
 from map.map_value_range import map_val
 
-main_pose = 1.5
+x_targ = 1.5
+y_targ = 1.5
 
 def polar2cats(r,theta):
-    x = r*np.cos(theta) + main_pose
-    y = r*np.sin(theta) + main_pose
+    x = r*np.cos(theta) + x_targ
+    y = r*np.sin(theta) + y_targ
     return x,y
 
 # Create canidate pose
@@ -26,7 +27,7 @@ obs_list = task_rectangle_obs_1()
 # create robot instance
 robot = planar_rr()
 theta_ik = [robot.inverse_kinematic_geometry(np.array([[x_coord[i]],[y_coord[i]]]), elbow_option=0) for i in range(len(x_coord))]
-theta_ik_main = robot.inverse_kinematic_geometry(np.array([[main_pose],[main_pose]]), elbow_option=0)
+theta_ik_main = robot.inverse_kinematic_geometry(np.array([[x_targ],[y_targ]]), elbow_option=0)
 
 # create config space
 grid_np = configuration_generate_plannar_rr(robot, obs_list)

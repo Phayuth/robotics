@@ -36,3 +36,6 @@ ax.set_xlabel('x')
 ax.set_ylabel('y')
 ax.set_title('Artificial Potential Field')
 plt.show()
+
+plt.imshow(U_total)
+plt.show()

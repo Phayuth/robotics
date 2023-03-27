@@ -12,9 +12,12 @@ from map.map_value_range import map_val
 
 robot = planar_rr()
 
+x_targ = 1.6
+y_targ = 2.15
+
 def polar2cats(r,theta):
-    x = r*np.cos(theta) + 1.6
-    y = r*np.sin(theta) + 2.15
+    x = r*np.cos(theta) + x_targ
+    y = r*np.sin(theta) + y_targ
     return x,y
 
 theta = np.linspace(np.pi/2,3*np.pi/2,10)
@@ -22,8 +25,8 @@ radius = 0.1
 x_coord, y_coord = polar2cats(radius,theta)
 
 # target
-target = np.array([[1.6],
-                   [2.15]])
+target = np.array([[x_targ],
+                   [y_targ]])
 theta_ik_tag = robot.inverse_kinematic_geometry(target, elbow_option=0)
 
 # approach point

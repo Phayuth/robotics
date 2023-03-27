@@ -9,9 +9,13 @@ from robot.planar_rrr import planar_rrr
 
 robot = planar_rrr()
 
+x_targ = 0.5 # user pick
+y_targ = 0.5 # user pick
+alpha_candidate = 2 # given from grapse pose candidate
+
 def polar2cats(r,theta):
-    x = r*np.cos(theta) + 0.5
-    y = r*np.sin(theta) + 0.5
+    x = r*np.cos(theta) + x_targ
+    y = r*np.sin(theta) + y_targ
     return x,y
 
 theta_coord = np.linspace(0,2*np.pi,90)
@@ -19,13 +23,11 @@ radius = 0.1
 x_coord, y_coord = polar2cats(radius,theta_coord)
 
 # target
-alpha_candidate = 2
 phi_target = alpha_candidate - np.pi
-target = np.array([[0.5],
-                   [0.5],
+target = np.array([[x_targ],
+                   [y_targ],
                    [phi_target]])
 theta_ik_tag = robot.inverse_kinematic_geometry(target, elbow_option=0)
-
 
 
 # approach point
