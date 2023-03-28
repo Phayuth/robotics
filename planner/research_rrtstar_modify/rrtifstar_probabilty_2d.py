@@ -1,7 +1,55 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+    
+def unit_nball_sampling(n = 2):
 
+    u = np.random.normal(0, 1, n + 1)
+    norm = np.linalg.norm(u)
+    u = u/norm
+    x_rand = u[:n]
+    
+    return x_rand
+
+def ellipsoid_sampling(center, n=2, axes=[], rot=[]):
+
+    if len(rot) == 0: 
+        rot = np.eye(n)
+    if len(axes) == 0:
+        axes = [1]*n 
+    l = np.diag(axes)
+
+    xball = unit_nball_sampling(n)
+    x_rand = (rot @ l @ xball.T).T + center
+    
+    return x_rand
+
+class informed_sampling:
+    def __init__(self, goal, start, n=2):
+        self.n = n
+        self.cmin = np.linalg.norm(goal - start)
+        self.center = (goal + start)/2
+        self.c = self.rotationtoworldframe(goal, start)
+
+    def sample(self, cmax):
+        #hyperspheroid axes lengths
+        r1 = cmax/2 # cmax - current best cost
+        ri = np.sqrt(cmax**2 - self.cmin**2)/2
+        axes = [r1]+ [ri]*(self.n - 1)
+        x_rand = ellipsoid_sampling(self.center, axes=axes, rot=self.c)
+        return x_rand
+
+    def rotationtoworldframe(self, goal, start):
+        e1 = (goal - start) / self.cmin
+        w1 = [1]+[0]*(self.n - 1)
+        m = np.outer(e1,w1)
+        u, s, v = np.linalg.svd(m)
+        middlem = np.eye(self.n)
+        middlem[-1,-1] = np.linalg.det(u)*np.linalg.det(v)
+        c = u @ middlem @ v.T
+
+        return c
+    
 class node(object):
     def __init__(self, x:float, y:float, cost:float = 0, parent = None):
         """node class
@@ -41,7 +89,7 @@ class rrt_star():
         self.w1 = w1
         self.w2 = w2
         self.w3 = w3
-
+        self.x_sol = np.array([[float('inf'),float('inf')]])
         self.sample_taken = 0
         self.total_iter = 0
         self.iteration = max_interation
@@ -54,25 +102,20 @@ class rrt_star():
         self.addparent_elapsed = 0
         self.rewire_elapsed = 0
 
-    def Sampling(self)-> node:
-        """bias sampling method
+    def cost_best(self):
+        cost = []
+        for i in range(len(self.x_sol)):
+            cost.append(self.Distance_cost(node(self.x_sol[i,0], self.x_sol[i,1]), self.x_goal))
+        
+        cbest = np.amax(cost)
 
-        Returns:
-            node: random bias sampling node
-        """
-        row = self.map.shape[1]
+        return cbest
+    
+    def Sampling(self,cbest)-> node:
+        
+        samp = informed_sampling(self.x_init.arr, self.x_goal.arr).sample(cbest)
 
-        p = np.ravel(self.map) / np.sum(self.map)
-
-        x_sample = np.random.choice(len(p), p=p)
-
-        x = x_sample // row
-        y = x_sample % row
-
-        x = np.random.uniform(low=x - 0.5, high=x + 0.5)
-        y = np.random.uniform(low=y - 0.5, high=y + 0.5)
-
-        x_rand = node(x, y)
+        x_rand = node(samp[0], samp[1])
 
         return x_rand
 
@@ -293,7 +336,6 @@ class rrt_star():
         temp_path.sort()
 
         if temp_path == []:
-            print("cannot find path")
             return None
 
         else:
@@ -359,13 +401,16 @@ class rrt_star():
             time_sampling_start = time.time()
             while True:
                 # create random node by start bias sampling
-                x_rand = self.Sampling()
+                x_rand = self.Sampling(self.cost_best())
+                print("==>> x_rand: \n", x_rand)
                 # update number of iteration
                 self.total_iter += 1
                 # find the nearest node to sampling
                 x_nearest = self.Nearest(x_rand)
+                print("==>> x_nearest: \n", x_nearest)
                 # create new node in the direction of random and nearest to nearest node
                 x_new = self.Steer(x_rand, x_nearest)
+                print("==>> x_new: \n", x_new)
                 # check whether to add new node to tree or not, if yes then add and breeak out of sampling loop, if not then continue sampling loop
                 b = self.New_Check(x_new)
                 if b == True :
@@ -382,7 +427,6 @@ class rrt_star():
                 break
             # update sample taken number
             self.sample_taken += 1
-            print("==>> self.sample_taken: ", self.sample_taken)
 
             # start record addparent time
             time_addparent_start = time.time()
@@ -404,6 +448,8 @@ class rrt_star():
             # determine rewire time elapsed
             self.rewire_elapsed += (time_rewire_end - time_rewire_start)
 
+            if x_new.arr - self.x_goal.arr < 0.1: # rgoal
+                self.x_sol = np.vstack(self.x_sol, x_new.arr)
             # record graph cost data
             self.Graph_sample_num += 1
             if self.Graph_sample_num%100 == 0:
@@ -413,10 +459,10 @@ class rrt_star():
         # record end of planner loop
         self.e = time.time()
 
-    def print_time(self):
-        print("Total time : ", self.e - self.s,"second")
-        print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
-        print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")
-        print("Rewire time : ", self.rewire_elapsed,"second", (self.rewire_elapsed*100)/(self.e-self.s),"%")
-        print("Total_iteration = ", self.total_iter)
-        print("Cost : ", self.x_goal.cost)
+    # def print_time(self):
+    #     print("Total time : ", self.e - self.s,"second")
+    #     print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
+    #     print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")
+    #     print("Rewire time : ", self.rewire_elapsed,"second", (self.rewire_elapsed*100)/(self.e-self.s),"%")
+    #     print("Total_iteration = ", self.total_iter)
+    #     print("Cost : ", self.x_goal.cost)

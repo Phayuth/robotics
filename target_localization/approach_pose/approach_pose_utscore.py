@@ -5,22 +5,18 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
+from util.coord_transform import polar2cats
 
 x_targ = 0.5 # user pick
 y_targ = 0.5 # user pick
-
-def polar2cats(r,theta):
-    x = r*np.cos(theta) + x_targ
-    y = r*np.sin(theta) + y_targ
-    return x,y
 
 # Create canidate pose
 target_theta_list = np.linspace(np.pi/2,3*np.pi/2,50)
 
 r_inner = 0.1
 r_outer = r_inner + 0.1
-x_inner, y_inner = polar2cats(r_inner,target_theta_list)
-x_outer, y_outer = polar2cats(r_outer,target_theta_list)
+x_inner, y_inner = polar2cats(r_inner,target_theta_list, x_targ, y_targ)
+x_outer, y_outer = polar2cats(r_outer,target_theta_list, x_targ, y_targ)
 
 
 # create score of angle

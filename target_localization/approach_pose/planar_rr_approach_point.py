@@ -9,20 +9,16 @@ from robot.planar_rr import planar_rr
 from config_space_2d.generate_config_planar_rr import configuration_generate_plannar_rr
 from map.taskmap_geo_format import task_rectangle_obs_1
 from map.map_value_range import map_val
+from util.coord_transform import polar2cats
 
 robot = planar_rr()
 
 x_targ = 1.6
 y_targ = 2.15
 
-def polar2cats(r,theta):
-    x = r*np.cos(theta) + x_targ
-    y = r*np.sin(theta) + y_targ
-    return x,y
-
 theta = np.linspace(np.pi/2,3*np.pi/2,10)
 radius = 0.1
-x_coord, y_coord = polar2cats(radius,theta)
+x_coord, y_coord = polar2cats(radius,theta, x_targ, y_targ)
 
 # target
 target = np.array([[x_targ],

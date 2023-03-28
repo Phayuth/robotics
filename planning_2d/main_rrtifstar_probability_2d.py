@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 from map.map_loader import grid_map_probability
 from map.taskmap_img_format import map_2d_empty
-from planner.research_rrtstar_modify.rrtstar_probabilty_2d_mod import node, rrt_star
+from planner.research_rrtstar_modify.rrtifstar_probabilty_2d import node, rrt_star
 
 # Load Map
 map_index = 2
