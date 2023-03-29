@@ -24,8 +24,8 @@ def configuration_generate_plannar_rr(robot, obs_list):
 
             col = []
             for i in obs_list:
-                col1 = collision_class.line_v_rectangle(linearm1, i)
-                col2 = collision_class.line_v_rectangle(linearm2, i)
+                col1 = collision_class.intersect_line_v_rectangle(linearm1, i)
+                col2 = collision_class.intersect_line_v_rectangle(linearm2, i)
                 col.extend((col1,col2))
 
             if True in col:

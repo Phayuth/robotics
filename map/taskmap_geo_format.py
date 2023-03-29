@@ -46,15 +46,25 @@ def task_rectangle_obs_6():
     list_obs = [rec1,rec2]
     return list_obs
 
+def task_rectangle_obs_7():
+    # for my rrtbase
+    rec1 = collision_class.sqr_rec_2d_obj(x=1,y=1,h=1,w=2)
+    rec2 = collision_class.sqr_rec_2d_obj(x=5,y=1,h=1,w=2)
+    rec3 = collision_class.sqr_rec_2d_obj(x=1,y=5,h=1,w=1)
+    rec4 = collision_class.sqr_rec_2d_obj(x=5,y=5,h=0.8,w=4)
+    list_obs = [rec1,rec2,rec3,rec4]
+    return list_obs
+
+
 if __name__ == "__main__":
 
     plt.axes().set_aspect('equal')
     plt.axvline(x=0, c="green")
     plt.axhline(y=0, c="green")
 
-    target = [1.5,1]
-    plt.scatter(target[0],target[1])
-    list_obs = task_rectangle_obs_6()
+    # target = [1.5,1]
+    # plt.scatter(target[0],target[1])
+    list_obs = task_rectangle_obs_7()
     for obs in list_obs:
         obs.plot()
     plt.show()

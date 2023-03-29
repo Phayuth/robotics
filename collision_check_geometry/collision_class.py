@@ -106,7 +106,7 @@ def intersect_sphere_v_aabb(aabb, sphere):
     distance = math.sqrt((x - sphere.x) * (x - sphere.x) + (y - sphere.y) * (y - sphere.y) + (z - sphere.z) * (z - sphere.z))
     return distance <= sphere.r
 
-def point_to_point_3d(point_a,point_b):
+def intersect_point_v_point_3d(point_a,point_b):
     x = point_a.x - point_b.x
     y = point_a.y - point_b.y
     z = point_a.z - point_b.z
@@ -119,7 +119,7 @@ def point_to_point_3d(point_a,point_b):
     else:
         return False
 
-def triangle_to_point(trig,point):
+def intersect_triangle_v_point(trig,point):
     # http://www.jeffreythompson.org/collision-detection/tri-point.php
 
     x1 = trig.vertix_a_x
@@ -162,7 +162,7 @@ def trig_area(A,B,C):
 
     return abs(cross_prod)/2
 
-def line_circle_collision(radius,O,P,Q): # https://www.baeldung.com/cs/circle-line-segment-collision-detection
+def intersect_line_v_circle_collisio(radius,O,P,Q): # https://www.baeldung.com/cs/circle-line-segment-collision-detection
 
     distPQ = P - Q
     minimum_distance = 2*trig_area(O,P,Q)/np.linalg.norm(distPQ)
@@ -188,7 +188,7 @@ def intersect_rectangle_v_rectangle(rec1,rec2):
     else:
         return False
 
-def line_v_line(line1, line2):
+def intersect_line_v_line(line1, line2):
     x1 = line1.xs
     y1 = line1.ys
     x2 = line1.xe
@@ -206,13 +206,27 @@ def line_v_line(line1, line2):
         return True
     return False
 
-def line_v_rectangle(line, rec):
+def intersect_line_v_rectangle(line, rec):
     l1 = line_obj(rec.x, rec.y, rec.x+rec.w, rec.y)
     l2 = line_obj(rec.x, rec.y, rec.x, rec.y+rec.h)
     l3 = line_obj(rec.x, rec.y+rec.h, rec.x+rec.w, rec.y+rec.h)
     l4 = line_obj(rec.x+rec.w, rec.y, rec.x+rec.w, rec.y+rec.h)
 
-    if (line_v_line(line, l1) or line_v_line(line, l2) or line_v_line(line, l3) or line_v_line(line, l4)):
+    if (intersect_line_v_line(line, l1) or intersect_line_v_line(line, l2) or intersect_line_v_line(line, l3) or intersect_line_v_line(line, l4)):
+        return True
+    else:
+        return False
+    
+def intersect_point_v_rectangle(point, rec):
+    rx = rec.x
+    ry = rec.y
+    rw = rec.w
+    rh = rec.h
+
+    px = point.x
+    py = point.y
+
+    if (px >= rx) and (px <= rx + rw) and (py >= ry) and (py <= ry +rh):
         return True
     else:
         return False
