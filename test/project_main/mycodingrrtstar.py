@@ -9,31 +9,35 @@ from collision_check_geometry.collision_class import line_obj, point2d_obj, inte
 from map.taskmap_geo_format import task_rectangle_obs_7
 
 class node:
-    def __init__(self, x, y, parent=None, cost=0.0) -> None:
+    def __init__(self,x,y,parent=None,cost=0.0) -> None:
         self.x = x
         self.y = y
         self.parent = parent
         self.cost = 0.0
 
+    # def __repr__(self) -> str:
+    #     return f"x is {self.x} | y is {self.y} | parent is {self.parent} | cost is {self.cost}"
+
 class rrtstar:
     def __init__(self) -> None:
         # properties of planner
         self.maxiteration = 1000
-        self.startnode = node(4, 4)
+        self.startnode = node(4,4)
         self.startnode.cost = 0.0
-        self.goalnode = node(7, 8)
+        self.goalnode = node(7,8)
 
         # map
-        self.map = np.ones((10, 10))
+        self.map = np.ones((10,10))
         self.obs = task_rectangle_obs_7()
 
         # distance step update per iteration
         m = self.map.shape[0] * self.map.shape[1]
         self.radius = (2 * (1 + 1/2)**(1/2)) * (m/np.pi)**(1/2)
-        self.eta = self.radius * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
+        self.eta = self.radius*(np.log(self.maxiteration) / self.maxiteration)**(1/2)
 
         # start with a tree vertex have start node and empty branch
         self.tree_vertex = [self.startnode]
+        self.tree_branch = []
 
     def planning(self):
         for _ in range(self.maxiteration):
@@ -46,7 +50,6 @@ class rrtstar:
                 x_new.cost = x_nearest.cost + self.cost_line(x_new, x_nearest) # add the vertex new, which we have to calculate the cost and add parent as well
                 x_new.parent = x_nearest
 
-                # connect along minimum cost path
                 X_near = self.near(x_new, self.eta)
                 for x_near in X_near:
                     if self.collision_check_line(x_near, x_new):
@@ -58,9 +61,17 @@ class rrtstar:
                             x_new.cost = x_nearest.cost + self.cost_line(x_new, x_nearest)
                             x_new.parent = x_nearest
 
+                # for x_near in self.tree_vertex:
+                #     if np.linalg.norm([(x_new.x - x_near.x), (x_new.y - x_near.y)]) <= self.eta:
+                #         if self.collision_check_line(x_near, x_new):
+                #             continue
+                #         if x_near.cost + np.linalg.norm([(x_new.x - x_near.x), (x_new.y - x_near.y)]) < x_nearest.cost + np.linalg.norm([(x_new.x - x_nearest.x), (x_new.y - x_nearest.y)]):
+                #             x_nearest = x_near
+                #             x_new.cost = x_nearest.cost + np.linalg.norm([(x_new.x - x_nearest.x), (x_new.y - x_nearest.y)])
+                #             x_new.parent = x_nearest
+                
                 self.tree_vertex.append(x_new)
 
-                # rewire
                 for x_near in X_near:
                     if self.collision_check_line(x_near, x_new):
                         continue
@@ -69,30 +80,15 @@ class rrtstar:
                         x_near.parent = x_new
                         x_near.cost = x_new.cost + self.cost_line(x_new, x_near)
 
-    def search_path(self):
-        X_near = self.near(self.goalnode, self.eta)
-        for x_near in X_near:
-            if self.collision_check_line(x_near, self.goalnode):
-                continue
-            self.goalnode.parent = x_near
-
-            path = [self.goalnode]
-            curr_node = self.goalnode
-
-            while curr_node != self.startnode:
-                curr_node = curr_node.parent
-                path.append(curr_node)
-
-            path.reverse()
-
-            best_path = path
-
-            cost = sum(i.cost for i in path)
-
-            if cost < sum(j.cost for j in best_path):
-                best_path = path
-        
-        return best_path
+                # for x_near in self.tree_vertex:
+                #     if x_near is not x_new.parent:
+                #         if np.linalg.norm([(x_new.x - x_near.x), (x_new.y - x_near.y)]) <= self.eta:
+                #             if self.collision_check_line(x_near, x_new):
+                #                 continue
+                #             if x_new.cost + np.linalg.norm([(x_new.x - x_near.x), (x_new.y - x_near.y)]) < x_near.cost:
+                #                 x_near.parent = x_new
+                #                 x_near.cost = x_new.cost + np.linalg.norm([(x_new.x - x_near.x), (x_new.y - x_near.y)])
+                                    
 
     def sampling(self):
         x = np.random.uniform(low=0, high=self.map.shape[0])
@@ -133,7 +129,7 @@ class rrtstar:
         return [self.tree_vertex[i] for i in neighbor]
 
     def cost_line(self, xstart, xend):
-        return np.linalg.norm([(xstart.x - xend.x), (xstart.y - xend.y)]) # simple euclidean distance as cost
+        return np.linalg.norm([(xstart.x - xend.x), (xstart.y - xend.y)])
 
     def collision_check_node(self, x_new):
         nodepoint = point2d_obj(x_new.x, x_new.y)
@@ -183,8 +179,4 @@ if __name__ == "__main__":
     planner = rrtstar()
     planner.planning()
     planner.plot_env()
-
-    path = planner.search_path()
-    plt.plot([node.x for node in path], [node.y for node in path], color='blue')
-
     plt.show()

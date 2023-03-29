@@ -9,7 +9,7 @@ from collision_check_geometry.collision_class import line_obj, point2d_obj, inte
 from map.taskmap_geo_format import task_rectangle_obs_7
 
 class node:
-    def __init__(self, x, y, parent=None) -> None:
+    def __init__(self, x, y, parent=None)-> None:
         self.x = x
         self.y = y
         self.parent = parent
@@ -26,11 +26,10 @@ class rrtbase():
         self.obs = task_rectangle_obs_7()
 
         # distance step update per iteration
-        self.d_step = 0.3  # eta
+        self.eta = 0.3  # eta
 
         # start with a tree vertex have start node and empty branch
         self.tree_vertex = [self.startnode]
-        self.tree_branch = []
 
     def planing(self):
 
@@ -43,9 +42,8 @@ class rrtbase():
             if self.collision_check_node(x_new) or self.collision_check_line(x_nearest, x_new):
                 continue
             else:
-                self.tree_vertex.append(x_new)
                 x_new.parent = x_nearest # add parent of the x_new as x_nearest of graph seacher
-                self.tree_branch.append([x_nearest, x_new])
+                self.tree_vertex.append(x_new)
     
     def search_path(self):
         # search path from the construted tree
@@ -53,7 +51,6 @@ class rrtbase():
         # connect the x_goal to the nearest node of the tree
         x_near_to_goal = self.nearest_node(self.goalnode) # naive connect, we can do better, but for simplication just use this
         self.goalnode.parent = x_near_to_goal
-        self.tree_branch.append([x_near_to_goal, self.goalnode])
 
         # initialize the path with the goal node
         path = [self.goalnode]
@@ -91,12 +88,12 @@ class rrtbase():
         dist_y = x_rand.y - x_nearest.y
         dist = np.linalg.norm([dist_x, dist_y])
 
-        if dist <= self.d_step:
+        if dist <= self.eta:
             x_new = x_rand
         else:
             direction = np.arctan2(dist_y, dist_x)
-            new_x = self.d_step*np.cos(direction) + x_nearest.x
-            new_y = self.d_step*np.sin(direction) + x_nearest.y
+            new_x = self.eta*np.cos(direction) + x_nearest.x
+            new_y = self.eta*np.sin(direction) + x_nearest.y
             x_new = node(new_x, new_y)
         return x_new
 
@@ -136,8 +133,9 @@ class rrtbase():
             plt.scatter(j.x, j.y, color="red")
 
         # plot tree branh
-        for k in self.tree_branch:
-            plt.plot([k[0].x, k[1].x], [k[0].y, k[1].y], color="green")
+        for k in self.tree_vertex:
+            if k is not self.startnode:
+                plt.plot([k.x, k.parent.x],[k.y, k.parent.y], color="green")
 
         # plot start and goal node
         plt.scatter([self.startnode.x, self.goalnode.x], [self.startnode.y, self.goalnode.y], color='cyan')
