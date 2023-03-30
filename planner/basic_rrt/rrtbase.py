@@ -17,7 +17,7 @@ class node:
 class rrtbase():
     def __init__(self) -> None:
         # properties of planner
-        self.maxiteration = 100
+        self.maxiteration = 1000
         self.startnode = node(4, 4)
         self.goalnode = node(7, 8)
 
@@ -39,10 +39,10 @@ class rrtbase():
             # plt.scatter(x_rand.x, x_rand.y, color='black') # plot for random demonstration
             x_nearest = self.nearest_node(x_rand)
             x_new = self.steer(x_nearest, x_rand)
+            x_new.parent = x_nearest # add parent of the x_new as x_nearest of graph seacher
             if self.collision_check_node(x_new) or self.collision_check_line(x_nearest, x_new):
                 continue
             else:
-                x_new.parent = x_nearest # add parent of the x_new as x_nearest of graph seacher
                 self.tree_vertex.append(x_new)
     
     def search_path(self):

@@ -34,10 +34,18 @@ class rrtstar:
 
         # start with a tree vertex have start node and empty branch
         self.tree_vertex = [self.startnode]
+        self.X_soln = []
 
     def planning(self):
+        c_best = np.inf
         for _ in range(self.maxiteration):
-            x_rand = self.sampling()
+            for x_soln in self.X_soln:
+                c_best = x_soln.cost
+            #     if x_soln.cost < c_best:
+            #         c_best = x_soln.cost
+            # x_rand = self.sampling(self.startnode, self.goalnode, c_best)
+
+            x_rand = self.unisampling()
             x_nearest = self.nearest_node(x_rand)
             x_new = self.steer(x_nearest, x_rand)
             x_new.parent = x_nearest
@@ -45,64 +53,66 @@ class rrtstar:
             if self.collision_check_node(x_new) or self.collision_check_line(x_new.parent, x_new):
                 continue
             else:
-                # connect along minimum cost path (choose parent) update the parent of the node of x_new
-                X_near = self.near(x_new, self.eta) # find a list of node in the area of x_new
-                x_min = x_new.parent # create a xmin variable that hold the minimun node to x_new, which is its parent
-                c_min = x_min.cost + self.cost_line(x_min, x_new) # create a variable to hold the current cost of travel from x_start to x_new_parent + x_new_parent to x_new
-                for x_near in X_near: # check the node in the area round x_new
-                    if self.collision_check_line(x_near, x_new): # check collision from x_new to all node in the area
+                X_near = self.near(x_new, self.eta) 
+                x_min = x_new.parent 
+                c_min = x_min.cost + self.cost_line(x_min, x_new)
+                for x_near in X_near: 
+                    if self.collision_check_line(x_near, x_new): 
                         continue
-                    # c_min = x_nearest.cost + self.cost_line(x_new, x_nearest)
-                    c_new = x_near.cost + self.cost_line(x_near, x_new) # for each node in the area, calculate the cost from new x_start to node in the area + node in the area to x_new
-                    if c_new < c_min: # if the new cost is lower than the current cost
-                            x_min = x_near # update the node that in the area to be the new x_min
-                            c_min = c_new # update the cost of node in the area to be the new c_min
-                
-                # we update the parent of x_new to be x_min and the x_new cost to be c_new
+
+                    c_new = x_near.cost + self.cost_line(x_near, x_new) 
+                    if c_new < c_min: 
+                            x_min = x_near
+                            c_min = c_new 
+
                 x_new.parent = x_min
                 x_new.cost = c_min
-                self.tree_vertex.append(x_new) # than we commit to the vertex list
-
-                # rewire (update the parent of node surround the area of x_new)
+                self.tree_vertex.append(x_new)
+              
                 for x_near in X_near:
                     if self.collision_check_line(x_near, x_new):
                         continue
-                    c_near = x_near.cost #  c_near store the cost of from x_start to x_near (near the x_new)
-                    c_new = x_new.cost + self.cost_line(x_new, x_near) # find the cost from x_new to each of node near it area
+                    c_near = x_near.cost
+                    c_new = x_new.cost + self.cost_line(x_new, x_near)
                     if c_new < c_near: 
-                        x_near.parent = x_new # update the parent of the x_near to be x_new
-                        x_near.cost = x_new.cost + self.cost_line(x_new, x_near) # update the cost of x_near to be cost from start to x_new + the cost from x_new to x_near
+                        x_near.parent = x_new 
+                        x_near.cost = x_new.cost + self.cost_line(x_new, x_near) 
 
-    def search_path(self):
-        X_near = self.near(self.goalnode, self.eta)
-        for x_near in X_near:
-            if self.collision_check_line(x_near, self.goalnode):
-                continue
-            self.goalnode.parent = x_near
+                # in goal region
+                if self.ingoal_region(x_new):
+                    self.X_soln.append(x_new)
 
-            path = [self.goalnode]
-            curr_node = self.goalnode
+    def sampling(self, x_start, x_goal, c_max):
+        if c_max < np.inf:
+            c_min = np.linalg.norm([x_goal.x - x_start.x], [x_goal.y - x_start.y]).item()
+            x_center = np.array([(x_start.x + x_goal.x)/2, (x_start.y + x_goal.y)/2]).reshape(2,1)
+            C = self.RotationToWorldFrame(x_start, x_goal)
+            r1 = c_max/2
+            r2 = np.sqrt(c_max**2 - c_min**2)/2
+            L = np.diag([r1, r2])
+            x_ball = self.sampleUnitBall()
+            x_rand = (C @ L @ x_ball) + x_center
+            x_rand = node(x_rand[0,0], x_rand[1,0])
+        else:
+            x_rand = self.unisampling()
+        return x_rand
 
-            while curr_node != self.startnode:
-                curr_node = curr_node.parent
-                path.append(curr_node)
-
-            path.reverse()
-
-            best_path = path
-
-            cost = sum(i.cost for i in path)
-
-            if cost < sum(j.cost for j in best_path):
-                best_path = path
+    def sampleUnitBall(self):
+        x, y = np.random.uniform(-1, 1), np.random.uniform(-1, 1)
+        if x ** 2 + y ** 2 < 1:
+            return np.array([[x], [y]]).reshape(2,1)
         
-        return best_path
-
-    def sampling(self):
+    def unisampling(self):
         x = np.random.uniform(low=0, high=self.map.shape[0])
         y = np.random.uniform(low=0, high=self.map.shape[1])
         x_rand = node(x, y)
         return x_rand
+    
+    def ingoal_region(self, x_new):
+        if np.linalg.norm([self.goalnode.x - x_new.x, self.goalnode.y - x_new.y]) <= 1 :# self.eta:
+            return True
+        else:
+            return False
     
     def nearest_node(self, x_rand):
         vertex_list = []
@@ -126,7 +136,6 @@ class rrtstar:
             new_x = self.eta*np.cos(direction) + x_nearest.x
             new_y = self.eta*np.sin(direction) + x_nearest.y
             x_new = node(new_x, new_y)
-
         return x_new
 
     def near(self, x_new, min_step):
@@ -140,36 +149,45 @@ class rrtstar:
     def cost_line(self, xstart, xend):
         return np.linalg.norm([(xstart.x - xend.x), (xstart.y - xend.y)]) # simple euclidean distance as cost
 
+
+    def RotationToWorldFrame(self, x_start, x_goal):
+        theta = np.arctan2((x_goal.y - x_start.y),(x_goal.x - x_start.x))
+
+        R = np.array([[ np.cos(theta), np.sin(theta)],
+                      [-np.sin(theta), np.cos(theta)]])
+        
+        return R
+    
     def collision_check_node(self, x_new):
-        nodepoint = point2d_obj(x_new.x, x_new.y)
+        # nodepoint = point2d_obj(x_new.x, x_new.y)
 
-        col = []
-        for obs in self.obs:
-            colide = intersect_point_v_rectangle(nodepoint, obs)
-            col.append(colide)
+        # col = []
+        # for obs in self.obs:
+        #     colide = intersect_point_v_rectangle(nodepoint, obs)
+        #     col.append(colide)
 
-        if True in col:
-            return True
-        else:
-            return False
+        # if True in col:
+        #     return True
+        # else:
+        #     return False
+        return False
 
     def collision_check_line(self, x_nearest, x_new):
-        line = line_obj(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
-
-        col = []
-        for obs in self.obs:
-            colide = intersect_line_v_rectangle(line, obs)
-            col.append(colide)
-
-        if True in col:
-            return True
-        else:
-            return False
-
+        # line = line_obj(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
+        # col = []
+        # for obs in self.obs:
+        #     colide = intersect_line_v_rectangle(line, obs)
+        #     col.append(colide)
+        # if True in col:
+        #     return True
+        # else:
+        #     return False
+        return False
+    
     def plot_env(self):
         # plot obstacle
-        for obs in self.obs:
-            obs.plot()
+        # for obs in self.obs:
+        #     obs.plot()
 
         # plot tree vertex and start and goal node
         for j in self.tree_vertex:
@@ -183,19 +201,19 @@ class rrtstar:
         # plot start and goal node
         plt.scatter([self.startnode.x, self.goalnode.x], [self.startnode.y, self.goalnode.y], color='cyan')
 
-        # goal node circle
-        theta = np.linspace(0,2*np.pi,90)
-        x = self.eta * np.cos(theta) + self.goalnode.x
-        y = self.eta * np.sin(theta) + self.goalnode.y
-        plt.plot(x,y)
+        # plot ingoal region node
+        for l in self.X_soln:
+            plt.scatter(l.x, l.y, color="yellow")
 
 if __name__ == "__main__":
     np.random.seed(9)
     planner = rrtstar()
     planner.planning()
     planner.plot_env()
-
-    path = planner.search_path()
-    plt.plot([node.x for node in path], [node.y for node in path], color='blue')
+    for ind, val in enumerate(planner.X_soln):
+        print(val.cost)
+    print(len(planner.X_soln))
+    # path = planner.search_path()
+    # plt.plot([node.x for node in path], [node.y for node in path], color='blue')
 
     plt.show()
