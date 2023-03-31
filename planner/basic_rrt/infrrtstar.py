@@ -40,12 +40,12 @@ class rrtstar:
         c_best = np.inf
         for _ in range(self.maxiteration):
             for x_soln in self.X_soln:
-                c_best = x_soln.cost
-            #     if x_soln.cost < c_best:
-            #         c_best = x_soln.cost
-            # x_rand = self.sampling(self.startnode, self.goalnode, c_best)
+                c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode)
+                if x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode) < c_best:
+                    c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode)
+            
+            x_rand = self.sampling(self.startnode, self.goalnode, c_best)
 
-            x_rand = self.unisampling()
             x_nearest = self.nearest_node(x_rand)
             x_new = self.steer(x_nearest, x_rand)
             x_new.parent = x_nearest
@@ -82,9 +82,33 @@ class rrtstar:
                 if self.ingoal_region(x_new):
                     self.X_soln.append(x_new)
 
+    def search_path(self):
+        for xbest in self.X_soln:
+            if self.collision_check_line(xbest, self.goalnode):
+                continue
+            self.goalnode.parent = xbest
+
+            path = [self.goalnode]
+            curr_node = self.goalnode
+
+            while curr_node != self.startnode:
+                curr_node = curr_node.parent
+                path.append(curr_node)
+
+            path.reverse()
+
+            best_path = path
+
+            cost = sum(i.cost for i in path)
+
+            if cost < sum(j.cost for j in best_path):
+                best_path = path
+        
+        return best_path
+    
     def sampling(self, x_start, x_goal, c_max):
         if c_max < np.inf:
-            c_min = np.linalg.norm([x_goal.x - x_start.x], [x_goal.y - x_start.y]).item()
+            c_min = self.cost_line(x_start, x_goal)
             x_center = np.array([(x_start.x + x_goal.x)/2, (x_start.y + x_goal.y)/2]).reshape(2,1)
             C = self.RotationToWorldFrame(x_start, x_goal)
             r1 = c_max/2
@@ -98,9 +122,11 @@ class rrtstar:
         return x_rand
 
     def sampleUnitBall(self):
-        x, y = np.random.uniform(-1, 1), np.random.uniform(-1, 1)
-        if x ** 2 + y ** 2 < 1:
-            return np.array([[x], [y]]).reshape(2,1)
+        r = np.random.uniform(low=0, high=1)
+        theta = np.random.uniform(low=0, high=2*np.pi)
+        x = r*np.cos(theta)
+        y = r*np.sin(theta)
+        return np.array([[x], [y]]).reshape(2,1)
         
     def unisampling(self):
         x = np.random.uniform(low=0, high=self.map.shape[0])
@@ -151,43 +177,43 @@ class rrtstar:
 
 
     def RotationToWorldFrame(self, x_start, x_goal):
-        theta = np.arctan2((x_goal.y - x_start.y),(x_goal.x - x_start.x))
+        theta = np.arctan2((x_goal.y - x_start.y), (x_goal.x - x_start.x))
 
         R = np.array([[ np.cos(theta), np.sin(theta)],
-                      [-np.sin(theta), np.cos(theta)]])
+                      [-np.sin(theta), np.cos(theta)]]).T
         
         return R
     
     def collision_check_node(self, x_new):
-        # nodepoint = point2d_obj(x_new.x, x_new.y)
+        nodepoint = point2d_obj(x_new.x, x_new.y)
 
-        # col = []
-        # for obs in self.obs:
-        #     colide = intersect_point_v_rectangle(nodepoint, obs)
-        #     col.append(colide)
+        col = []
+        for obs in self.obs:
+            colide = intersect_point_v_rectangle(nodepoint, obs)
+            col.append(colide)
 
-        # if True in col:
-        #     return True
-        # else:
-        #     return False
-        return False
+        if True in col:
+            return True
+        else:
+            return False
+        # return False
 
     def collision_check_line(self, x_nearest, x_new):
-        # line = line_obj(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
-        # col = []
-        # for obs in self.obs:
-        #     colide = intersect_line_v_rectangle(line, obs)
-        #     col.append(colide)
-        # if True in col:
-        #     return True
-        # else:
-        #     return False
-        return False
+        line = line_obj(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
+        col = []
+        for obs in self.obs:
+            colide = intersect_line_v_rectangle(line, obs)
+            col.append(colide)
+        if True in col:
+            return True
+        else:
+            return False
+        # return False
     
     def plot_env(self):
         # plot obstacle
-        # for obs in self.obs:
-        #     obs.plot()
+        for obs in self.obs:
+            obs.plot()
 
         # plot tree vertex and start and goal node
         for j in self.tree_vertex:
@@ -210,10 +236,8 @@ if __name__ == "__main__":
     planner = rrtstar()
     planner.planning()
     planner.plot_env()
-    for ind, val in enumerate(planner.X_soln):
-        print(val.cost)
-    print(len(planner.X_soln))
-    # path = planner.search_path()
-    # plt.plot([node.x for node in path], [node.y for node in path], color='blue')
+    path = planner.search_path()
+    print(len(path))
+    plt.plot([node.x for node in path], [node.y for node in path], color='blue')
 
     plt.show()
