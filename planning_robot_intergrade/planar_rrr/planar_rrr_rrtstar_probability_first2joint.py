@@ -6,13 +6,13 @@ sys.path.append(str(wd))
 import matplotlib.pyplot as plt
 from map.taskmap_geo_format import task_rectangle_obs_6
 from robot.planar_rrr import planar_rrr
-from util.coord_transform import polar2cats
+from util.coord_transform import polar2cats, approach_circle_plt
 import numpy as np
 from map.map_value_range import map_val, map_multi_val
-from config_space_2d.generate_config_planar_rrr import configuration_generate_plannar_rrr
+from config_space_2d.generate_config_planar_rrr import configuration_generate_plannar_rrr_first_2joints
 from planner.research_rrtstar_3d.rrtstar_probabilty_3d import node , rrt_star
-from util.extract_path_class import extract_path_class_3d
 
+from util.extract_path_class import extract_path_class_3d
 
 robot = planar_rrr()
 
@@ -21,10 +21,6 @@ init_pose = np.array([[2.5],[0],[0]])
 x_targ = 0.5
 y_targ = 0.5
 alpha_candidate = 2  # given from grapse pose candidate
-
-theta_coord = np.linspace(0, 2*np.pi, 90)
-radius = 0.1
-x_coord, y_coord = polar2cats(radius, theta_coord, x_targ, y_targ)
 
 # target
 phi_target = alpha_candidate - np.pi
@@ -41,9 +37,14 @@ app_point = np.array([[d_app*np.cos(target[2, 0]+np.pi) + target[0, 0]],
                       [target[2, 0]]])
 theta_ik_app = robot.inverse_kinematic_geometry(app_point, elbow_option=0)
 
+
+# plot view
 robot.plot_arm(theta_ik_tag, plt_basis=True)
 robot.plot_arm(theta_ik_app)
-plt.plot(x_coord, y_coord)
+approach_circle_plt(x_targ, y_targ, radius=0.1)
+obs_list = task_rectangle_obs_6()
+for obs in obs_list:
+    obs.plot()
 plt.show()
 
 
@@ -52,11 +53,11 @@ theta_init = robot.inverse_kinematic_geometry(init_pose, elbow_option=0)
 theta_goal = theta_ik_app
 
 # grid size
-grid_size = 360
+grid_size = 75
 theta_init_index = (map_multi_val(theta_init, -np.pi, np.pi, 0, grid_size)).astype(int)
 theta_goal_index = (map_multi_val(theta_goal, -np.pi, np.pi, 0, grid_size)).astype(int)
 
-map = np.ones((360,360,360)) #empty map
+map = configuration_generate_plannar_rrr_first_2joints(robot, obs_list)
 
 # Planing
 x_init = node(theta_init_index[0,0], theta_init_index[1,0], theta_init_index[2,0])
@@ -79,7 +80,9 @@ plt.show()
 
 pathx, pathy, pathz = extract_path_class_3d(path)
 
-plt.plot(x_coord, y_coord)
+
+# plot view
+approach_circle_plt(x_targ, y_targ, radius=0.1)
 for i in range(len(path)):
     theta1 = map_val(pathx[i], 0, grid_size, -np.pi, np.pi)
     theta2 = map_val(pathy[i], 0, grid_size, -np.pi, np.pi)

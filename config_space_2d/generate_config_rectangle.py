@@ -4,7 +4,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from collision_check_geometry.collision_class import sqr_rec_2d_obj, intersect_rectangle_v_rectangle
+from collision_check_geometry.collision_class import obj_rec, intersect_rectangle_v_rectangle
 
 # This is to demonstate a sampling of state-space of robot
 
@@ -17,7 +17,7 @@ def configuration_generate_rectangle(obs_list):
     for i in sample:
         for j in sample:
 
-            rec_moving = sqr_rec_2d_obj(i,j,h=2,w=2)
+            rec_moving = obj_rec(i,j,h=2,w=2)
 
             col = []
             for k in obs_list:

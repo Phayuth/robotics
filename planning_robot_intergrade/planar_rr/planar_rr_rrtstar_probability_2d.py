@@ -32,14 +32,14 @@ theta_goal = robot.inverse_kinematic_geometry(desired_pose, elbow_option=0)
 # calculate theta init index inside confuration 
 theta1_init = theta_init[0,0]
 theta2_init = theta_init[1,0]
-theta1_init_index = int(map_val(theta1_init, -np.pi, np.pi, 0, 360)) 
-theta2_init_index = int(map_val(theta2_init, -np.pi, np.pi, 0, 360))
+theta1_init_index = (map_val(theta1_init, -np.pi, np.pi, 0, 360)) 
+theta2_init_index = (map_val(theta2_init, -np.pi, np.pi, 0, 360))
 
 # calculate theta goal index
 theta1_goal = theta_goal[0,0]
 theta2_goal = theta_goal[1,0]
-theta1_goal_index = int(map_val(theta1_goal, -np.pi, np.pi, 0, 360)) 
-theta2_goal_index = int(map_val(theta2_goal, -np.pi, np.pi, 0, 360))
+theta1_goal_index = (map_val(theta1_goal, -np.pi, np.pi, 0, 360)) 
+theta2_goal_index = (map_val(theta2_goal, -np.pi, np.pi, 0, 360))
 
 # task space plot view
 robot.plot_arm(theta_init, plt_basis=True)

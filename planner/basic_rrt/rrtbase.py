@@ -5,7 +5,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from collision_check_geometry.collision_class import line_obj, point2d_obj, intersect_point_v_rectangle, intersect_line_v_rectangle
+from collision_check_geometry.collision_class import obj_line2d, obj_point2d, intersect_point_v_rectangle, intersect_line_v_rectangle
 from map.taskmap_geo_format import task_rectangle_obs_7
 
 class node:
@@ -98,7 +98,7 @@ class rrtbase():
         return x_new
 
     def collision_check_node(self, x_new):
-        nodepoint = point2d_obj(x_new.x, x_new.y)
+        nodepoint = obj_point2d(x_new.x, x_new.y)
 
         col = []
         for obs in self.obs:
@@ -111,7 +111,7 @@ class rrtbase():
             return False
 
     def collision_check_line(self, x_nearest, x_new):
-        line = line_obj(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
+        line = obj_line2d(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
 
         col = []
         for obs in self.obs:

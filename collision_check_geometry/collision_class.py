@@ -5,7 +5,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-class aabb_obj:
+class obj_aabb:
     def __init__(self,x_min,y_min,z_min,x_max,y_max,z_max):
         self.x_min = x_min
         self.y_min = y_min
@@ -14,7 +14,7 @@ class aabb_obj:
         self.y_max = y_max
         self.z_max = z_max
 
-class sqr_rec_2d_obj:
+class obj_rec:
     def __init__(self,x,y,h,w):
         self.x = x
         self.y = y
@@ -27,13 +27,13 @@ class sqr_rec_2d_obj:
         plt.plot([self.x,self.x+self.w], [self.y+self.h,self.y+self.h],c="b")
         plt.plot([self.x+self.w,self.x+self.w], [self.y,self.y+self.h],c="b")
         
-class point3d_obj:
+class obj_point3d:
     def __init__(self,x,y,z):
         self.x = x
         self.y = y
         self.z = z
 
-class point2d_obj:
+class obj_point2d:
     def __init__(self,x,y):
         self.x = x
         self.y = y
@@ -41,7 +41,7 @@ class point2d_obj:
     def plot(self):
         plt.scatter(self.x, self.y)
 
-class line_obj:
+class obj_line2d:
     def __init__(self, xs, ys, xe, ye):
         self.xs = xs
         self.ys = ys
@@ -51,20 +51,20 @@ class line_obj:
     def plot(self):
         plt.plot([self.xs,self.xe],[self.ys,self.ye])
         
-class sphere_obj:
+class obj_sphere:
     def __init__(self,x,y,z,r):
         self.x = x
         self.y = y
         self.z = z
         self.r = r
 
-class circle_obj:
+class obj_circle:
      def __init__(self,x,y,r):
         self.x = x
         self.y = y
         self.r = r
 
-class triangle_obj:
+class obj_triangle:
     def __init__(self,vertix_a,vertix_b,vertix_c):
         self.vertix_a_x = vertix_a[0]
         self.vertix_a_y = vertix_a[1]
@@ -207,10 +207,10 @@ def intersect_line_v_line(line1, line2):
     return False
 
 def intersect_line_v_rectangle(line, rec):
-    l1 = line_obj(rec.x, rec.y, rec.x+rec.w, rec.y)
-    l2 = line_obj(rec.x, rec.y, rec.x, rec.y+rec.h)
-    l3 = line_obj(rec.x, rec.y+rec.h, rec.x+rec.w, rec.y+rec.h)
-    l4 = line_obj(rec.x+rec.w, rec.y, rec.x+rec.w, rec.y+rec.h)
+    l1 = obj_line2d(rec.x, rec.y, rec.x+rec.w, rec.y)
+    l2 = obj_line2d(rec.x, rec.y, rec.x, rec.y+rec.h)
+    l3 = obj_line2d(rec.x, rec.y+rec.h, rec.x+rec.w, rec.y+rec.h)
+    l4 = obj_line2d(rec.x+rec.w, rec.y, rec.x+rec.w, rec.y+rec.h)
 
     if (intersect_line_v_line(line, l1) or intersect_line_v_line(line, l2) or intersect_line_v_line(line, l3) or intersect_line_v_line(line, l4)):
         return True

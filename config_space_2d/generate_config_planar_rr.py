@@ -19,8 +19,8 @@ def configuration_generate_plannar_rr(robot, obs_list):
             print(f"at theta1 {theta1[j]} | at theta2 {theta2[k]}")
             theta = np.array([[theta1[j]],[theta2[k]]])
             link_pose = robot.forward_kinematic(theta, return_link_pos=True)
-            linearm1 = collision_class.line_obj(link_pose[0][0], link_pose[0][1], link_pose[1][0], link_pose[1][1])
-            linearm2 = collision_class.line_obj(link_pose[1][0], link_pose[1][1], link_pose[2][0], link_pose[2][1])
+            linearm1 = collision_class.obj_line2d(link_pose[0][0], link_pose[0][1], link_pose[1][0], link_pose[1][1])
+            linearm2 = collision_class.obj_line2d(link_pose[1][0], link_pose[1][1], link_pose[2][0], link_pose[2][1])
 
             col = []
             for i in obs_list:

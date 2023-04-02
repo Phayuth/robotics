@@ -1,11 +1,11 @@
 import numpy as np
 import collision_class
 
-a = collision_class.point3d_obj(5,5,2)
-b = collision_class.point3d_obj(5,5,5)
-c = collision_class.point2d_obj(5,5)
+a = collision_class.obj_point3d(5,5,2)
+b = collision_class.obj_point3d(5,5,5)
+c = collision_class.obj_point2d(5,5)
 
-trig = collision_class.triangle_obj([0,0],[10,0],[0,10])
+trig = collision_class.obj_triangle([0,0],[10,0],[0,10])
 
 collision = collision_class.intersect_point_v_point_3d(a,b)
 collision = collision_class.intersect_triangle_v_point(trig,c)
@@ -24,7 +24,7 @@ Q = np.array([[-6],
 collide = collision_class.intersect_line_v_circle_collisio(r,O,P,Q)
 print(collision)
 
-rec1 = collision_class.sqr_rec_2d_obj(0,0,5,5)
-rec2 = collision_class.sqr_rec_2d_obj(10,10,5,5)
+rec1 = collision_class.obj_rec(0,0,5,5)
+rec2 = collision_class.obj_rec(10,10,5,5)
 collision = collision_class.intersect_rectangle_v_rectangle(rec1,rec2)
 print(collision)
