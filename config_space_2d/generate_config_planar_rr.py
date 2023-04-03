@@ -3,8 +3,8 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-from collision_check_geometry import collision_class
 import numpy as np
+from collision_check_geometry import collision_class
 
 def configuration_generate_plannar_rr(robot, obs_list):
 
@@ -37,39 +37,26 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
     from map.taskmap_geo_format import task_rectangle_obs_1
     from robot.planar_rr import planar_rr
-    from map.map_value_range import map_val
+    from map.map_value_range import map_multi_val
 
-    plt.axes().set_aspect('equal')
-    plt.axvline(x=0, c="green")
-    plt.axhline(y=0, c="green")
 
-    # robot, inverse kinematic and plot
+    # SECTION - robot class 
     r = planar_rr()
     init_pose = np.array([[1.8],[3.3]])
     desired_pose = np.array([[3.5],[1.8]])
-    theta_up = r.inverse_kinematic_geometry(desired_pose, elbow_option=0)
-    r.plot_arm(theta_up)
-
-    # map theta to index image (option elbow up)
-    theta1_up = theta_up[0,0]
-    theta2_up = theta_up[1,0]
-    theta1_up_index = int(map_val(theta1_up, -np.pi, np.pi, 0, 360)) 
-    theta2_up_index = int(map_val(theta2_up, -np.pi, np.pi, 0, 360))
-
-    # map index image to theta (option elbow up)
-    theta1 = map_val(theta1_up_index, 0, 360, -np.pi, np.pi)
-    theta2 = map_val(theta2_up_index, 0, 360, -np.pi, np.pi)
-
+    theta = r.inverse_kinematic_geometry(desired_pose, elbow_option=0)
+    theta_index = map_multi_val(theta, -np.pi, np.pi, 0, 360).astype(int) # map theta to index image (option elbow up)
+    theta_val = map_multi_val(theta_index, 0, 360, -np.pi, np.pi)         # map index image to theta (option elbow up)
+    r.plot_arm(theta, plt_basis=True)
     obs_list = task_rectangle_obs_1()
     for obs in obs_list:
         obs.plot()
     plt.show()
 
+
+    # SECTION - configuration space
     grid_np = configuration_generate_plannar_rr(r, obs_list)
-
-    # add a point in index of grid
-    grid_np[theta1_up_index, theta2_up_index] = 2
-
+    grid_np[theta_index[0,0], theta_index[1,0]] = 2 # add a point in index of grid
     plt.imshow(grid_np)
     plt.grid(True)
     plt.show()

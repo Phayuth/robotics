@@ -6,7 +6,6 @@ sys.path.append(str(wd))
 import numpy as np
 import matplotlib.pyplot as plt
 from collision_check_geometry.collision_class import obj_line2d, obj_point2d, intersect_point_v_rectangle, intersect_line_v_rectangle
-from map.taskmap_geo_format import task_rectangle_obs_7
 
 class node:
     def __init__(self, x, y, parent=None)-> None:
@@ -15,18 +14,16 @@ class node:
         self.parent = parent
 
 class rrtbase():
-    def __init__(self) -> None:
-        # properties of planner
-        self.maxiteration = 1000
-        self.startnode = node(4, 4)
-        self.goalnode = node(7, 8)
-
+    def __init__(self, map, obstacle_list, startnode, goalnode, eta=0.3, maxiteration=1000)-> None:
         # map properties
-        self.map = np.ones((10, 10))
-        self.obs = task_rectangle_obs_7()
+        self.map = map
+        self.startnode = node(startnode[0,0], startnode[1,0])
+        self.goalnode  = node(goalnode[0,0], goalnode[1,0])
+        self.obs = obstacle_list
 
-        # distance step update per iteration
-        self.eta = 0.3  # eta
+        # properties of planner
+        self.eta = eta # distance step update per iteration
+        self.maxiteration = maxiteration
 
         # start with a tree vertex have start node and empty branch
         self.tree_vertex = [self.startnode]
@@ -36,7 +33,6 @@ class rrtbase():
         # create the tree
         for _ in range(self.maxiteration):
             x_rand = self.sampling()
-            # plt.scatter(x_rand.x, x_rand.y, color='black') # plot for random demonstration
             x_nearest = self.nearest_node(x_rand)
             x_new = self.steer(x_nearest, x_rand)
             x_new.parent = x_nearest # add parent of the x_new as x_nearest of graph seacher
@@ -141,12 +137,36 @@ class rrtbase():
         plt.scatter([self.startnode.x, self.goalnode.x], [self.startnode.y, self.goalnode.y], color='cyan')
 
 if __name__ == "__main__":
+    from map.taskmap_geo_format import task_rectangle_obs_7
+    from map.taskmap_img_format import bmap
+    from map.map_format_converter import img_to_geo
     np.random.seed(9)
-    planner = rrtbase()
-    planner.planing()
-    planner.plot_env()
 
+
+    # SECTION - Experiment 1
+    # map = np.ones((10,10))
+    # obslist = task_rectangle_obs_7()
+    # start = np.array([4,4]).reshape(2,1)
+    # goal = np.array([7,8]).reshape(2,1)
+    # map = np.ones((10,10))
+    # obslist = task_rectangle_obs_7()
+
+
+    # SECTION - Experiment 2
+    start = np.array([4,4]).reshape(2,1)
+    goal = np.array([8.5,1]).reshape(2,1)
+    map = np.ones((10,10))
+    obslist = img_to_geo(bmap(), minmax=[0,10], free_space_value=1)
+    for o in obslist:
+        o.plot()
+    plt.show()
+
+
+    # SECTION - Planning Section
+    planner = rrtbase(map, obslist, start, goal, eta=0.3, maxiteration=3000)
+    planner.planing()
     path = planner.search_path()
+
+    planner.plot_env()
     plt.plot([node.x for node in path], [node.y for node in path], color='blue')
-    
     plt.show()

@@ -11,14 +11,18 @@ from map.map_value_range import map_val, map_multi_val
 from config_space_2d.generate_config_planar_rr import configuration_generate_plannar_rr
 from planner.research_rrtstar.rrtstar_probabilty_2d import node , rrt_star
 from util.extract_path_class import extract_path_class_2d
+from util.coord_transform import polar2cats
 
-def polar2cats(r,theta):
-    x = r*np.cos(theta) + 1.6
-    y = r*np.sin(theta) + 2.15
-    return x,y
+# def polar2cats(r,theta):
+#     x = r*np.cos(theta) + 1.6
+#     y = r*np.sin(theta) + 2.15
+#     return x,y
+x_targ = 1.6
+y_targ = 2.15
 theta_view = np.linspace(np.pi/2,3*np.pi/2,10)
 radius = 0.1
-x_coord, y_coord = polar2cats(radius,theta_view)
+x_coord, y_coord = polar2cats(radius, theta_view, x_targ, y_targ)
+# x_coord, y_coord = polar2cats(radius,theta_view)
 
 # robot, inverse kinematic and plot
 robot = planar_rr()

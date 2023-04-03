@@ -9,24 +9,19 @@ from robot.planar_rr import planar_rr
 from config_space_2d.generate_config_planar_rr import configuration_generate_plannar_rr
 from map.taskmap_geo_format import task_rectangle_obs_1
 from map.map_value_range import map_val
-from util.coord_transform import polar2cats
+from util.coord_transform import polar2cats, approach_circle_plt
 
 robot = planar_rr()
 
+# target
 x_targ = 1.6
 y_targ = 2.15
-
-theta = np.linspace(np.pi/2,3*np.pi/2,10)
-radius = 0.1
-x_coord, y_coord = polar2cats(radius,theta, x_targ, y_targ)
-
-# target
 target = np.array([[x_targ],
                    [y_targ]])
 theta_ik_tag = robot.inverse_kinematic_geometry(target, elbow_option=0)
 
 # approach point
-d_app = 0.1
+d_app = 0.3
 alpha = np.pi + np.sum(theta_ik_tag)
 app_point = np.array([[d_app*np.cos(alpha)],
                       [d_app*np.sin(alpha)]]) + target
@@ -36,16 +31,11 @@ theta_ik_app = robot.inverse_kinematic_geometry(app_point, elbow_option=0)
 obs_list = task_rectangle_obs_1()
 
 # setup plot look
-plt.axes().set_aspect('equal')
-plt.axvline(x=0, c="black")
-plt.axhline(y=0, c="black")
-
+robot.plot_arm(theta_ik_app, plt_basis=True)
+robot.plot_arm(theta_ik_tag)
+approach_circle_plt(x_targ, y_targ, d_app)
 for obs in obs_list:
     obs.plot()
-
-plt.plot(x_coord, y_coord)
-robot.plot_arm(theta_ik_app)
-robot.plot_arm(theta_ik_tag)
 plt.show()
 
 # create config space
