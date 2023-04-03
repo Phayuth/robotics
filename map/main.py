@@ -2,7 +2,8 @@ import numpy as np
 import glob
 import matplotlib.pyplot as plt
 
-# view map in config space folder
+
+# SECTION - view 2D map in config space folder
 map_list = glob.glob('./map/mapdata/config_space_data_2d/*.npy')
 fig, axs = plt.subplots(2, 3)
 axs[0, 0].imshow(np.load(map_list[0]))
@@ -17,16 +18,15 @@ axs[1, 1].imshow(np.load(map_list[4]))
 axs[1, 1].set_title('Axis [1, 1]')
 plt.show()
 
-# plot config space in 3d #slow
+
+# SECTION - plot config space in 3d #slow
 map = np.load('./map/mapdata/config_space_data_3d/config3D.npy')
 ax = plt.figure().add_subplot(projection='3d')
-ax.voxels(map,  edgecolor='k')
+ax.voxels(map, edgecolor='k')
 plt.show()
 
-fig = plt.figure()
-ax = fig.add_subplot(projection='3d')
 
-# point cloud
+# SECTION - point cloud
 map = np.load('./map/mapdata/point_cloud/xyz(0.3).npy')
 x_coord = map[:,0]
 y_coord = map[:,1]

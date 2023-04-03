@@ -40,7 +40,6 @@ def pmap(return_rgb=False):
     d = ImageDraw.Draw(image)
 
     # random obstacle
-    np.random.seed(9)  # 9
     for i in range(no_box):
         xy = np.random.randint(image_size, size=2)
         rgb = np.random.randint(255, size=3)
@@ -64,8 +63,6 @@ def pmap(return_rgb=False):
         return map
 
 def bmap(return_rgb=False):
-    # img = Image.open('map/map01.png')
-    # imgArray = np.array(img)
     image_size = 50
     box_size = 3
     no_box = 20
@@ -73,7 +70,6 @@ def bmap(return_rgb=False):
     d = ImageDraw.Draw(image)
 
     # random obstacle
-    np.random.seed(6)  # 6
     for i in range(no_box):
         xy = np.random.randint(image_size, size=2)
         rgb = np.random.randint(155, size=3)

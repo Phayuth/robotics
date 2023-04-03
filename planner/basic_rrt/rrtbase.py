@@ -22,8 +22,8 @@ class rrtbase():
         self.obs = obstacle_list
 
         # properties of planner
-        self.eta = eta # distance step update per iteration
         self.maxiteration = maxiteration
+        self.eta = eta # distance step update per iteration
 
         # start with a tree vertex have start node and empty branch
         self.tree_vertex = [self.startnode]
@@ -144,8 +144,6 @@ if __name__ == "__main__":
 
 
     # SECTION - Experiment 1
-    # map = np.ones((10,10))
-    # obslist = task_rectangle_obs_7()
     # start = np.array([4,4]).reshape(2,1)
     # goal = np.array([7,8]).reshape(2,1)
     # map = np.ones((10,10))
@@ -157,6 +155,10 @@ if __name__ == "__main__":
     goal = np.array([8.5,1]).reshape(2,1)
     map = np.ones((10,10))
     obslist = img_to_geo(bmap(), minmax=[0,10], free_space_value=1)
+
+
+    # SECTION - plot task space
+    plt.scatter([start[0,0], goal[0,0]], [start[1,0], goal[1,0]])
     for o in obslist:
         o.plot()
     plt.show()
@@ -167,6 +169,8 @@ if __name__ == "__main__":
     planner.planing()
     path = planner.search_path()
 
+
+    # SECTION - plot planning result
     planner.plot_env()
     plt.plot([node.x for node in path], [node.y for node in path], color='blue')
     plt.show()

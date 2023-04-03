@@ -27,10 +27,14 @@ if __name__=="__main__":
     import matplotlib.pyplot as plt
     from taskmap_img_format import map_2d_1, map_2d_2, pmap, bmap
 
+
+    # SECTION - load map in image space
     map = bmap()
     plt.imshow(map)
     plt.show()
 
+
+    # SECTION - convert from image to geometry format
     obj_list = img_to_geo(map, minmax=[0,10], free_space_value=0)
     for obs in obj_list:
         obs.plot()

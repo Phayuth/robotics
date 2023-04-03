@@ -55,32 +55,36 @@ def grid_map_probability(index, size):
 
 if __name__ == "__main__":
 
-    # load binary map
+    # SECTION - load binary map
     index = 2
     map = grid_map_binary(index)
     plt.title("Original Map")
     plt.imshow(map)
     plt.show()
 
-    # increase map size
+
+    # SECTION - increase map size
     map = increase_map_size(map, multiplier=4)
     plt.title("Increase Map size")
     plt.imshow(map)
     plt.show()
 
-    # dilation of obstacle
+
+    # SECTION - dilation of obstacle
     map = obs_dilation(1- map)
     plt.title("Dilation Map")
     plt.imshow(map)
     plt.show()
 
-    # probabilitize map
+
+    # SECTION - probabilitize map
     map = probabilitizer(map, size=3)
     plt.title("Probability Map")
     plt.imshow(map)
     plt.show()
 
-    # Full set of all operation above in one function
+
+    # SECTION - Full set of all operation above in one function
     filter_size = 3
     map = grid_map_probability(index, filter_size)
     plt.imshow(map)

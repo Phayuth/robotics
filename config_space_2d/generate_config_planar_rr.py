@@ -6,6 +6,7 @@ sys.path.append(str(wd))
 import numpy as np
 from collision_check_geometry import collision_class
 
+
 def configuration_generate_plannar_rr(robot, obs_list):
 
     grid_size = 360
@@ -47,8 +48,11 @@ if __name__=="__main__":
     theta = r.inverse_kinematic_geometry(desired_pose, elbow_option=0)
     theta_index = map_multi_val(theta, -np.pi, np.pi, 0, 360).astype(int) # map theta to index image (option elbow up)
     theta_val = map_multi_val(theta_index, 0, 360, -np.pi, np.pi)         # map index image to theta (option elbow up)
-    r.plot_arm(theta, plt_basis=True)
     obs_list = task_rectangle_obs_1()
+
+
+    # SECTION - plot task space
+    r.plot_arm(theta, plt_basis=True)
     for obs in obs_list:
         obs.plot()
     plt.show()
@@ -57,6 +61,9 @@ if __name__=="__main__":
     # SECTION - configuration space
     grid_np = configuration_generate_plannar_rr(r, obs_list)
     grid_np[theta_index[0,0], theta_index[1,0]] = 2 # add a point in index of grid
+
+
+    # SECTION - plot configspace in image format
     plt.imshow(grid_np)
     plt.grid(True)
     plt.show()

@@ -6,7 +6,6 @@ sys.path.append(str(wd))
 import numpy as np
 import matplotlib.pyplot as plt
 from collision_check_geometry.collision_class import obj_line2d, obj_point2d, intersect_point_v_rectangle, intersect_line_v_rectangle
-from map.taskmap_geo_format import task_rectangle_obs_7
 
 class node:
     def __init__(self, x, y, parent=None, cost=0.0) -> None:
@@ -15,19 +14,17 @@ class node:
         self.parent = parent
         self.cost = cost
 
-class rrtstar:
-    def __init__(self) -> None:
+class infm_rrtstar:
+    def __init__(self, map, obstacle_list, startnode, goalnode, eta=None, maxiteration=1000)-> None:
+        # map properties
+        self.map = map
+        self.startnode = node(startnode[0,0], startnode[1,0])
+        self.startnode.cost = 0.0
+        self.goalnode  = node(goalnode[0,0], goalnode[1,0])
+        self.obs = obstacle_list
+
         # properties of planner
         self.maxiteration = 1000
-        self.startnode = node(4, 4)
-        self.startnode.cost = 0.0
-        self.goalnode = node(7, 8)
-
-        # map
-        self.map = np.ones((10, 10))
-        self.obs = task_rectangle_obs_7()
-
-        # distance step update per iteration
         m = self.map.shape[0] * self.map.shape[1]
         self.radius = (2 * (1 + 1/2)**(1/2)) * (m/np.pi)**(1/2)
         self.eta = self.radius * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
@@ -38,7 +35,8 @@ class rrtstar:
 
     def planning(self):
         c_best = np.inf
-        for _ in range(self.maxiteration):
+        for itera in range(self.maxiteration):
+            print(itera)
             for x_soln in self.X_soln:
                 c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode)
                 if x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode) < c_best:
@@ -232,12 +230,40 @@ class rrtstar:
             plt.scatter(l.x, l.y, color="yellow")
 
 if __name__ == "__main__":
+    from map.taskmap_geo_format import task_rectangle_obs_7
+    from map.taskmap_img_format import bmap
+    from map.map_format_converter import img_to_geo
     np.random.seed(9)
-    planner = rrtstar()
-    planner.planning()
-    planner.plot_env()
-    path = planner.search_path()
-    print(len(path))
-    plt.plot([node.x for node in path], [node.y for node in path], color='blue')
 
+
+    # SECTION - Experiment 1
+    start = np.array([4,4]).reshape(2,1)
+    goal = np.array([7,8]).reshape(2,1)
+    map = np.ones((10,10))
+    obslist = task_rectangle_obs_7()
+
+
+    # SECTION - Experiment 2
+    # start = np.array([4,4]).reshape(2,1)
+    # goal = np.array([8.5,1]).reshape(2,1)
+    # map = np.ones((10,10))
+    # obslist = img_to_geo(bmap(), minmax=[0,10], free_space_value=1)
+
+
+    # SECTION - plot task space
+    plt.scatter([start[0,0], goal[0,0]], [start[1,0], goal[1,0]])
+    for o in obslist:
+        o.plot()
+    plt.show()
+
+
+    # SECTION - Planing Section
+    planner = infm_rrtstar(map, obslist, start, goal, maxiteration=1000)
+    planner.planning()
+    path = planner.search_path()
+
+
+    # SECTION - plot planning result
+    planner.plot_env()
+    plt.plot([node.x for node in path], [node.y for node in path], color='blue')
     plt.show()

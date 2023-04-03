@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from map.taskmap_geo_format import task_rectangle_obs_6
 from robot.planar_rrr import planar_rrr
-from util.coord_transform import polar2cats, approach_circle_plt
+from util.coord_transform import polar2cats, circle_plt
 from map.map_value_range import map_val, map_multi_val
 from config_space_2d.generate_config_planar_rrr import configuration_generate_plannar_rrr_first_2joints
 from planner.research_rrtstar_3d.rrtstar_probabilty_3d import node , rrt_star
@@ -41,7 +41,7 @@ theta_ik_app = robot.inverse_kinematic_geometry(app_point, elbow_option=0)
 # plot view
 robot.plot_arm(theta_ik_tag, plt_basis=True)
 robot.plot_arm(theta_ik_app)
-approach_circle_plt(x_targ, y_targ, radius=0.1)
+circle_plt(x_targ, y_targ, radius=0.1)
 obs_list = task_rectangle_obs_6()
 for obs in obs_list:
     obs.plot()
@@ -82,7 +82,7 @@ pathx, pathy, pathz = extract_path_class_3d(path)
 
 
 # plot view
-approach_circle_plt(x_targ, y_targ, radius=0.1)
+circle_plt(x_targ, y_targ, radius=0.1)
 for i in range(len(path)):
     theta1 = map_val(pathx[i], 0, grid_size, -np.pi, np.pi)
     theta2 = map_val(pathy[i], 0, grid_size, -np.pi, np.pi)
