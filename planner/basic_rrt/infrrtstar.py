@@ -112,9 +112,12 @@ class infm_rrtstar:
             r1 = c_max/2
             r2 = np.sqrt(c_max**2 - c_min**2)/2
             L = np.diag([r1, r2])
-            x_ball = self.sampleUnitBall()
-            x_rand = (C @ L @ x_ball) + x_center
-            x_rand = node(x_rand[0,0], x_rand[1,0])
+            while True:
+                x_ball = self.sampleUnitBall()
+                x_rand = (C @ L @ x_ball) + x_center
+                x_rand = node(x_rand[0,0], x_rand[1,0])
+                if (0 < x_rand.x < self.map.shape[0]) or (0 < x_rand.y < self.map.shape[1]):
+                    break
         else:
             x_rand = self.unisampling()
         return x_rand
@@ -233,21 +236,24 @@ if __name__ == "__main__":
     from map.taskmap_geo_format import task_rectangle_obs_7
     from map.taskmap_img_format import bmap
     from map.map_format_converter import img_to_geo
+    from collision_check_geometry.collision_class import obj_rec
     np.random.seed(9)
 
 
     # SECTION - Experiment 1
-    start = np.array([4,4]).reshape(2,1)
-    goal = np.array([7,8]).reshape(2,1)
-    map = np.ones((10,10))
-    obslist = task_rectangle_obs_7()
+    # start = np.array([4,4]).reshape(2,1)
+    # goal = np.array([7,8]).reshape(2,1)
+    # map = np.ones((10,10))
+    # obslist = task_rectangle_obs_7()
 
 
     # SECTION - Experiment 2
-    # start = np.array([4,4]).reshape(2,1)
-    # goal = np.array([8.5,1]).reshape(2,1)
-    # map = np.ones((10,10))
-    # obslist = img_to_geo(bmap(), minmax=[0,10], free_space_value=1)
+    start = np.array([4,4]).reshape(2,1)
+    goal = np.array([8.5,1]).reshape(2,1)
+    map = np.ones((10,10))
+    obslist = img_to_geo(bmap(), minmax=[0,10], free_space_value=1)
+    obsborder = [obj_rec(0,0,0.1,10), obj_rec(0,0,10,0.1), obj_rec(10,0,10,0.1), obj_rec(0,10,0.1,10)]
+    obslist = obslist + obsborder
 
 
     # SECTION - plot task space
@@ -258,7 +264,7 @@ if __name__ == "__main__":
 
 
     # SECTION - Planing Section
-    planner = infm_rrtstar(map, obslist, start, goal, maxiteration=1000)
+    planner = infm_rrtstar(map, obslist, start, goal, maxiteration=2000)
     planner.planning()
     path = planner.search_path()
 

@@ -429,7 +429,6 @@ class rrt_star():
 
 if __name__=="__main__":
     from map.map_loader import grid_map_binary
-    from planner.research_rrtstar.rrtstar_probabilty_proxy_collision import node , rrt_star
     np.random.seed(0)
 
     # SECTION - Experiment 1

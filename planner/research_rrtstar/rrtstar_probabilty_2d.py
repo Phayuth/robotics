@@ -426,7 +426,6 @@ class rrt_star():
 if __name__=="__main__":
     from map.map_loader import grid_map_probability
     from map.taskmap_img_format import map_2d_empty
-    from planner.research_rrtstar.rrtstar_probabilty_2d import node, rrt_star
     np.random.seed(1)
 
  
