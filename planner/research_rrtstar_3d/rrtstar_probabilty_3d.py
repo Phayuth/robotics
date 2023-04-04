@@ -1,3 +1,8 @@
+import os
+import sys
+wd = os.path.abspath(os.getcwd())
+sys.path.append(str(wd))
+
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -23,7 +28,7 @@ class node(object):
         self.parent = parent
 
 class rrt_star():
-    def __init__(self, map:np.ndarray, x_init:node, x_goal:node, eta:float, w1:float, w2:float, max_interation:int):
+    def __init__(self, map:np.ndarray, x_init:node, x_goal:node, w1:float, w2:float, eta:float=None, maxiteration:int=1000):
         """YeongMin proposed method of planning using RRT*, Bias sampling, Probability Costmap
 
         Args:
@@ -35,20 +40,26 @@ class rrt_star():
             w2 (float): obstacle weight
             max_interation (int): maximum of iteration
         """
+        # map properties
         self.map = map
-        self.x_init = x_init
-        self.x_goal = x_goal
+        self.x_init = node(x_init[0,0], x_init[1,0], x_init[2,0])
+        self.x_goal = node(x_goal[0,0], x_goal[1,0], x_goal[2,0])
         self.nodes = [self.x_init]
-        self.eta = eta
+
+        # planner properties
+        self.maxiteration = maxiteration
+        self.m = map.shape[0] * map.shape[1] * map.shape[2]
+        self.r = (2 * (1 + 1/2)**(1/2)) * (self.m/np.pi)**(1/2)
+        self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
         self.w1 = w1
         self.w2 = w2
 
         self.sample_taken = 0
         self.total_iter = 0
-        self.iteration = max_interation
         self.Graph_sample_num = 0
         self.Graph_data = np.array([[0,0]])
 
+        # timing
         self.s = time.time()
         self.e = None
         self.sampling_elapsed = 0
@@ -374,14 +385,14 @@ class rrt_star():
                 if b == True :
                     break
                 # stop if the sampling iteration reach maximum
-                if self.total_iter == self.iteration:
+                if self.total_iter == self.maxiteration:
                     break
             # stop record sampling time
             time_sampling_end = time.time()
             # determine sampling time elapsed
             self.sampling_elapsed += time_sampling_end - time_sampling_start
             # stop the entire planner if iteration reach maximum
-            if self.total_iter == self.iteration:
+            if self.total_iter == self.maxiteration:
                 break
             # update sample taken number
             self.sample_taken += 1
@@ -423,3 +434,40 @@ class rrt_star():
         print("Total_iteration = ", self.total_iter)
         print("Cost : ", self.x_goal.cost)
 
+ 
+if __name__=="__main__":
+    from map.taskmap_img_format import map_3d_empty
+    from util.extract_path_class import extract_path_class_3d
+    np.random.seed(0)
+
+
+    # SECTION - Experiment 1
+    filter_size = 0  # 1 = 3x3, 2 = 5x5, 3 = 7x7
+    classify = False
+    map = map_3d_empty()
+    x_init = np.array([0, 0, 0]).reshape(3,1)
+    x_goal = np.array([40, 10, 30]).reshape(3,1)
+
+
+    # SECTION - Experiment 2
+    # filter_size = 0  # 1 = 3x3, 2 = 5x5, 3 = 7x7
+    # classify = False
+    # map = np.load('./map/mapdata/config_space_data_3d/config3D.npy')
+    # x_init = np.array([0, 0, 0]).reshape(3,1)
+    # x_goal = np.array([40, 10, 30]).reshape(3,1)
+
+
+    # SECTION - planner 
+    distance_weight = 0.5
+    obstacle_weight = 0.5
+    rrt = rrt_star(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
+    rrt.start_planning()
+
+
+    # SECTION - result
+    path = rrt.Get_Path()
+    pathx, pathy, pathz = extract_path_class_3d(path)
+    rrt.print_time()
+    rrt.Draw_tree()
+    rrt.Draw_path(path)
+    plt.show()

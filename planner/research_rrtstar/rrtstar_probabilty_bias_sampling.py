@@ -1,3 +1,8 @@
+import os
+import sys
+wd = os.path.abspath(os.getcwd())
+sys.path.append(str(wd))
+
 import numpy as np
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
@@ -20,7 +25,7 @@ class node(object):
         self.parent = parent
 
 class rrt_star():
-    def __init__(self, map:np.ndarray, x_init:node, x_goal:node, eta:float, obs:list, obstacle_center:list, collision_range:float, max_iteration:int):
+    def __init__(self, map:np.ndarray, x_init:node, x_goal:node, obs:list, obstacle_center:list, collision_range:float, eta:float=None, maxiteration:int=1000):
         """General RRT star method of planning with Bias sampling
 
         Args:
@@ -33,21 +38,27 @@ class rrt_star():
             collision_range (float): range of obstacle generate from [generate obstcle from map]
             max_iteration (int): maximum of iteration
         """
+        # map properties
         self.map = map
-        self.x_init = x_init
-        self.x_goal = x_goal
+        self.x_init = node(x_init[0,0], x_init[1,0])
+        self.x_goal = node(x_goal[0,0], x_goal[1,0])
         self.nodes = [self.x_init]
         self.obs = obs
         self.obstacle_center = obstacle_center
         self.collision_range = collision_range
-        self.eta = eta
-        self.iteration = max_iteration
+
+        # planner properties
+        self.maxiteration = maxiteration
+        self.m = map.shape[0] * map.shape[1]
+        self.r = (2 * (1 + 1/2)**(1/2)) * (self.m/np.pi)**(1/2)
+        self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
 
         self.sample_taken = 0
         self.total_iter = 0
         self.Graph_sample_num = 0
         self.Graph_data = np.array([[0,0]])
 
+        # timing
         self.s = time.time()
         self.e = None
         self.sampling_elapsed = 0
@@ -354,14 +365,14 @@ class rrt_star():
                 if self.Node_collision_check(x_new):
                     break
                 # stop if the sampling iteration reach maximum
-                if self.total_iter == self.iteration:
+                if self.total_iter == self.maxiteration:
                     break
             # stop record sampling time
             time_sampling_end = time.time()
             # determine sampling time elapsed
             self.sampling_elapsed += time_sampling_end - time_sampling_start
             # stop the entire planner if iteraton reach maximum
-            if self.total_iter == self.iteration:
+            if self.total_iter == self.maxiteration:
                 break
             # update sample taken number
             self.sample_taken += 1
@@ -405,3 +416,35 @@ class rrt_star():
         print("Rewire time : ", self.rewire_elapsed,"second", (self.rewire_elapsed*100)/(self.e-self.s),"%")
         print("Total_iteration = ", self.total_iter)
         print("Cost : ", self.x_goal.cost)
+
+
+if __name__=="__main__":
+    from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map
+    from map.map_loader import grid_map_binary
+    np.random.seed(0)
+
+
+    # SECTION - Experiment 1
+    index = 0
+    map = grid_map_binary(index)
+    plt.imshow(map)
+    plt.show()
+    mm, obstacle, obstacle_center  = obstacle_generate_from_map(index)
+    obs = Obstacle_generater(obstacle)
+    collision_range = (2**(1/2))/2
+    x_init = np.array([15, 15]).reshape(2,1)
+    x_goal = np.array([20, 20]).reshape(2,1)
+
+
+    # SECTION - planner
+    rrt = rrt_star(map, x_init, x_goal, obs, obstacle_center, collision_range, maxiteration=1000)
+    rrt.start_planning()
+    path = rrt.Get_Path()
+
+
+    # SECTION - result
+    rrt.print_time()
+    rrt.Draw_obs()
+    rrt.Draw_Tree()
+    rrt.Draw_path(path)
+    plt.show()

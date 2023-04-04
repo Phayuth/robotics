@@ -25,8 +25,8 @@ class rrtstar:
 
         # properties of planner
         self.maxiteration = maxiteration
-        m = self.map.shape[0] * self.map.shape[1]
-        self.radius = (2 * (1 + 1/2)**(1/2)) * (m/np.pi)**(1/2)
+        self.m = self.map.shape[0] * self.map.shape[1]
+        self.radius = (2 * (1 + 1/2)**(1/2)) * (self.m/np.pi)**(1/2)
         self.eta = self.radius * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
 
         # start with a tree vertex have start node and empty branch
