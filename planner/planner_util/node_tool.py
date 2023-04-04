@@ -1,93 +1,74 @@
 import numpy as np
-import random
 import matplotlib.pyplot as plt
 
-def sampling_point_step(x_base,y_base,dist_step):
+class node:
+    def __init__(self, x, y, cost=0, cost_euld=0, parent=None, child=None):
+        self.x = x
+        self.y = y
+        self.cost = cost
+        self.cost_euld = cost_euld
+        self.parent = parent
+        self.child = child
     
-    x_sample = random.randint(-10, 10)
-    y_sample = random.randint(-10, 10)
+def steer(q_base, q_rand, dist_step):
 
-    theta = np.arctan2((y_sample - y_base),(x_sample - x_base))
-    x_new = dist_step*np.cos(theta)
-    y_new = dist_step*np.sin(theta)
-    
-    return x_new, y_new, x_sample, y_sample
+    if np.linalg.norm([q_base.x - q_rand.x, q_base.y - q_rand.y]) <= dist_step:
+        q_new = q_rand
 
-def nearest_neighbor_circle(r, distribution, node):
-    
+    else:
+        # theta approach
+        theta = np.arctan2((q_rand.y - q_base.y),(q_rand.x - q_base.x))
+        x_new = dist_step*np.cos(theta) + q_base.x
+        y_new = dist_step*np.sin(theta) + q_base.y
+        q_new = node(x_new, y_new)
+
+        # hypothenus approach cos=near/hypo, sin=far/hypos
+        # hypo = np.linalg.norm([q_base.x - q_rand.x, q_base.y - q_rand.y])
+        # x_new = dist_step*(q_rand.x - q_base.x)/hypo + q_base.x
+        # y_new = dist_step*(q_rand.y - q_base.y)/hypo + q_base.y
+        # q_new = node(x_new, y_new)
+
+    return q_new
+
+def nearest_neighbor(r, nodeslist, node):
     neighbor = []
-
-    for i in range(len(distribution)):
-        dx = distribution[i,0]
-        dy = distribution[i,1]
-
-        base = [node[0,0],node[1,0]]
-
-        dist = [(base[0] - dx) - (base[1] - dy)]
-        
+    for ind, nd in enumerate(nodeslist):
+        dist = np.linalg.norm([nd.x - node.x, nd.y - node.y])
         if np.linalg.norm(dist) <= r:
-            neighbor.append([dx,dy])
+            neighbor.append(nd)
 
     return neighbor
 
-def nearest_node(node_list,node):
+def nearest_node(nodeslist, node):
     D = []
-    for i in range(len(node_list)):
-        xi = node_list[i][0]
-        yi = node_list[i][1]
-
-        x0 = node[0]
-        y0 = node[1]
-
-        coord = [(xi - x0),(yi - y0)]
-        d = np.linalg.norm(coord)
-        D.append(d)
-
+    for ind, nd in enumerate(nodeslist):
+        dist = np.linalg.norm([nd.x - node.x, nd.y - node.y])
+        D.append(dist)
     nearest_index = np.argmin(D)
-    return node_list[nearest_index]
+
+    return nodeslist[nearest_index]
+
 
 if __name__ == "__main__":
-    # sampling point step
-    x_base = 0
-    y_base = 0
-    x_new, y_new, x_sample, y_sample = sampling_point_step(x_base,y_base,dist_step=2)
-
-    print(x_new, y_new)
-    print(x_sample, y_sample)
-    plt.scatter(0, 0)
-    plt.scatter(x_new, y_new)
-    plt.scatter(x_sample, y_sample)
+    
+    # SECTION - steer
+    q_base = node(0,0)
+    q_rand = node(np.random.randint(5), np.random.randint(5))
+    q_new = steer(q_base, q_rand, dist_step=1)
+    plt.scatter([q_base.x, q_rand.x, q_new.x],[q_base.y, q_rand.y, q_new.y])
     plt.show()
 
-    # nearest neighbor
+
+    # SECTION - nearest neighbor
     r = 2
-    list_node = [[0,0],[1,0],[-1,0],[0,1],[0,-1],[0,5]]
-    node = np.array([[0],[0]])
-    distribution = np.array(list_node)
-
-    neg = nearest_neighbor_circle(r,distribution,node)
-
-    x , y = distribution[:,0] , distribution[:,1]
-    x_base, y_base = node[0], node[1]
-
+    list_node = [node(0,0),node(1,0),node(-1,0),node(0,1),node(0,-1),node(0,5)]
+    nd = node(0,0)
+    neg = nearest_neighbor(r,list_node,node)
     print(neg)
-    plt.scatter(x,y)
-    plt.scatter(x_base,y_base,c="red")
-    plt.show()
 
-    # nearest node
-    list_node = [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5]]
-    node = [1,3]
 
-    list_node_array = np.array(list_node)
-
+    # SECTION - nearest node
+    list_node = [node(0,0),node(0,1),node(0,2),node(0,3),node(0,4),node(0,5)]
+    nd = [1,3]
     near = nearest_node(list_node,node)
-
-    x , y = list_node_array[:,0] , list_node_array[:,1]
-    x_node, y_node = node[0], node[1]
-
     print(near)
-
-    plt.scatter(x,y)
-    plt.scatter(x_node,y_node)
-    plt.show()

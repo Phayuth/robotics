@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from collision_check_geometry.collision_class import obj_line2d, obj_point2d, intersect_point_v_rectangle, intersect_line_v_rectangle
 
 class node:
-    def __init__(self, x, y, parent=None, cost=0.0) -> None:
+    def __init__(self, x, y, parent=None, cost=0.0)-> None:
         self.x = x
         self.y = y
         self.parent = parent
@@ -24,9 +24,9 @@ class infm_rrtstar:
         self.obs = obstacle_list
 
         # properties of planner
-        self.maxiteration = 1000
-        m = self.map.shape[0] * self.map.shape[1]
-        self.radius = (2 * (1 + 1/2)**(1/2)) * (m/np.pi)**(1/2)
+        self.maxiteration = maxiteration
+        self.m = self.map.shape[0] * self.map.shape[1]
+        self.radius = (2 * (1 + 1/2)**(1/2)) * (self.m/np.pi)**(1/2)
         self.eta = self.radius * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
 
         # start with a tree vertex have start node and empty branch
@@ -41,7 +41,7 @@ class infm_rrtstar:
                 c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode)
                 if x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode) < c_best:
                     c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode)
-            
+
             x_rand = self.sampling(self.startnode, self.goalnode, c_best)
 
             x_nearest = self.nearest_node(x_rand)
@@ -116,7 +116,7 @@ class infm_rrtstar:
                 x_ball = self.sampleUnitBall()
                 x_rand = (C @ L @ x_ball) + x_center
                 x_rand = node(x_rand[0,0], x_rand[1,0])
-                if (0 < x_rand.x < self.map.shape[0]) or (0 < x_rand.y < self.map.shape[1]):
+                if (0 < x_rand.x < self.map.shape[0]) and (0 < x_rand.y < self.map.shape[1]): # check if outside configspace
                     break
         else:
             x_rand = self.unisampling()
@@ -197,7 +197,6 @@ class infm_rrtstar:
             return True
         else:
             return False
-        # return False
 
     def collision_check_line(self, x_nearest, x_new):
         line = obj_line2d(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
@@ -209,7 +208,6 @@ class infm_rrtstar:
             return True
         else:
             return False
-        # return False
     
     def plot_env(self):
         # plot obstacle
@@ -252,8 +250,8 @@ if __name__ == "__main__":
     goal = np.array([8.5,1]).reshape(2,1)
     map = np.ones((10,10))
     obslist = img_to_geo(bmap(), minmax=[0,10], free_space_value=1)
-    obsborder = [obj_rec(0,0,0.1,10), obj_rec(0,0,10,0.1), obj_rec(10,0,10,0.1), obj_rec(0,10,0.1,10)]
-    obslist = obslist + obsborder
+    # obsborder = [obj_rec(0,0,0.1,10), obj_rec(0,0,10,0.1), obj_rec(10,0,10,0.1), obj_rec(0,10,0.1,10)]
+    # obslist = obslist + obsborder
 
 
     # SECTION - plot task space
@@ -264,7 +262,7 @@ if __name__ == "__main__":
 
 
     # SECTION - Planing Section
-    planner = infm_rrtstar(map, obslist, start, goal, maxiteration=2000)
+    planner = infm_rrtstar(map, obslist, start, goal, maxiteration=1000)
     planner.planning()
     path = planner.search_path()
 

@@ -9,12 +9,11 @@ import time
 from util.coord_transform import circle_plt
 
 class node(object):
-    def __init__(self, x:float, y:float, cost:float = 0, cost_inf= 0, parent = None):
+    def __init__(self, x:float, y:float, cost:float= 0, cost_real= 0, parent= None):
         self.x = x
         self.y = y
-        self.arr = np.array([self.x, self.y])
         self.cost = cost
-        self.cost_inf = cost_inf # real cost for informsampling
+        self.cost_real = cost_real # real cost for informsampling
         self.parent = parent
 
 class infm_rrtstar_prob():
@@ -29,7 +28,8 @@ class infm_rrtstar_prob():
         self.maxiteration = maxiteration
         self.m = map.shape[0] * map.shape[1]
         self.r = (2 * (1 + 1/2)**(1/2)) * (self.m/np.pi)**(1/2)
-        self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
+        # self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
+        self.eta = 4
         self.w1 = w1
         self.w2 = w2
         self.X_soln = []
@@ -46,7 +46,13 @@ class infm_rrtstar_prob():
         self.addparent_elapsed = 0
         self.rewire_elapsed = 0
 
-    def biassampling(self)-> node:
+    def unisampling(self):
+        x = np.random.uniform(low=0, high=self.map.shape[0])
+        y = np.random.uniform(low=0, high=self.map.shape[1])
+        x_rand = node(x, y)
+        return x_rand
+    
+    def biassampling(self):
         row = self.map.shape[1]
         p = np.ravel(self.map) / np.sum(self.map)
         x_sample = np.random.choice(len(p), p=p)
@@ -54,7 +60,6 @@ class infm_rrtstar_prob():
         y = x_sample % row
         x = np.random.uniform(low=x - 0.5, high=x + 0.5)
         y = np.random.uniform(low=y - 0.5, high=y + 0.5)
-        print(x-0.5, x+0.5)
         x_rand = node(x, y)
         return x_rand
     
@@ -66,13 +71,12 @@ class infm_rrtstar_prob():
             r1 = c_max/2
             r2 = np.sqrt(c_max**2 - c_min**2)/2
             L = np.diag([r1, r2])
-            x_ball = self.sampleUnitBall()
-            x_rand = (C @ L @ x_ball) + x_center
-
-            x_rand = node(x_rand[0,0], x_rand[1,0])
-            # check if outside of area
-            if (0 < x_rand.x < self.map.shape[0]) or (0 < x_rand.y < self.map.shape[1]):
-                x_rand = None
+            while True:
+                x_ball = self.sampleUnitBall()
+                x_rand = (C @ L @ x_ball) + x_center
+                x_rand = node(x_rand[0,0], x_rand[1,0])
+                if (0 < x_rand.x < self.map.shape[0]) and (0 < x_rand.y < self.map.shape[1]): # check if outside of area
+                    break
         else:
             x_rand = self.biassampling()
         return x_rand
@@ -99,21 +103,23 @@ class infm_rrtstar_prob():
             return False
 
     def Distance_cost(self, start:node, end:node)-> float:
-        distance_cost = np.linalg.norm(start.arr - end.arr)
+        distance_cost = np.linalg.norm([(end.x - start.x), (end.y - start.y)])
         return distance_cost
 
     def Obstacle_cost(self, start:node, end:node)-> float:
         seg_length = 1
-        seg_point = int(np.ceil(np.linalg.norm(start.arr - end.arr) / seg_length))
+        seg_point = int(np.ceil(self.Distance_cost(start, end) / seg_length))
 
         value = 0
         if seg_point > 1:
-            v = (end.arr - start.arr) / (seg_point)
+            v = self.Distance_cost(start, end)/ (seg_point)
 
             for i in range(seg_point + 1):
                 seg = start.arr + i * v
                 seg = np.around(seg)
+
                 if 1 - self.map[int(seg[0]), int(seg[1])] == 1 :
+                    
                     cost = 1e10
 
                     return cost
@@ -197,7 +203,7 @@ class infm_rrtstar_prob():
                     c_min = x_near.cost + self.Line_cost(x_near, x_new)
             x_new.parent = x_min
             x_new.cost = c_min
-            x_new.cost_inf = x_near.cost_inf + self.Distance_cost(x_near, x_new)
+            x_new.cost_real = x_near.cost_real + self.Distance_cost(x_near, x_new)
 
         return x_new
 
@@ -208,7 +214,7 @@ class infm_rrtstar_prob():
                     if x_new.cost + self.Line_cost(x_new, x_near) < x_near.cost:
                         x_near.parent = x_new
                         x_near.cost = x_new.cost + self.Line_cost(x_new, x_near)
-                        x_near.cost_inf = x_new.cost_inf + self.Distance_cost(x_new, x_near)
+                        x_near.cost_real = x_new.cost_real + self.Distance_cost(x_new, x_near)
 
     def Get_Path(self)-> list:
         temp_path = []
@@ -240,27 +246,6 @@ class infm_rrtstar_prob():
 
             return path
 
-    def Cost_Graph(self):
-
-        temp_path = []
-        n = 0
-        for i in self.nodes:
-            if self.Distance_cost(i, self.x_goal) < 3:
-                cost = i.cost + self.Line_cost(self.x_goal, i)
-                temp_path.append([cost, n, i])
-                n += 1
-        temp_path.sort()
-
-        if temp_path == []:
-            return 0
-        else:
-            closest_node = temp_path[0][2]
-            i = closest_node
-
-            self.x_goal.cost = temp_path[0][0]
-
-            return self.x_goal.cost
-
     def Draw_Tree(self):
         for i in self.nodes:
             if i is not self.x_init:
@@ -277,49 +262,34 @@ class infm_rrtstar_prob():
 
     def start_planning(self):
         while True:
-            time_sampling_start = time.time()
             c_best = np.inf
             while True:
                 for x_soln in self.X_soln:
-                    c_best = x_soln.parent.cost_inf + self.Distance_cost(x_soln.parent, x_soln) + self.Distance_cost(x_soln, self.x_goal)
-                    if x_soln.parent.cost_inf + self.Distance_cost(x_soln.parent, x_soln) + self.Distance_cost(x_soln, self.x_goal) < c_best:
-                        c_best = x_soln.parent.cost_inf + self.Distance_cost(x_soln.parent, x_soln) + self.Distance_cost(x_soln, self.x_goal)
-
+                    c_best = x_soln.parent.cost_real + self.Distance_cost(x_soln.parent, x_soln) + self.Distance_cost(x_soln, self.x_goal)
+                    if x_soln.parent.cost_real + self.Distance_cost(x_soln.parent, x_soln) + self.Distance_cost(x_soln, self.x_goal) < c_best:
+                        c_best = x_soln.parent.cost_real + self.Distance_cost(x_soln.parent, x_soln) + self.Distance_cost(x_soln, self.x_goal)
+                print(c_best)
                 x_rand = self.infmsampling(self.x_init, self.x_goal, c_best)
-                if x_rand == None:
-                    break
                 self.total_iter += 1
                 x_nearest = self.Nearest(x_rand)
                 x_new = self.Steer(x_rand, x_nearest)
-                b = self.New_Check(x_new)
-                if b == True: break
+                x_new.parent = x_nearest
+                x_new.cost = x_new.parent.cost + self.Line_cost(x_new, x_new.parent)
+                x_new.cost_real = x_new.parent.cost_real + self.Distance_cost(x_new, x_new.parent)
+                if self.New_Check(x_new) == True: break
                 if self.total_iter == self.maxiteration: break
 
-            time_sampling_end = time.time()
-            self.sampling_elapsed += time_sampling_end - time_sampling_start
             if self.total_iter == self.maxiteration: break
             self.sample_taken += 1
             print("==>> self.sample_taken: ", self.sample_taken)
 
-            time_addparent_start = time.time()
             x_new = self.Add_Parent(x_new, x_nearest)
-            time_addparent_end = time.time()
-            self.addparent_elapsed += (time_addparent_end - time_addparent_start)
             self.nodes.append(x_new)
-
-            time_rewire_start = time.time()
             self.Rewire(x_new)
-            time_rewire_end = time.time()
-            self.rewire_elapsed += (time_rewire_end - time_rewire_start)
 
             # in goal region
             if self.ingoal_region(x_new):
                 self.X_soln.append(x_new)
-
-            # self.Graph_sample_num += 1
-            # if self.Graph_sample_num%100 == 0:
-            #     Graph_cost = self.Cost_Graph()
-            #     self.Graph_data = np.append(self.Graph_data,np.array([[self.Graph_sample_num, Graph_cost]]), axis = 0)
     
         self.e = time.time()
 
@@ -358,8 +328,7 @@ if __name__=="__main__":
     obstacle_weight = 0.5
     rrt = infm_rrtstar_prob(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
     rrt.start_planning()
-    path = rrt.Get_Path()
-    print(rrt.X_soln)
+    # path = rrt.Get_Path()
 
 
     # SECTION - result
@@ -367,6 +336,6 @@ if __name__=="__main__":
     plt.figure(figsize=(10,10))
     plt.axes().set_aspect('equal')
     rrt.Draw_Tree()
-    rrt.Draw_path(path)
+    # rrt.Draw_path(path)
     plt.imshow(np.transpose(1-map), interpolation = 'nearest', origin="lower")
     plt.show()

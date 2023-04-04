@@ -130,4 +130,4 @@ if __name__=="__main__":
     map2 = grid_map_probability(0, 3)
     map3 = grid_map_probability(0, 3)
 
-    start_sampling(map3, number_sampling=1000, sampling_mode="infsamp")
+    start_sampling(map3, number_sampling=1000, sampling_mode="uniform")
