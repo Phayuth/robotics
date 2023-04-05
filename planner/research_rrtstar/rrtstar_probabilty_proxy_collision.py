@@ -432,11 +432,19 @@ if __name__=="__main__":
     np.random.seed(0)
 
     # SECTION - Experiment 1
-    map = grid_map_binary(index=1).T
+    # map = grid_map_binary(index=1).T
+    # plt.imshow(map)
+    # plt.show()
+    # x_init = np.array([24, 12]).reshape(2,1)
+    # x_goal = np.array([27, 27]).reshape(2,1)
+
+
+    # SECTION - Experiment 2
+    map = np.ones((500,500))
     plt.imshow(map)
     plt.show()
-    x_init = np.array([24, 12]).reshape(2,1)
-    x_goal = np.array([27, 27]).reshape(2,1)
+    x_init = np.array([20, 20]).reshape(2, 1)
+    x_goal = np.array([200, 20]).reshape(2, 1)
 
 
     # SECTION - planner

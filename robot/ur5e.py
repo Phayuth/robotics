@@ -304,9 +304,6 @@ class ur5e:
         T05 = A1 @ A2 @ A3 @ A4 @ A5
         T06 = A1 @ A2 @ A3 @ A4 @ A5 @ A6
 
-        plt.figure(figsize=(10,10))
-        plt.axes().set_aspect('equal')
-
         if plt_basis:
         # plot basic axis
             ax.plot3D([0, 0.5], [0, 0], [0, 0], 'red', linewidth=4)

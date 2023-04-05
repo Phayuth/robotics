@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
 
     # SECTION - Planning Section
-    planner = rrtbase(map, obslist, start, goal, eta=0.3, maxiteration=3000)
+    planner = rrtbase(map, obslist, start, goal, eta=1, maxiteration=3000)
     planner.planing()
     path = planner.search_path()
 

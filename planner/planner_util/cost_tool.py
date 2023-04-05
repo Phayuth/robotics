@@ -27,65 +27,65 @@ def segmented_line(q_base, q_far, num_seg=10):
         point = node(x, y)
         points.append(point)
     points.append(q_far)
+
     return points
 
 
 def getcost(map, q, minmax_q = [[-np.pi, np.pi],[-np.pi, np.pi]], return_index_cost=False):
 
-    # if minmax_q[0][0] < q.x < minmax_q[0][1] or minmax_q[1][0] < q.y < minmax_q[1][1]:
+    if minmax_q[0][0] < q.x < minmax_q[0][1] or minmax_q[1][0] < q.y < minmax_q[1][1]: # value must inside the range, not even equal pi
     
-    cell_size_x = (minmax_q[0][1] - minmax_q[0][0])/map.shape[0]
-    cell_size_y = (minmax_q[1][1] - minmax_q[1][0])/map.shape[1]
+        ind_x = int((map_val(q.x, minmax_q[0][0], minmax_q[0][1], 0, map.shape[0])))
+        ind_y = int((map_val(q.y, minmax_q[1][0], minmax_q[1][1], 0, map.shape[1])))
 
-    ind_x = int(round(q.x/cell_size_x))
-    ind_y = int(round(q.y/cell_size_y))
-
-    if return_index_cost:
-        return ind_x, ind_y, map[ind_y, ind_x]
-    else:
-        return map[ind_y, ind_x] # in img format row is y, column is x, spend weeks cause of this
-
-def getc(map, q, return_index_cost=False):
-
-    ind_x = int(round(map_val(q.x, -np.pi, np.pi, 0, map.shape[0])))
-    ind_y = int(round(map_val(q.y, -np.pi, np.pi, 0, map.shape[1])))
-
-    if return_index_cost:
-        return ind_x, ind_y, map[ind_y, ind_x]
-    else:
-        return map[ind_y, ind_x] # in img format row is y, column is x, spend weeks cause of this
+        if return_index_cost:
+            return ind_x, ind_y, map[ind_y, ind_x]
+        else:
+            return map[ind_y, ind_x] # in img format row is y, column is x, spend weeks cause of this
 
 
 def setcost(map, q, cost, minmax_q = [[-np.pi, np.pi],[-np.pi, np.pi]]):
     cell_size_x = (minmax_q[0][1] - minmax_q[0][0])/map.shape[0]
     cell_size_y = (minmax_q[1][1] - minmax_q[1][0])/map.shape[1]
 
-    ind_x = int(round(q.x/cell_size_x))
-    ind_y = int(round(q.y/cell_size_y))
+    ind_x = int((q.x/cell_size_x))
+    ind_y = int((q.y/cell_size_y))
 
     map[ind_y, ind_x] = cost
 
 
-# def obstacle_cost(map, start, end):
-#     seg_length = 1
-#     seg_point = int(np.ceil(distance(start, end) / seg_length))
-#     value = 0
-#     if seg_point > 1:
-#         v = distance(start, end)/ (seg_point)
-#         for i in range(seg_point + 1):
-#             seg = np.array([start.x, start.y]) + i * v
-#             seg = np.around(seg)
-#             if 1 - map[int(seg[0]), int(seg[1])] == 1 :
-#                 cost = 1e10
-#                 return cost
-#             else:
-#                 value += 1 - map[int(seg[0]), int(seg[1])]
-#         cost = value / (seg_point + 1)
-#         return cost
-#     else:
-#         value = map[int(start.x), int(start.y)] + map[int(end.x), int(end.y)]
-#         cost = value / 2
-#         return cost
+def line_cost(map, q_base, q_far, num_seg, return_index_cost=False):
+    seg = segmented_line(q_base, q_far, num_seg=num_seg)
+    costlist = [getcost(map, q) for q in seg]
+    cost = np.sum(costlist) / num_seg
+
+    if return_index_cost:
+        costlist = [getcost(map, q, return_index_cost=True) for q in seg]
+        return costlist
+    else:
+        return cost
+
+
+def obstacle_cost(map, start, end):
+    seg_length = 1
+    seg_point = int(np.ceil(distance(start, end) / seg_length))
+    value = 0
+    if seg_point > 1:
+        v = distance(start, end)/ (seg_point)
+        for i in range(seg_point + 1):
+            seg = np.array([start.x, start.y]) + i * v
+            seg = np.around(seg)
+            if 1 - map[int(seg[1]), int(seg[0])] == 1 :
+                cost = 1e10
+                return cost
+            else:
+                value += 1 - map[int(seg[1]), int(seg[0])]
+        cost = value / (seg_point + 1)
+        return cost
+    else:
+        value = map[int(start.y), int(start.x)] + map[int(end.y), int(end.x)]
+        cost = value / 2
+        return cost
 
 
 if __name__ == "__main__":
@@ -98,34 +98,41 @@ if __name__ == "__main__":
     # q_start = node(5,5)
     # q_end = node(5,10)
     # cost = obstacle_cost(map, q_start, q_end)
+    # print("==>> cost: \n", cost)
 
-    # plt.imshow(np.flip(map, 0), origin="lower")
+    # plt.imshow(map, origin="lower")
     # plt.scatter([q_start.x, q_end.x], [q_start.y, q_end.y])
     # plt.plot([q_start.x, q_end.x], [q_start.y, q_end.y])
     # plt.show()
 
 
     # SECTION - segmented line
-    # q_start = node(1,1)
-    # q_end = node(6,8)
+    # q_start = node(-1,-1)
+    # q_end = node(2, 1.5)
     # q_seg = segmented_line(q_start, q_end, num_seg=10)
     # for i in q_seg: plt.scatter(i.x, i.y)
     # plt.show()
 
 
     # SECTION - getcost
-    # q = node(3.14,2)
-    # cell = getcost(map, q, minmax_q = [[-np.pi, np.pi],[-np.pi, np.pi]], return_index_cost=True)
+    # q = node(-1,-1)
+    # cell = getcost(map, q, return_index_cost=True)
     # plt.imshow(map, origin="lower")
     # plt.scatter(cell[0], cell[1])
     # plt.title(f"cell index and value: {cell}, realgeo value: {q.x, q.y}, map shape: {map.shape}")
     # plt.show()
 
 
-    # SECTION - getc
-    q = node(0,0)
-    cell = getc(map, q, return_index_cost=True)
+    # SECTION - line cost
+    q_start = node(-1,-1)
+    q_end = node(2, 2)
+    costline = line_cost(map, q_start, q_end, num_seg=16)
+    print("==>> costline: \n", costline)
+
+    # line cost plot
+    ss = line_cost(map, q_start, q_end, num_seg=16, return_index_cost=True)
+    print("==>> ss: \n", ss)
+    plt.grid()
     plt.imshow(map, origin="lower")
-    plt.scatter(cell[0], cell[1])
-    plt.title(f"cell index and value: {cell}, realgeo value: {q.x, q.y}, map shape: {map.shape}")
+    for i in ss: plt.scatter(i[0], i[1])
     plt.show()

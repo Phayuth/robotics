@@ -239,17 +239,17 @@ if __name__ == "__main__":
 
 
     # SECTION - Experiment 1
-    # start = np.array([4,4]).reshape(2,1)
-    # goal = np.array([7,8]).reshape(2,1)
-    # map = np.ones((10,10))
-    # obslist = task_rectangle_obs_7()
+    start = np.array([4,4]).reshape(2,1)
+    goal = np.array([7,8]).reshape(2,1)
+    map = np.ones((10,10))
+    obslist = task_rectangle_obs_7()
 
 
     # SECTION - Experiment 2
-    start = np.array([4,4]).reshape(2,1)
-    goal = np.array([8.5,1]).reshape(2,1)
-    map = np.ones((10,10))
-    obslist = img_to_geo(bmap(), minmax=[0,10], free_space_value=1)
+    # start = np.array([4,4]).reshape(2,1)
+    # goal = np.array([8.5,1]).reshape(2,1)
+    # map = np.ones((10,10))
+    # obslist = img_to_geo(bmap(), minmax=[0,10], free_space_value=1)
     # obsborder = [obj_rec(0,0,0.1,10), obj_rec(0,0,10,0.1), obj_rec(10,0,10,0.1), obj_rec(0,10,0.1,10)]
     # obslist = obslist + obsborder
 
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
 
     # SECTION - Planing Section
-    planner = infm_rrtstar(map, obslist, start, goal, maxiteration=1000)
+    planner = infm_rrtstar(map, obslist, start, goal, maxiteration=500)
     planner.planning()
     path = planner.search_path()
 

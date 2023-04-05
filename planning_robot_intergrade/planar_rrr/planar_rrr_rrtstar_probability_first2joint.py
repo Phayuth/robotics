@@ -1,17 +1,18 @@
 import os
 import sys
+
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-import numpy as np
 import matplotlib.pyplot as plt
-from map.taskmap_geo_format import task_rectangle_obs_6
-from robot.planar_rrr import planar_rrr
-from util.coord_transform import polar2cats, circle_plt
-from map.map_value_range import map_val, map_multi_val
-from config_space_2d.generate_config_planar_rrr import configuration_generate_plannar_rrr_first_2joints
-from planner.research_rrtstar_3d.rrtstar_probabilty_3d import node , rrt_star
+import numpy as np
 
+from config_space_2d.generate_config_planar_rrr import configuration_generate_plannar_rrr_first_2joints
+from map.map_value_range import map_multi_val, map_val
+from map.taskmap_geo_format import task_rectangle_obs_6
+from planner.research_rrtstar_3d.rrtstar_probabilty_3d import node, rrt_star
+from robot.planar_rrr import planar_rrr
+from util.coord_transform import circle_plt, polar2cats
 from util.extract_path_class import extract_path_class_3d
 
 robot = planar_rrr()
@@ -60,8 +61,8 @@ theta_goal_index = (map_multi_val(theta_goal, -np.pi, np.pi, 0, grid_size)).asty
 map = configuration_generate_plannar_rrr_first_2joints(robot, obs_list)
 
 # Planing
-x_init = node(theta_init_index[0,0], theta_init_index[1,0], theta_init_index[2,0])
-x_goal = node(theta_goal_index[0,0], theta_goal_index[1,0], theta_goal_index[2,0])
+x_init = np.array([theta_init_index[0,0], theta_init_index[1,0], theta_init_index[2,0]]).reshape(3,1)
+x_goal = np.array([theta_goal_index[0,0], theta_goal_index[1,0], theta_goal_index[2,0]]).reshape(3,1)
 iteration = 500
 m = map.shape[0] * map.shape[1] * map.shape[2]
 r = (2 * (1 + 1/2)**(1/2)) * (m/np.pi)**(1/2)
