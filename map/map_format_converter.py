@@ -18,7 +18,7 @@ def img_to_geo(map, minmax=[], free_space_value=1):
         xval = np.linspace(-np.pi, np.pi, size_x)
         yval = np.linspace(-np.pi, np.pi, size_y)
 
-    obj = [obj_rec(xval[i], yval[j], xval[i+1] - xval[i], yval[j+1] - yval[j]) for i in range(len(xval)-1) for j in range(len(yval)-1) if map[i,j] != free_space_value]
+    obj = [obj_rec(xval[i], yval[j], xval[i+1] - xval[i], yval[j+1] - yval[j], p=free_space_value) for i in range(len(xval)-1) for j in range(len(yval)-1) if map[i,j] != free_space_value]
 
     return obj
 

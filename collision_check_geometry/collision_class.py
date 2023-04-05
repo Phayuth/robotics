@@ -15,17 +15,20 @@ class obj_aabb:
         self.z_max = z_max
 
 class obj_rec:
-    def __init__(self,x,y,h,w):
+    def __init__(self,x,y,h,w,p=None):
         self.x = x
         self.y = y
         self.h = h
         self.w = w
+        self.p = p # probability value
 
     def plot(self):
-        plt.plot([self.x,self.x+self.w], [self.y,self.y], c="b")
-        plt.plot([self.x,self.x], [self.y,self.y+self.h],c="b")
-        plt.plot([self.x,self.x+self.w], [self.y+self.h,self.y+self.h],c="b")
-        plt.plot([self.x+self.w,self.x+self.w], [self.y,self.y+self.h],c="b")
+        if self.p == 1: color = "r"
+        else: color = "b"
+        plt.plot([self.x,self.x+self.w], [self.y,self.y], c=color)
+        plt.plot([self.x,self.x], [self.y,self.y+self.h], c=color)
+        plt.plot([self.x,self.x+self.w], [self.y+self.h,self.y+self.h], c=color)
+        plt.plot([self.x+self.w,self.x+self.w], [self.y,self.y+self.h], c=color)
         
 class obj_point3d:
     def __init__(self,x,y,z):

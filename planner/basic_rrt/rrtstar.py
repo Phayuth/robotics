@@ -222,6 +222,9 @@ if __name__ == "__main__":
 
 
     # SECTION - plot planning result
+    freelist = img_to_geo(bmap(), minmax=[0,10], free_space_value=0)
+    for f in freelist:
+        f.plot()
     planner.plot_env()
     plt.plot([node.x for node in path], [node.y for node in path], color='blue')
     plt.show()

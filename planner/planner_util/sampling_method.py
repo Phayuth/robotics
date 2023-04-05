@@ -130,4 +130,15 @@ if __name__=="__main__":
     map2 = grid_map_probability(0, 3)
     map3 = grid_map_probability(0, 3)
 
-    start_sampling(map3, number_sampling=1000, sampling_mode="uniform")
+    # start_sampling(map3, number_sampling=1000, sampling_mode="uniform")
+
+
+
+    # SECTION - Test code
+    row = map3.shape[0]
+    p = np.ravel(map3) / np.sum(map3)
+    x_sample = np.random.choice(len(p), p=p)
+    x = x_sample // row
+    y = x_sample % row
+    x = np.random.uniform(low=x - 0.5, high=x + 0.5)
+    y = np.random.uniform(low=y - 0.5, high=y + 0.5)

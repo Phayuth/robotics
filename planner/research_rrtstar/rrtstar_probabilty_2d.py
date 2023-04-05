@@ -1,5 +1,6 @@
 import os
 import sys
+
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
@@ -7,8 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
+
 class node(object):
-    def __init__(self, x:float, y:float, cost:float = 0, parent = None):
+    def __init__(self, x: float, y: float, cost: float = 0, parent=None):
         """node class
 
         Args:
@@ -38,22 +40,22 @@ class rrt_star():
         """
         # map properties
         self.map = map
-        self.x_init = node(x_init[0,0], x_init[1,0])
-        self.x_goal = node(x_goal[0,0], x_goal[1,0])
+        self.x_init = node(x_init[0, 0], x_init[1, 0])
+        self.x_goal = node(x_goal[0, 0], x_goal[1, 0])
         self.nodes = [self.x_init]
-        
+
         # planner properties
         self.maxiteration = maxiteration
         self.m = map.shape[0] * map.shape[1]
-        self.r = (2 * (1 + 1/2)**(1/2)) * (self.m/np.pi)**(1/2)
-        self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
+        self.r = (2 * (1 + 1 / 2) ** (1 / 2)) * (self.m / np.pi) ** (1 / 2)
+        self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration) ** (1 / 2)
         self.w1 = w1
         self.w2 = w2
 
         self.sample_taken = 0
         self.total_iter = 0
         self.Graph_sample_num = 0
-        self.Graph_data = np.array([[0,0]])
+        self.Graph_data = np.array([[0, 0]])
 
         # timing
         self.s = time.time()
@@ -62,7 +64,7 @@ class rrt_star():
         self.addparent_elapsed = 0
         self.rewire_elapsed = 0
 
-    def Sampling(self)-> node:
+    def Sampling(self) -> node:
         """bias sampling method
 
         Returns:
@@ -84,10 +86,10 @@ class rrt_star():
 
         return x_rand
 
-    def Distance_cost(self, start:node, end:node)-> float:
+    def Distance_cost(self, start: node, end: node) -> float:
         """calculate distance from one node to other node based on euclidean distance norm
         [note] = yeongmin name this incorrectly. to get distance cost, it must divide by eta which done in function line cost
-        
+
         Args:
             start (node): start pose with node class
             end (node): end pose with node class
@@ -96,10 +98,10 @@ class rrt_star():
             float: norm value between 2 point
         """
         distance_cost = np.linalg.norm(start.arr - end.arr)
-        
+
         return distance_cost
 
-    def Obstacle_cost(self, start:node, end:node)-> float:
+    def Obstacle_cost(self, start: node, end: node) -> float:
         """calculate cost for obstacle node
 
         Args:
@@ -119,7 +121,7 @@ class rrt_star():
             for i in range(seg_point + 1):
                 seg = start.arr + i * v
                 seg = np.around(seg)
-                if 1 - self.map[int(seg[0]), int(seg[1])] == 1 :
+                if 1 - self.map[int(seg[0]), int(seg[1])] == 1:
                     cost = 1e10
 
                     return cost
@@ -131,13 +133,15 @@ class rrt_star():
             return cost
 
         else:
-
-            value = self.map[int(start.arr[0]), int(start.arr[1])] + self.map[int(end.arr[0]), int(end.arr[1])]
+            value = (
+                self.map[int(start.arr[0]), int(start.arr[1])]
+                + self.map[int(end.arr[0]), int(end.arr[1])]
+            )
             cost = value / 2
 
             return cost
 
-    def Line_cost(self, start:node, end:node)-> float:
+    def Line_cost(self, start: node, end: node) -> float:
         """calculate line cost. if the path crosses an obstacle, it has a high cost
 
         Args:
@@ -145,14 +149,16 @@ class rrt_star():
             end (node): end pose with node class
 
         Returns:
-            float: line cost = (distance weight * cost distance) + (obstacle weight * obstacle distance) 
+            float: line cost = (distance weight * cost distance) + (obstacle weight * obstacle distance)
         """
 
-        cost = self.w1*(self.Distance_cost(start, end)/self.eta) + self.w2*(self.Obstacle_cost(start, end))
+        cost = self.w1 * (self.Distance_cost(start, end) / self.eta) + self.w2 * (
+            self.Obstacle_cost(start, end)
+        )
 
         return cost
 
-    def Nearest(self, x_rand:node)-> node:
+    def Nearest(self, x_rand: node) -> node:
         """Find the nearest node in the tree that is the nearest to the random node
 
         Args:
@@ -164,17 +170,16 @@ class rrt_star():
         vertex = []
         i = 0
         for x_near in self.nodes:
-
             dist = self.Distance_cost(x_near, x_rand)
             vertex.append([dist, i, x_near])
-            i+=1
+            i += 1
 
         vertex.sort()
         x_nearest = vertex[0][2]
 
         return x_nearest
 
-    def Steer(self, x_rand:node, x_nearest:node)-> node:
+    def Steer(self, x_rand: node, x_nearest: node) -> node:
         """steer function to create a new node that is in the direction of x_rand node and near to x_nearest node
 
         Args:
@@ -187,17 +192,17 @@ class rrt_star():
 
         d = self.Distance_cost(x_rand, x_nearest)
 
-        if d < self.eta :
+        if d < self.eta:
             x_new = node(x_rand.x, x_rand.y)
         else:
-            new_x = x_nearest.x + self.eta*((x_rand.x - x_nearest.x)/d)
-            new_y = x_nearest.y + self.eta*((x_rand.y - x_nearest.y)/d)
+            new_x = x_nearest.x + self.eta * ((x_rand.x - x_nearest.x) / d)
+            new_y = x_nearest.y + self.eta * ((x_rand.y - x_nearest.y) / d)
 
-            x_new  = node(new_x, new_y)
+            x_new = node(new_x, new_y)
 
         return x_new
 
-    def Exist_Check(self, x_new:node)-> bool:
+    def Exist_Check(self, x_new: node) -> bool:
         """check if the new node is already exist in the tree
 
         Args:
@@ -209,10 +214,10 @@ class rrt_star():
         for x_near in self.nodes:
             if x_new.x == x_near.x and x_new.y == x_near.y:
                 return False
-            else :
+            else:
                 return True
 
-    def New_Check(self, x_new:node)-> bool:
+    def New_Check(self, x_new: node) -> bool:
         """new yeongmin proposed to Check whether or not to add to the tree.
         check probability cost of node a long with exist node check
 
@@ -239,7 +244,7 @@ class rrt_star():
         else:
             return False
 
-    def Add_Parent(self, x_new:node, x_nearest:node)-> node:
+    def Add_Parent(self, x_new: node, x_nearest: node) -> node:
         """function for adding parent node to x_new node
 
         Args:
@@ -247,14 +252,14 @@ class rrt_star():
             x_nearest (node): nearest node in the tree nearest to the x_new
 
         Returns:
-            node: x_new node that has x_nearest as its parent and cost  
+            node: x_new node that has x_nearest as its parent and cost
         """
 
         x_min = x_nearest
         c_min = x_min.cost + self.Line_cost(x_min, x_new)
 
         for x_near in self.nodes:
-            if self.Distance_cost(x_near, x_new) <= self.eta :
+            if self.Distance_cost(x_near, x_new) <= self.eta:
                 if x_near.cost + self.Line_cost(x_near, x_new) < c_min:
                     x_min = x_near
                     c_min = x_near.cost + self.Line_cost(x_near, x_new)
@@ -263,7 +268,7 @@ class rrt_star():
 
         return x_new
 
-    def Rewire(self, x_new:node):
+    def Rewire(self, x_new: node):
         """recontruct rrt tree
 
         Args:
@@ -277,7 +282,7 @@ class rrt_star():
                         x_near.parent = x_new
                         x_near.cost = x_new.cost + self.Line_cost(x_new, x_near)
 
-    def Get_Path(self)-> list:
+    def Get_Path(self) -> list:
         """get a list of path from start to end if path is found, else None
 
         Returns:
@@ -287,9 +292,9 @@ class rrt_star():
         path = []
         n = 0
         for i in self.nodes:
-            if self.Distance_cost(i, self.x_goal) < self.eta: #5
+            if self.Distance_cost(i, self.x_goal) < self.eta:  # 5
                 cost = i.cost + self.Line_cost(self.x_goal, i)
-                temp_path.append([cost,n, i])
+                temp_path.append([cost, n, i])
                 n += 1
         temp_path.sort()
 
@@ -313,7 +318,6 @@ class rrt_star():
             return path
 
     def Cost_Graph(self):
-
         temp_path = []
         n = 0
         for i in self.nodes:
@@ -334,14 +338,13 @@ class rrt_star():
             return self.x_goal.cost
 
     def Draw_Tree(self):
-        """draw rrt tree on plot
-        """
+        """draw rrt tree on plot"""
 
         for i in self.nodes:
             if i is not self.x_init:
                 plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "b")
 
-    def Draw_path(self, path:list):
+    def Draw_path(self, path: list):
         """draw result path on plot
 
         Args:
@@ -353,8 +356,7 @@ class rrt_star():
                 plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "r", linewidth=2.5)
 
     def start_planning(self):
-        """start planning loop
-        """
+        """start planning loop"""
         while True:
             # start record sampling time
             time_sampling_start = time.time()
@@ -369,7 +371,7 @@ class rrt_star():
                 x_new = self.Steer(x_rand, x_nearest)
                 # check whether to add new node to tree or not, if yes then add and breeak out of sampling loop, if not then continue sampling loop
                 b = self.New_Check(x_new)
-                if b == True :
+                if b == True:
                     break
                 # stop if the sampling iteration reach maximum
                 if self.total_iter == self.maxiteration:
@@ -392,7 +394,7 @@ class rrt_star():
             # stop record addparent time
             time_addparent_end = time.time()
             # determine addparent time elapsed
-            self.addparent_elapsed += (time_addparent_end - time_addparent_start)
+            self.addparent_elapsed += time_addparent_end - time_addparent_start
             # add xnew to rrt tree nodes
             self.nodes.append(x_new)
 
@@ -403,11 +405,11 @@ class rrt_star():
             # stop record rewire time
             time_rewire_end = time.time()
             # determine rewire time elapsed
-            self.rewire_elapsed += (time_rewire_end - time_rewire_start)
+            self.rewire_elapsed += time_rewire_end - time_rewire_start
 
             # record graph cost data
             self.Graph_sample_num += 1
-            if self.Graph_sample_num%100 == 0:
+            if self.Graph_sample_num % 100 == 0:
                 Graph_cost = self.Cost_Graph()
                 self.Graph_data = np.append(self.Graph_data,np.array([[self.Graph_sample_num, Graph_cost]]), axis = 0)
     
@@ -423,18 +425,19 @@ class rrt_star():
         print("Cost : ", self.x_goal.cost)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     from map.map_loader import grid_map_probability
     from map.taskmap_img_format import map_2d_empty
+
     np.random.seed(1)
 
- 
+
     # SECTION - Experiment 1
     map_index = 2
-    filter_size = 3 # 1 = 3x3, 2 = 5x5, 3 = 7x7
+    filter_size = 3  # 1 = 3x3, 2 = 5x5, 3 = 7x7
     map = grid_map_probability(map_index, filter_size)
-    x_init = np.array([19.5, 110]).reshape(2,1)
-    x_goal = np.array([110, 17]).reshape(2,1)
+    x_init = np.array([19.5, 110]).reshape(2, 1)
+    x_goal = np.array([110, 17]).reshape(2, 1)
 
 
     # SECTION - planner
@@ -447,8 +450,8 @@ if __name__=="__main__":
 
     # SECTION - result
     rrt.print_time()
-    plt.figure(figsize=(10,10))
-    plt.axes().set_aspect('equal')
+    plt.figure(figsize=(10, 10))
+    plt.axes().set_aspect("equal")
     rrt.Draw_Tree()
     rrt.Draw_path(path)
     plt.imshow(np.transpose(1-map),cmap = "jet", interpolation = 'nearest', origin="lower")
