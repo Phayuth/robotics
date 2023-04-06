@@ -18,7 +18,7 @@ class node(object):
         self.parent = parent
 
 
-class infmrrtstar_binarymap_unisampling:
+class infmrrtstar_costmap_biassampling:
     def __init__(
         self,
         map: np.ndarray,
@@ -56,13 +56,15 @@ class infmrrtstar_binarymap_unisampling:
         self.addparent_elapsed = 0
         self.rewire_elapsed = 0
 
-    def uniform_sampling(self) -> node:
-
-        x = np.random.uniform(low=0, high=self.map.shape[0] - 1) # must have -1 when implement with costmap
-        y = np.random.uniform(low=0, high=self.map.shape[1] - 1)
-
+    def bias_sampling(self)-> node:
+        row = self.map.shape[1]
+        p = np.ravel(self.map) / np.sum(self.map)
+        x_sample = np.random.choice(len(p), p=p)
+        x = x_sample // row
+        y = x_sample % row
+        x = np.random.uniform(low=x - 0.5, high=x + 0.5)
+        y = np.random.uniform(low=y - 0.5, high=y + 0.5)
         x_rand = node(x, y)
-
         return x_rand
     
     def sampling(self, x_start, x_goal, c_max):
@@ -81,7 +83,7 @@ class infmrrtstar_binarymap_unisampling:
                 if (0 < x_rand.x < self.map.shape[0] -1) and (0 < x_rand.y < self.map.shape[1] -1): # check if inside configspace
                     break
         else:
-            x_rand = self.uniform_sampling()
+            x_rand = self.bias_sampling()
         return x_rand
 
     def sampleUnitBall(self):
@@ -318,6 +320,7 @@ class infmrrtstar_binarymap_unisampling:
                         c_best = x_soln.parent.costr + self.distance_cost(x_soln.parent, x_soln) + self.distance_cost(x_soln, self.x_goal)
 
                 x_rand = self.sampling(self.x_init, self.x_goal, c_best)
+
                 self.total_iter += 1
                 x_nearest = self.nearest(x_rand)
                 x_new = self.steer(x_rand, x_nearest)
@@ -350,45 +353,39 @@ class infmrrtstar_binarymap_unisampling:
         # record end of planner loop
         self.e = time.time()
 
-    def print_time(self):
-        print("Total time : ", self.e - self.s,"second")
-        print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
-        print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")
-        print("Rewire time : ", self.rewire_elapsed,"second", (self.rewire_elapsed*100)/(self.e-self.s),"%")
-        print("Total_iteration = ", self.total_iter)
-        print("Cost : ", self.x_goal.cost)
+    # def print_time(self):
+    #     print("Total time : ", self.e - self.s,"second")
+    #     print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
+    #     print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")
+    #     print("Rewire time : ", self.rewire_elapsed,"second", (self.rewire_elapsed*100)/(self.e-self.s),"%")
+    #     print("Total_iteration = ", self.total_iter)
+    #     print("Cost : ", self.x_goal.cost)
 
 
 if __name__ == "__main__":
-    from map.map_loader import grid_map_binary
-    np.random.seed(0)
+    from map.map_loader import grid_map_probability
+    np.random.seed(1)
+
 
     # SECTION - Experiment 1
-    map = grid_map_binary(index=1)
+    map = grid_map_probability(index=2, size=3)
     plt.imshow(map)
     plt.show()
-    x_init = np.array([24, 12]).reshape(2, 1)
-    x_goal = np.array([1.20, 13.20]).reshape(2, 1)
-
-
-    # SECTION - Experiment 2
-    # map = np.ones((500,500))
-    # plt.imshow(map)
-    # plt.show()
-    # x_init = np.array([20, 20]).reshape(2, 1)
-    # x_goal = np.array([200, 20]).reshape(2, 1)
+    x_init = np.array([19.5, 110]).reshape(2, 1)
+    x_goal = np.array([110, 17]).reshape(2, 1)
 
 
     # SECTION - planner
     distance_weight = 0.5
     obstacle_weight = 0.5
-    rrt = infmrrtstar_binarymap_unisampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=500)
+    rrt = infmrrtstar_costmap_biassampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
     rrt.start_planning()
     path = rrt.get_path()
 
 
     # SECTION - result
-    plt.imshow(map)
+    # rrt.print_time()
     rrt.draw_tree()
     rrt.draw_path(path)
+    plt.imshow(map, interpolation = 'nearest')
     plt.show()

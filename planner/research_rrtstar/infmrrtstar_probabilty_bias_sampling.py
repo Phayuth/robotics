@@ -18,7 +18,7 @@ class node(object):
         self.parent = parent
 
 
-class infmrrtstar_binarymap_unisampling:
+class infmrrtstar_binarymap_biassampling:
     def __init__(
         self,
         map: np.ndarray,
@@ -56,13 +56,15 @@ class infmrrtstar_binarymap_unisampling:
         self.addparent_elapsed = 0
         self.rewire_elapsed = 0
 
-    def uniform_sampling(self) -> node:
-
-        x = np.random.uniform(low=0, high=self.map.shape[0] - 1) # must have -1 when implement with costmap
-        y = np.random.uniform(low=0, high=self.map.shape[1] - 1)
-
+    def bias_sampling(self)-> node:
+        row = self.map.shape[1]
+        p = np.ravel(self.map) / np.sum(self.map)
+        x_sample = np.random.choice(len(p), p=p)
+        x = x_sample // row
+        y = x_sample % row
+        x = np.random.uniform(low=x - 0.5, high=x + 0.5)
+        y = np.random.uniform(low=y - 0.5, high=y + 0.5)
         x_rand = node(x, y)
-
         return x_rand
     
     def sampling(self, x_start, x_goal, c_max):
@@ -81,7 +83,7 @@ class infmrrtstar_binarymap_unisampling:
                 if (0 < x_rand.x < self.map.shape[0] -1) and (0 < x_rand.y < self.map.shape[1] -1): # check if inside configspace
                     break
         else:
-            x_rand = self.uniform_sampling()
+            x_rand = self.bias_sampling()
         return x_rand
 
     def sampleUnitBall(self):
@@ -351,12 +353,12 @@ class infmrrtstar_binarymap_unisampling:
         self.e = time.time()
 
     def print_time(self):
-        print("Total time : ", self.e - self.s,"second")
-        print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
-        print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")
-        print("Rewire time : ", self.rewire_elapsed,"second", (self.rewire_elapsed*100)/(self.e-self.s),"%")
-        print("Total_iteration = ", self.total_iter)
-        print("Cost : ", self.x_goal.cost)
+        print("total time : ", self.e - self.s, "second")
+        print("sampling time : ",self.sampling_elapsed,"second",(self.sampling_elapsed * 100) / (self.e - self.s),"%")
+        print("add_parent time : ",self.addparent_elapsed,"second",(self.addparent_elapsed * 100) / (self.e - self.s),"%")
+        print("rewire time : ",self.rewire_elapsed,"second",(self.rewire_elapsed * 100) / (self.e - self.s),"%")
+        print("total_iteration = ", self.total_iter)
+        print("cost : ", self.x_goal.cost)
 
 
 if __name__ == "__main__":
@@ -364,11 +366,11 @@ if __name__ == "__main__":
     np.random.seed(0)
 
     # SECTION - Experiment 1
-    map = grid_map_binary(index=1)
-    plt.imshow(map)
-    plt.show()
-    x_init = np.array([24, 12]).reshape(2, 1)
-    x_goal = np.array([1.20, 13.20]).reshape(2, 1)
+    # map = grid_map_binary(index=1)
+    # plt.imshow(map)
+    # plt.show()
+    # x_init = np.array([24, 12]).reshape(2, 1)
+    # x_goal = np.array([1.20, 13.20]).reshape(2, 1)
 
 
     # SECTION - Experiment 2
@@ -379,10 +381,18 @@ if __name__ == "__main__":
     # x_goal = np.array([200, 20]).reshape(2, 1)
 
 
+    # SECTION - Experiment 3
+    map = grid_map_binary(index=1)
+    plt.imshow(map)
+    plt.show()
+    x_init = np.array([5, 5]).reshape(2, 1)
+    x_goal = np.array([25, 5]).reshape(2, 1)
+
+
     # SECTION - planner
     distance_weight = 0.5
     obstacle_weight = 0.5
-    rrt = infmrrtstar_binarymap_unisampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=500)
+    rrt = infmrrtstar_binarymap_biassampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=500)
     rrt.start_planning()
     path = rrt.get_path()
 

@@ -107,6 +107,7 @@ class infm_rrtstar:
     def sampling(self, x_start, x_goal, c_max):
         if c_max < np.inf:
             c_min = self.cost_line(x_start, x_goal)
+            print(c_max, c_min)
             x_center = np.array([(x_start.x + x_goal.x)/2, (x_start.y + x_goal.y)/2]).reshape(2,1)
             C = self.RotationToWorldFrame(x_start, x_goal)
             r1 = c_max/2
