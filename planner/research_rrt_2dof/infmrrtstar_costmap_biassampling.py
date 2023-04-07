@@ -18,7 +18,7 @@ class node(object):
         self.parent = parent
 
 
-class infmrrtstar_costmap_biassampling:
+class infmrrtstar_binarymap_biassampling:
     def __init__(
         self,
         map: np.ndarray,
@@ -320,7 +320,6 @@ class infmrrtstar_costmap_biassampling:
                         c_best = x_soln.parent.costr + self.distance_cost(x_soln.parent, x_soln) + self.distance_cost(x_soln, self.x_goal)
 
                 x_rand = self.sampling(self.x_init, self.x_goal, c_best)
-
                 self.total_iter += 1
                 x_nearest = self.nearest(x_rand)
                 x_new = self.steer(x_rand, x_nearest)
@@ -353,22 +352,46 @@ class infmrrtstar_costmap_biassampling:
         # record end of planner loop
         self.e = time.time()
 
-    # def print_time(self):
-    #     print("Total time : ", self.e - self.s,"second")
-    #     print("Sampling time : ", self.sampling_elapsed,"second", (self.sampling_elapsed*100)/(self.e-self.s),"%")
-    #     print("Add_Parent time : ", self.addparent_elapsed,"second", (self.addparent_elapsed*100)/(self.e-self.s),"%")
-    #     print("Rewire time : ", self.rewire_elapsed,"second", (self.rewire_elapsed*100)/(self.e-self.s),"%")
-    #     print("Total_iteration = ", self.total_iter)
-    #     print("Cost : ", self.x_goal.cost)
+    def print_time(self):
+        print("total time : ", self.e - self.s, "second")
+        print("sampling time : ",self.sampling_elapsed,"second",(self.sampling_elapsed * 100) / (self.e - self.s),"%")
+        print("add_parent time : ",self.addparent_elapsed,"second",(self.addparent_elapsed * 100) / (self.e - self.s),"%")
+        print("rewire time : ",self.rewire_elapsed,"second",(self.rewire_elapsed * 100) / (self.e - self.s),"%")
+        print("total_iteration = ", self.total_iter)
+        print("cost : ", self.x_goal.cost)
 
 
 if __name__ == "__main__":
+    from map.map_loader import grid_map_binary
     from map.map_loader import grid_map_probability
-    np.random.seed(1)
+    np.random.seed(0)
+
+    # SECTION - Experiment 1 binary
+    # map = grid_map_binary(index=1)
+    # plt.imshow(map)
+    # plt.show()
+    # x_init = np.array([24, 12]).reshape(2, 1)
+    # x_goal = np.array([1.20, 13.20]).reshape(2, 1)
 
 
-    # SECTION - Experiment 1
-    map = grid_map_probability(index=2, size=3)
+    # SECTION - Experiment 2 binary
+    # map = np.ones((500,500))
+    # plt.imshow(map)
+    # plt.show()
+    # x_init = np.array([20, 20]).reshape(2, 1)
+    # x_goal = np.array([200, 20]).reshape(2, 1)
+
+
+    # SECTION - Experiment 3 binary
+    # map = grid_map_binary(index=1)
+    # plt.imshow(map)
+    # plt.show()
+    # x_init = np.array([5, 5]).reshape(2, 1)
+    # x_goal = np.array([25, 5]).reshape(2, 1)
+
+
+    # SECTION - Experiment 4 costmap
+    map = grid_map_probability(index=0, size=3)
     plt.imshow(map)
     plt.show()
     x_init = np.array([19.5, 110]).reshape(2, 1)
@@ -377,15 +400,15 @@ if __name__ == "__main__":
 
     # SECTION - planner
     distance_weight = 0.5
-    obstacle_weight = 0.5
-    rrt = infmrrtstar_costmap_biassampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
+    obstacle_weight = 0.5 #10
+    rrt = infmrrtstar_binarymap_biassampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=500)
     rrt.start_planning()
     path = rrt.get_path()
 
 
     # SECTION - result
-    # rrt.print_time()
+    plt.imshow(map)
+    # plt.imshow(map, interpolation = 'nearest')
     rrt.draw_tree()
     rrt.draw_path(path)
-    plt.imshow(map, interpolation = 'nearest')
     plt.show()

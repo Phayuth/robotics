@@ -7,7 +7,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from skimage.measure import profile_line
-from planner.research_rrtstar.rrtstar_probabilty_2d import node , rrt_star
+from planner.research_rrtstar.rrtstar_costmap_biassampling import node , rrt_star
 from robot_used.ur5e.ur5e2d import Robot, pmap
 
 # load task space map

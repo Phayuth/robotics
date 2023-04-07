@@ -8,7 +8,7 @@ import math
 import matplotlib.pyplot as plt
 
 from map.map_loader import grid_map_binary
-from planner.research_rrtstar.rrtstar_probabilty_proxy_collision import node , rrt_star
+from planner.research_rrtstar.rrtstar_costmap_unisampling import node , rrt_star
 
 # Create map
 map = grid_map_binary(index=1).T

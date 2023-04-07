@@ -6,7 +6,7 @@ sys.path.append(str(wd))
 import numpy as np
 import math
 import matplotlib.pyplot as plt
-from planner.research_rrtstar.rrtstar_general import node, rrt_star
+from planner.research_rrtstar.rrtstar import node, rrt_star
 from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map
 
 # Map and Create obstacle

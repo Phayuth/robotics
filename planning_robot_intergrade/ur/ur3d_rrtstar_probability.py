@@ -2,7 +2,7 @@ import numpy as np
 import time
 import math
 from map.reshape_map import Reshape_map
-from planner.research_rrtstar_3d.rrtstar_probabilty_3d import node, rrt_star
+from planner.research_rrtstar_3d.rrtstar_costmap_biassampling import node, rrt_star
 from robot_used.ur5e.ur5e3d import Robot, map, draw_map, h_map
 from robot_used.ur5e.mesh_gen import draw_mesh
 import plotly.graph_objs as go

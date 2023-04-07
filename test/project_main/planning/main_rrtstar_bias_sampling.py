@@ -5,7 +5,7 @@ sys.path.append(str(wd))
 
 import math
 import matplotlib.pyplot as plt
-from planner.research_rrtstar.rrtstar_probabilty_bias_sampling import node, rrt_star
+from planner.research_rrtstar.rrtstar_biassampling import node, rrt_star
 from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map
 from map.map_loader import grid_map_binary
 

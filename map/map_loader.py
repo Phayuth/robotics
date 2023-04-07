@@ -33,8 +33,6 @@ def padding_four_size(map, size):
     return map
 
 def probabilitizer(map, size):
-    # I think this function is to calculate obstacle distance (distance from current cell to near obstacle)
-    # load map and convert map from binary to probability
     # map = 1 - map # in case of the value is switch
     kernel_map = np.array([])
     for i in range(size, map.shape[0] - size):

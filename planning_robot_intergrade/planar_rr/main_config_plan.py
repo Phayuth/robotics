@@ -5,7 +5,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from planner.research_rrtstar.rrtstar_probabilty_2d import node, rrt_star
+from planner.research_rrt_2dof.rrtstar_costmap_biassampling import node, rrt_star
 from robot_used.plannar_rr.RobotArm2D import Robot
 from map.taskmap_img_format import pmap
 from config_space_2d.generate_config_space import construct_config_space_2d

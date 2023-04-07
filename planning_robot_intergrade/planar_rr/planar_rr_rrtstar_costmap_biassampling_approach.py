@@ -1,28 +1,20 @@
 import os
 import sys
+
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import matplotlib.pyplot as plt
-from map.taskmap_geo_format import task_rectangle_obs_5
-from robot.planar_rr import planar_rr
 import numpy as np
-from map.map_value_range import map_val, map_multi_val
-from config_space_2d.generate_config_planar_rr import configuration_generate_plannar_rr
-from planner.research_rrtstar.rrtstar_probabilty_2d import node , rrt_star
-from util.extract_path_class import extract_path_class_2d
-from util.coord_transform import polar2cats
 
-# def polar2cats(r,theta):
-#     x = r*np.cos(theta) + 1.6
-#     y = r*np.sin(theta) + 2.15
-#     return x,y
-x_targ = 1.6
-y_targ = 2.15
-theta_view = np.linspace(np.pi/2,3*np.pi/2,10)
-radius = 0.1
-x_coord, y_coord = polar2cats(radius, theta_view, x_targ, y_targ)
-# x_coord, y_coord = polar2cats(radius,theta_view)
+from config_space_2d.generate_config_planar_rr import configuration_generate_plannar_rr
+from map.map_value_range import map_multi_val, map_val
+from map.taskmap_geo_format import task_rectangle_obs_5
+from planner.research_rrt_2dof.rrtstar_costmap_biassampling import node, rrt_star
+from robot.planar_rr import planar_rr
+from util.coord_transform import polar2cats, circle_plt
+from util.extract_path_class import extract_path_class_2d
+
 
 # robot, inverse kinematic and plot
 robot = planar_rr()
@@ -32,6 +24,8 @@ init_pose = np.array([[4],[0]])
 theta_init = robot.inverse_kinematic_geometry(init_pose, elbow_option=0)
 
 # goal pose
+x_targ = 1.6
+y_targ = 2.15
 goal_pose = np.array([[1.6],[2.15]])
 theta_goal = robot.inverse_kinematic_geometry(goal_pose, elbow_option=0)
 
@@ -54,7 +48,7 @@ theta_app_index = (map_multi_val(theta_app, -np.pi, np.pi, 0, grid_size)).astype
 robot.plot_arm(theta_init, plt_basis=True)
 robot.plot_arm(theta_goal)
 robot.plot_arm(theta_app)
-plt.plot(x_coord, y_coord)
+circle_plt(x_targ, y_targ, d_app)
 obs_list = task_rectangle_obs_5()
 for obs in obs_list:
     obs.plot()
@@ -66,15 +60,11 @@ plt.imshow(map)
 plt.show()
 
 # Planning
-x_init = node(theta_init_index[0,0], theta_init_index[1,0])
-x_goal = node(theta_app_index[0,0], theta_app_index[1,0])
-iteration = 1000
+x_init = theta_init_index
+x_goal = theta_app_index
 distance_weight = 0.5
 obstacle_weight = 0.5
-m = map.shape[0] * map.shape[1]
-r = (2 * (1 + 1/2)**(1/2)) * (m/np.pi)**(1/2)
-eta = r * (np.log(iteration) / iteration)**(1/2)
-rrt = rrt_star(map, x_init, x_goal, eta, distance_weight, obstacle_weight, iteration)
+rrt = rrt_star(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
 np.random.seed(0)
 rrt.start_planning()
 path = rrt.Get_Path()
@@ -97,7 +87,7 @@ pathx, pathy = extract_path_class_2d(path)
 
 # plot real target
 plt.scatter(goal_pose[0,0], goal_pose[1,0])
-plt.plot(x_coord, y_coord)
+circle_plt(x_targ, y_targ, d_app)
 robot.plot_arm(theta_goal)
 for i in range(len(path)):
     # map index image to theta
