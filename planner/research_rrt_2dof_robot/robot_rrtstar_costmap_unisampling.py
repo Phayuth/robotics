@@ -7,7 +7,6 @@ sys.path.append(str(wd))
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-
 from map.map_value_range import map_val
 
 
@@ -22,7 +21,7 @@ class node:
 class RobotRRTStarCostMapUniSampling:
     def __init__(
         self,
-        map: np.ndarray,
+        map,
         x_init: node,
         x_goal: node,
         w1: float,
@@ -58,8 +57,9 @@ class RobotRRTStarCostMapUniSampling:
         self.rewire_elapsed = 0
 
     def uniform_sampling(self) -> node:
-        x = np.random.uniform(low=-np.pi, high=np.pi)
-        y = np.random.uniform(low=-np.pi, high=np.pi)
+
+        x = np.random.uniform(low=self.map.xmin, high=self.map.xmax)
+        y = np.random.uniform(low=self.map.ymin, high=self.map.ymax)
 
         x_rand = node(x, y)
 
@@ -81,19 +81,19 @@ class RobotRRTStarCostMapUniSampling:
     #         for i in range(seg_point + 1):
     #             seg = np.array([start.x, start.y]) + i * v
     #             seg = np.around(seg)
-    #             if 1 - self.map[int(seg[1]), int(seg[0])] == 1:
+    #             if 1 - self.map.costmap[int(seg[1]), int(seg[0])] == 1:
     #                 cost = 1e10
 
     #                 return cost
     #             else:
-    #                 value += 1 - self.map[int(seg[1]), int(seg[0])]
+    #                 value += 1 - self.map.costmap[int(seg[1]), int(seg[0])]
 
     #         cost = value / (seg_point + 1)
 
     #         return cost
 
     #     else:
-    #         value = (self.map[int(start.y), int(start.x)] + self.map[int(end.y), int(end.x)])
+    #         value = (self.map.costmap[int(start.y), int(start.x)] + self.map.costmap[int(end.y), int(end.x)])
     #         cost = value / 2
 
     #         return cost
@@ -116,14 +116,14 @@ class RobotRRTStarCostMapUniSampling:
 
         return points
     
-    def getcost(self, q, minmax_q = [[-np.pi, np.pi],[-np.pi, np.pi]]):
+    def getcost(self, q):
 
-        if minmax_q[0][0] < q.x < minmax_q[0][1] or minmax_q[1][0] < q.y < minmax_q[1][1]: # value must inside the range, not even equal pi
-        
-            ind_x = int((map_val(q.x, minmax_q[0][0], minmax_q[0][1], 0, self.map.shape[0])))
-            ind_y = int((map_val(q.y, minmax_q[1][0], minmax_q[1][1], 0, self.map.shape[1])))
+        if self.map.xmin < q.x < self.map.xmax and self.map.ymin < q.y < self.map.ymax: # value must inside the range, not even equal pi
 
-            return map[ind_y, ind_x] # in img format row is y, column is x, spend weeks cause of this
+            ind_x = int((map_val(q.x, self.map.xmin, self.map.xmax, 0, self.map.costmap.shape[0])))
+            ind_y = int((map_val(q.y, self.map.ymin, self.map.ymax, 0, self.map.costmap.shape[1])))
+
+            return self.map.costmap[ind_y, ind_x] # in img format row is y, column is x, spend weeks cause of this
 
     def obstacle_cost(self, q_base, q_far, num_seg=10):
         seg = self.segmented_line(q_base, q_far, num_seg=num_seg)
@@ -137,6 +137,7 @@ class RobotRRTStarCostMapUniSampling:
             return cost
 
     def line_cost(self, start: node, end: node) -> float:
+
         cost = self.w1 * (self.distance_cost(start, end) / (self.eta)) + self.w2 * (self.obstacle_cost(start, end))
 
         return cost
@@ -178,12 +179,12 @@ class RobotRRTStarCostMapUniSampling:
         x_pob = np.array([x_new.x, x_new.y])
         x_pob = np.around(x_pob)
 
-        if x_pob[0] >= self.map.shape[0]:
-            x_pob[0] = self.map.shape[0] - 1
-        if x_pob[1] >= self.map.shape[1]:
-            x_pob[1] = self.map.shape[1] - 1
+        if x_pob[0] >= self.map.costmap.shape[0]:
+            x_pob[0] = self.map.costmap.shape[0] - 1
+        if x_pob[1] >= self.map.costmap.shape[1]:
+            x_pob[1] = self.map.costmap.shape[1] - 1
 
-        x_pob = self.map[int(x_pob[1]), int(x_pob[0])]
+        x_pob = self.map.costmap[int(x_pob[1]), int(x_pob[0])]
         p = np.random.uniform(0, 1)
 
         if x_pob > p and self.exist_check(x_new):
@@ -208,9 +209,7 @@ class RobotRRTStarCostMapUniSampling:
     def rewire(self, x_new: node):
         for x_near in self.nodes:
             if x_near is not x_new.parent:
-                if (
-                    self.distance_cost(x_near, x_new) <= self.eta
-                ):  # and self.obstacle_cost(x_new, x_near) < 1
+                if (self.distance_cost(x_near, x_new) <= self.eta):  # and self.obstacle_cost(x_new, x_near) < 1
                     if x_new.cost + self.line_cost(x_new, x_near) < x_near.cost:
                         x_near.parent = x_new
                         x_near.cost = x_new.cost + self.line_cost(x_new, x_near)
@@ -338,13 +337,14 @@ class RobotRRTStarCostMapUniSampling:
 
 
 if __name__ == "__main__":
+    from map.mapclass import MapClass, MapLoader
     from map.map_loader import grid_map_binary
-
     np.random.seed(0)
 
     # SECTION - experiment 1
-    map = grid_map_binary(index=1)
-    plt.imshow(map)
+    loader = MapLoader.loadsave(maptype="task", mapindex=1, reverse=False)
+    map = MapClass(loader, maprange=[[-np.pi, np.pi],[-np.pi, np.pi]])
+    plt.imshow(map.costmap)
     plt.show()
     x_init = np.array([0, 1]).reshape(2, 1)
     x_goal = np.array([2, 0]).reshape(2, 1)
@@ -358,7 +358,7 @@ if __name__ == "__main__":
     # path = rrt.get_path()
 
     # SECTION - result
-    plt.imshow(map)
+    plt.imshow(map.costmap)
     rrt.draw_tree()
     # rrt.draw_path(path)
     plt.show()

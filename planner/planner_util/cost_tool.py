@@ -86,6 +86,53 @@ def obstacle_cost(map, start, end):
         value = map[int(start.y), int(start.x)] + map[int(end.y), int(end.x)]
         cost = value / 2
         return cost
+    
+
+# def Obstacle_cost(self, start, end):
+#     seg_length = 1
+#     seg_point = int(np.ceil(np.linalg.norm(start.arr - end.arr) / seg_length))
+#     value = 0
+#     if seg_point > 1:
+#         v = (end.arr - start.arr) / (seg_point)
+#         for i in range(seg_point + 1):
+#             seg = start.arr + i * v
+#             seg = np.around(seg)
+#             if 1 - self.map[int(seg[0]), int(seg[1])] == 1:
+#                 cost = 1e10
+#                 return cost
+#             else:
+#                 value += 1 - self.map[int(seg[0]), int(seg[1])]
+#         cost = value / (seg_point + 1)
+#         return cost
+#     else:
+#         value = (self.map[int(start.arr[0]), int(start.arr[1])]+ self.map[int(end.arr[0]), int(end.arr[1])])
+#         cost = value / 2
+#         return cost
+    
+
+def obstacle_cost_mod(map, start, end):
+    seg_length = 1
+    seg_point = int(np.ceil(distance(start, end) / seg_length))
+    value = 0
+    sss = []
+    if seg_point > 1:
+        v = distance(start, end)/ (seg_point)
+        for i in range(seg_point + 1):
+            seg = np.array([start.x, start.y]) + i * v
+            seg = np.around(seg)
+            sss.append(seg)
+            print(sss)
+        #     if 1 - map[int(seg[1]), int(seg[0])] == 1 :
+        #         cost = 1e10
+        #         return cost
+        #     else:
+        #         value += 1 - map[int(seg[1]), int(seg[0])]
+        # cost = value / (seg_point + 1)
+        # return cost
+    # else:
+    #     value = map[int(start.y), int(start.x)] + map[int(end.y), int(end.x)]
+    #     cost = value / 2
+    #     return cost
 
 
 if __name__ == "__main__":
@@ -95,15 +142,23 @@ if __name__ == "__main__":
 
     # SECTION - obstacle cost
     map = map_2d_1()
-    # q_start = node(5,5)
-    # q_end = node(5,10)
-    # cost = obstacle_cost(map, q_start, q_end)
-    # print("==>> cost: \n", cost)
+    map = np.ones((30,30))
+    map[15,5] = 0
 
-    # plt.imshow(map, origin="lower")
-    # plt.scatter([q_start.x, q_end.x], [q_start.y, q_end.y])
-    # plt.plot([q_start.x, q_end.x], [q_start.y, q_end.y])
-    # plt.show()
+    
+    q_start = node(5,5)
+    q_end = node(5,15)
+
+    cost = obstacle_cost(map, q_start, q_end)
+    print("==>> cost: \n", cost)
+
+    cost = obstacle_cost_mod(map, q_start, q_end)
+    print("==>> cost: \n", cost)
+    plt.grid()
+    plt.imshow(map)
+    plt.scatter([q_start.x, q_end.x], [q_start.y, q_end.y])
+    plt.plot([q_start.x, q_end.x], [q_start.y, q_end.y])
+    plt.show()
 
 
     # SECTION - segmented line
@@ -124,15 +179,15 @@ if __name__ == "__main__":
 
 
     # SECTION - line cost
-    q_start = node(-1,-1)
-    q_end = node(2, 2)
-    costline = line_cost(map, q_start, q_end, num_seg=16)
-    print("==>> costline: \n", costline)
+    # q_start = node(-1,-1)
+    # q_end = node(2, 2)
+    # costline = line_cost(map, q_start, q_end, num_seg=16)
+    # print("==>> costline: \n", costline)
 
     # line cost plot
-    ss = line_cost(map, q_start, q_end, num_seg=16, return_index_cost=True)
-    print("==>> ss: \n", ss)
-    plt.grid()
-    plt.imshow(map, origin="lower")
-    for i in ss: plt.scatter(i[0], i[1])
-    plt.show()
+    # ss = line_cost(map, q_start, q_end, num_seg=16, return_index_cost=True)
+    # print("==>> ss: \n", ss)
+    # plt.grid()
+    # plt.imshow(map, origin="lower")
+    # for i in ss: plt.scatter(i[0], i[1])
+    # plt.show()

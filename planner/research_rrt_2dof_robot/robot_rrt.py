@@ -8,11 +8,13 @@ import matplotlib.pyplot as plt
 from collision_check_geometry.collision_class import obj_line2d, obj_point2d, intersect_point_v_rectangle, intersect_line_v_rectangle
 from map.map_value_range import map_val, map_multi_val
 
+
 class node:
     def __init__(self, x, y, parent=None)-> None:
         self.x = x
         self.y = y
         self.parent = parent
+
 
 class RobotRRT():
     def __init__(self, map, obstacle_list, startnode, goalnode, eta=0.3, maxiteration=1000)-> None:
@@ -24,7 +26,7 @@ class RobotRRT():
 
         # properties of planner
         self.maxiteration = maxiteration
-        self.eta = eta 
+        self.eta = eta
         self.tree_vertex = [self.startnode]
 
     def planing(self):

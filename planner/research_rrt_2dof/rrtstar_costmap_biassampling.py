@@ -443,7 +443,7 @@ if __name__ == "__main__":
     # SECTION - planner
     distance_weight = 0.5
     obstacle_weight = 0.5
-    rrt = rrt_star(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
+    rrt = rrt_star(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=2)
     rrt.start_planning()
     path = rrt.Get_Path()
 

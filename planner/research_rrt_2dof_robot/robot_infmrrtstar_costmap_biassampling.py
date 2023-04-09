@@ -364,7 +364,9 @@ class infmrrtstar_binarymap_biassampling:
 if __name__ == "__main__":
     from map.map_loader import grid_map_binary
     from map.map_loader import grid_map_probability
+    from map.mapclass import MapClass, MapLoader
     np.random.seed(0)
+
 
     # SECTION - Experiment 1 binary
     # map = grid_map_binary(index=1)
@@ -391,7 +393,18 @@ if __name__ == "__main__":
 
 
     # SECTION - Experiment 4 costmap
-    map = grid_map_probability(index=0, size=3)
+    # map = grid_map_probability(index=0, size=3)
+    # plt.imshow(map)
+    # plt.show()
+    # x_init = np.array([19.5, 110]).reshape(2, 1)
+    # x_goal = np.array([110, 17]).reshape(2, 1)
+
+
+    # SECTION - Experiment 4 costmap
+    loader = MapLoader.loadsave(maptype="task", mapindex=0, reverse=False)
+    map = MapClass(loader, maprange=[[-np.pi, np.pi],[-np.pi, np.pi]])
+    map.grid_map_probability()
+    map = map.costmap
     plt.imshow(map)
     plt.show()
     x_init = np.array([19.5, 110]).reshape(2, 1)

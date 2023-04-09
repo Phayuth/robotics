@@ -57,6 +57,7 @@ class infmrrtstar_binarymap_biassampling:
         self.rewire_elapsed = 0
 
     def bias_sampling(self)-> node:
+
         row = self.map.shape[1]
         p = np.ravel(self.map) / np.sum(self.map)
         x_sample = np.random.choice(len(p), p=p)
@@ -65,9 +66,11 @@ class infmrrtstar_binarymap_biassampling:
         x = np.random.uniform(low=x - 0.5, high=x + 0.5)
         y = np.random.uniform(low=y - 0.5, high=y + 0.5)
         x_rand = node(x, y)
+
         return x_rand
     
     def sampling(self, x_start, x_goal, c_max):
+
         if c_max < np.inf:
             c_min = self.distance_cost(x_start, x_goal)
             print(c_max, c_min)
@@ -84,22 +87,27 @@ class infmrrtstar_binarymap_biassampling:
                     break
         else:
             x_rand = self.bias_sampling()
+
         return x_rand
 
     def sampleUnitBall(self):
+
         r = np.random.uniform(low=0, high=1)
         theta = np.random.uniform(low=0, high=2*np.pi)
         x = r*np.cos(theta)
         y = r*np.sin(theta)
+
         return np.array([[x], [y]]).reshape(2,1)
 
     def ingoal_region(self, x_new):
+
         if np.linalg.norm([self.x_goal.x - x_new.x, self.x_goal.y - x_new.y]) <= 50 :# self.eta:
             return True
         else:
             return False
         
     def RotationToWorldFrame(self, x_start, x_goal):
+
         theta = np.arctan2((x_goal.y - x_start.y), (x_goal.x - x_start.x))
 
         R = np.array([[ np.cos(theta), np.sin(theta)],
@@ -127,22 +135,15 @@ class infmrrtstar_binarymap_biassampling:
                 seg = np.around(seg)
                 if 1 - self.map[int(seg[1]), int(seg[0])] == 1:
                     cost = 1e10
-
                     return cost
                 else:
                     value += 1 - self.map[int(seg[1]), int(seg[0])]
-
             cost = value / (seg_point + 1)
-
             return cost
 
         else:
-
-            value = (
-                self.map[int(start.y), int(start.x)] + self.map[int(end.y), int(end.x)]
-            )
+            value = (self.map[int(start.y), int(start.x)] + self.map[int(end.y), int(end.x)])
             cost = value / 2
-
             return cost
 
     def line_cost(self, start: node, end: node) -> float:
@@ -152,7 +153,7 @@ class infmrrtstar_binarymap_biassampling:
         return cost
 
     def nearest(self, x_rand: node) -> node:
-
+        
         vertex = []
         i = 0
         for x_near in self.nodes:
