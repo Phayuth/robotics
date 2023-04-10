@@ -17,7 +17,7 @@ P = np.array([[-6], [-6]])
 
 Q = np.array([[-6], [6]])
 
-collide = collision_class.intersect_line_v_circle_collisio(r, O, P, Q)
+collide = collision_class.intersect_line_v_circle(r, O, P, Q)
 print(collision)
 
 rec1 = collision_class.ObjRec(0, 0, 5, 5)

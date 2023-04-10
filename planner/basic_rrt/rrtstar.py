@@ -1,33 +1,49 @@
+""" RRT Star 2D.
+Map Type : Continuous configuration space 2D
+Sampling Method : Uniform
+Collsion : Geometry based
+Path Searcher : Cosider all nodes in the radius of x_goal. -> Calculate Cost to x_start -> Choose best with the lowest cost.
+
+"""
+
 import os
 import sys
+
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from collision_check_geometry.collision_class import obj_line2d, obj_point2d, intersect_point_v_rectangle, intersect_line_v_rectangle
+from collision_check_geometry.collision_class import ObjLine2D, ObjPoint2D, intersect_point_v_rectangle, intersect_line_v_rectangle
+
 
 class node:
+
     def __init__(self, x, y, parent=None, cost=0.0) -> None:
         self.x = x
         self.y = y
         self.parent = parent
         self.cost = cost
 
+
 class rrtstar:
-    def __init__(self, map, obstacle_list, x_start, x_goal, eta=None, maxiteration=1000) -> None:
+
+    def __init__(self, search_area, obstacle_list, x_start, x_goal, eta=None, maxiteration=1000) -> None:
         # map properties
-        self.map = map
-        self.x_start = node(x_start[0,0], x_start[1,0])
+        self.x_min = search_area[0][0]
+        self.x_max = search_area[0][1]
+        self.y_min = search_area[1][0]
+        self.y_max = search_area[1][1]
+        self.x_start = node(x_start[0, 0], x_start[1, 0])
         self.x_start.cost = 0.0
-        self.x_goal  = node(x_goal[0,0], x_goal[1,0])
+        self.x_goal = node(x_goal[0, 0], x_goal[1, 0])
         self.obs = obstacle_list
 
         # properties of planner
         self.maxiteration = maxiteration
-        self.m = self.map.shape[0] * self.map.shape[1]
-        self.radius = (2 * (1 + 1/2)**(1/2)) * (self.m/np.pi)**(1/2)
-        self.eta = self.radius * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
+        self.m = (self.x_max - self.x_min) * (self.y_max - self.y_min)
+        self.radius = (2 * (1 + 1 / 2)**(1 / 2)) * (self.m / np.pi)**(1 / 2)
+        self.eta = self.radius * (np.log(self.maxiteration) / self.maxiteration)**(1 / 2)
 
         # start with a tree vertex have start node and empty branch
         self.tree_vertex = [self.x_start]
@@ -50,9 +66,9 @@ class rrtstar:
                     if self.collision_check_line(x_near, x_new):
                         continue
                     c_new = x_near.cost + self.cost_line(x_near, x_new)
-                    if c_new < c_min: 
-                            x_min = x_near
-                            c_min = c_new
+                    if c_new < c_min:
+                        x_min = x_near
+                        c_min = c_new
 
                 x_new.parent = x_min
                 x_new.cost = c_min
@@ -62,8 +78,8 @@ class rrtstar:
                     if self.collision_check_line(x_near, x_new):
                         continue
                     c_near = x_near.cost
-                    c_new = x_new.cost + self.cost_line(x_new, x_near) 
-                    if c_new < c_near: 
+                    c_new = x_new.cost + self.cost_line(x_new, x_near)
+                    if c_new < c_near:
                         x_near.parent = x_new
                         x_near.cost = x_new.cost + self.cost_line(x_new, x_near)
 
@@ -87,15 +103,15 @@ class rrtstar:
 
             if cost < sum(j.cost for j in best_path):
                 best_path = path
-        
+
         return best_path
 
     def sampling(self):
-        x = np.random.uniform(low=0, high=self.map.shape[1])
-        y = np.random.uniform(low=0, high=self.map.shape[0])
+        x = np.random.uniform(low=self.x_min, high=self.x_max)
+        y = np.random.uniform(low=self.y_min, high=self.y_max)
         x_rand = node(x, y)
         return x_rand
-    
+
     def nearest_node(self, x_rand):
         vertex_list = []
         for each_vertex in self.tree_vertex:
@@ -115,8 +131,8 @@ class rrtstar:
             x_new = x_rand
         else:
             direction = np.arctan2(dist_y, dist_x)
-            new_x = self.eta*np.cos(direction) + x_nearest.x
-            new_y = self.eta*np.sin(direction) + x_nearest.y
+            new_x = self.eta * np.cos(direction) + x_nearest.x
+            new_y = self.eta * np.sin(direction) + x_nearest.y
             x_new = node(new_x, new_y)
 
         return x_new
@@ -133,7 +149,7 @@ class rrtstar:
         return np.linalg.norm([(xstart.x - xend.x), (xstart.y - xend.y)])
 
     def collision_check_node(self, x_new):
-        nodepoint = obj_point2d(x_new.x, x_new.y)
+        nodepoint = ObjPoint2D(x_new.x, x_new.y)
 
         col = []
         for obs in self.obs:
@@ -146,7 +162,7 @@ class rrtstar:
             return False
 
     def collision_check_line(self, x_nearest, x_new):
-        line = obj_line2d(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
+        line = ObjLine2D(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
 
         col = []
         for obs in self.obs:
@@ -176,10 +192,11 @@ class rrtstar:
         plt.scatter([self.x_start.x, self.x_goal.x], [self.x_start.y, self.x_goal.y], color='cyan')
 
         # goal node circle
-        theta = np.linspace(0,2*np.pi,90)
+        theta = np.linspace(0, 2 * np.pi, 90)
         x = self.eta * np.cos(theta) + self.x_goal.x
         y = self.eta * np.sin(theta) + self.x_goal.y
-        plt.plot(x,y)
+        plt.plot(x, y)
+
 
 if __name__ == "__main__":
     from map.taskmap_geo_format import task_rectangle_obs_7
@@ -187,36 +204,31 @@ if __name__ == "__main__":
     from map.map_format_converter import mapimg2geo
     np.random.seed(9)
 
-
     # SECTION - Experiment 1
+    # search_area = [[0, 10], [0, 10]]
     # start = np.array([4,4]).reshape(2,1)
     # goal = np.array([7,8]).reshape(2,1)
-    # map = np.ones((10,10))
     # obslist = task_rectangle_obs_7()
 
-
     # SECTION - Experiment 2
-    start = np.array([4,4]).reshape(2,1)
-    goal = np.array([8.5,1]).reshape(2,1)
-    map = np.ones((10,10))
-    obslist = mapimg2geo(bmap(), minmax=[0,10], free_space_value=1)
-
+    search_area = [[0, 10], [0, 10]]
+    start = np.array([4, 4]).reshape(2, 1)
+    goal = np.array([8.5, 1]).reshape(2, 1)
+    obslist = mapimg2geo(bmap(), minmax=[0, 10], free_space_value=1)
 
     # SECTION - plot task space
-    plt.scatter([start[0,0], goal[0,0]], [start[1,0], goal[1,0]])
+    plt.scatter([start[0, 0], goal[0, 0]], [start[1, 0], goal[1, 0]])
     for o in obslist:
         o.plot()
     plt.show()
 
-
     # SECTION - Planing Section
-    planner = rrtstar(map, obslist, start, goal, maxiteration=1000)
+    planner = rrtstar(search_area=search_area, obstacle_list=obslist, x_start=start, x_goal=goal, maxiteration=1000)
     planner.planning()
     path = planner.search_path()
 
-
     # SECTION - plot planning result
-    freelist = mapimg2geo(bmap(), minmax=[0,10], free_space_value=0)
+    freelist = mapimg2geo(bmap(), minmax=[0, 10], free_space_value=0)
     for f in freelist:
         f.plot()
     planner.plot_env()

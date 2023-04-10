@@ -7,7 +7,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from collision_check_geometry.collision_class import obj_rec
+from collision_check_geometry.collision_class import ObjRec
 
 
 def mapimg2geo(map, minmax=[], free_space_value=1):
@@ -21,7 +21,7 @@ def mapimg2geo(map, minmax=[], free_space_value=1):
         xval = np.linspace(-np.pi, np.pi, size_x)
         yval = np.linspace(-np.pi, np.pi, size_y)
 
-    obj = [obj_rec(xval[i], yval[j], xval[i + 1] - xval[i], yval[j + 1] - yval[j], p=free_space_value) for i in range(len(xval) - 1) for j in range(len(yval) - 1) if map[j, i] != free_space_value]
+    obj = [ObjRec(xval[i], yval[j], xval[i + 1] - xval[i], yval[j + 1] - yval[j], p=free_space_value) for i in range(len(xval) - 1) for j in range(len(yval) - 1) if map[j, i] != free_space_value]
 
     return obj
 

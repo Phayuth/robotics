@@ -1,17 +1,23 @@
+""" Inverse Kinematic based on numerical root finding method.
+- Robot Type : Planar RR
+- DOF : 2
+- Return : 1 Possible Theta
+"""
+
 import os
 import sys
 
 wd = os.path.abspath(os.getcwd())  # get the top parent folder
 sys.path.append(str(wd))  # add it to path
 
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
 from numerical_jacinv import ik_jacobian_inverse
 from numerical_jacpseudoinv import ik_jacobian_pseudo_inverse
 from numerical_jactranspose import ik_jacobian_transpose
 from numerical_ls_dls import ik_damped_leastsquare
 from numerical_ls_sdls import ik_selectively_damped_leastsquare
+
 from robot.planar_rr import PlanarRR
 
 # Create Robot Class

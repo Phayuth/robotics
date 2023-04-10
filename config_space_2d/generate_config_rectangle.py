@@ -1,5 +1,8 @@
-"""
-This is to demonstate a sampling of state-space of robot
+""" This is to demonstate a sampling of state-space of robot
+- Robot Type : Rectangle
+- DOF : 2
+- Taskspace map : Geometry Format
+- Collision Check : Geometry Based
 """
 
 import os

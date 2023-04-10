@@ -1,9 +1,10 @@
-""" 
-Collision check class based on geometry
+""" Collision check class based on geometry
 
-# ∧ is exactly 'and' in this context. ∨ means 'or'. 
-# You can notice the similarity both in form and meaning with ∩ and ∪ from set theory.
-# https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
+∧ is exactly 'and' in this context. ∨ means 'or'. You can notice the similarity both in form and meaning with ∩ and ∪ from set theory.
+References:
+    - https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
+    - http://www.jeffreythompson.org/collision-detection/table_of_contents.php
+    - https://www.baeldung.com/cs/circle-line-segment-collision-detection
 
 """
 import os
@@ -143,8 +144,6 @@ def intersect_point_v_point_3d(point_a, point_b):
 
 
 def intersect_triangle_v_point(trig, point):
-    # http://www.jeffreythompson.org/collision-detection/tri-point.php
-
     x1 = trig.vertix_a_x
     x2 = trig.vertix_b_x
     x3 = trig.vertix_c_x
@@ -186,8 +185,7 @@ def trig_area(A, B, C):
     return abs(cross_prod) / 2
 
 
-def intersect_line_v_circle_collisio(radius, O, P, Q):
-    # https://www.baeldung.com/cs/circle-line-segment-collision-detection
+def intersect_line_v_circle(radius, O, P, Q):
     distPQ = P - Q
     minimum_distance = 2 * trig_area(O, P, Q) / np.linalg.norm(distPQ)
 

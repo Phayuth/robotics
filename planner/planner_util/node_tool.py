@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 
 class node:
+
     def __init__(self, x, y, cost=0, cost_euld=0, parent=None, child=None):
         self.x = x
         self.y = y
@@ -61,7 +62,6 @@ if __name__ == "__main__":
     plt.scatter([q_base.x, q_rand.x, q_new.x], [q_base.y, q_rand.y, q_new.y])
     plt.show()
 
-
     # SECTION - nearest neighbor
     r = 2
     list_node = [
@@ -75,7 +75,6 @@ if __name__ == "__main__":
     nd = node(0, 0)
     neg = nearest_neighbor(r, list_node, node)
     print(neg)
-
 
     # SECTION - nearest node
     list_node = [node(0, 0), node(0, 1), node(0, 2), node(0, 3), node(0, 4), node(0, 5)]

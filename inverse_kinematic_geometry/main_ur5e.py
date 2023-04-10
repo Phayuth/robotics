@@ -1,3 +1,9 @@
+""" Inverse Kinematic based on geometry derived. Main script to apply code from robot class
+- Robot Type : UR5es
+- DOF : 6
+- Return : 8 possible vector of theta
+"""
+
 import os
 import sys
 

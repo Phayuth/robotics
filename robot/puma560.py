@@ -5,6 +5,7 @@ Reference :
 - DH parameters:
     1.DH parameter is from introduction to robotics mechanic and control by J.J. Craig for modified dh version
     2.Numerical parameter is from Software for control and dynamic simulation of unimate puma 560 robot by Sandeep Anand
+
 - Modified DH Matrix: is from craig
 
 """
@@ -160,22 +161,3 @@ class Puma560:
             theta[5, i] = theta_6
 
         return theta
-
-
-if __name__ == "__main__":
-    np.set_printoptions(suppress=True)
-
-    robot = Puma560()
-    theta_original = np.array([2, 1, 0.5, 2, 1, 0]).reshape(6, 1)
-    print("==>> theta_original: \n", theta_original)
-
-    Tforward_original = robot.forward_kinematic(theta_original, return_full_H=True)
-    print("==>> Tforward_original: \n", Tforward_original)
-
-    theta_ik = robot.inverse_kinematic_geometry(Tforward_original)
-
-    for i in range(8):
-        tt = theta_ik[:, i].reshape(6, 1)
-        Tforward_after_ik = robot.forward_kinematic(tt, return_full_H=True)
-        print(f"==>> Solution Number {i+1}: {theta_ik[:,i]}",)
-        print(Tforward_after_ik)

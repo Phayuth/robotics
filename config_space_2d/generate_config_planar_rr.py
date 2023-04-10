@@ -1,3 +1,12 @@
+""" Generate Configuration Space for Planar Robot RR in 2D
+- Robot Type : Planar RR
+- DOF : 2
+- Taskspace map : Geometry Format
+- Collision Check : Geometry Based
+- Theta 1 in Column
+- Theta 2 in Row
+"""
+
 import os
 import sys
 
@@ -9,17 +18,16 @@ from collision_check_geometry import collision_class
 
 
 def configuration_generate_plannar_rr(robot, obs_list):
-
     grid_size = 360
     theta1 = np.linspace(-np.pi, np.pi, grid_size)
     theta2 = np.linspace(-np.pi, np.pi, grid_size)
 
     grid_map = np.zeros((grid_size, grid_size))
 
-    for j in range(len(theta1)):
-        for k in range(len(theta2)):
-            print(f"at theta1 {theta1[j]} | at theta2 {theta2[k]}")
-            theta = np.array([[theta1[j]], [theta2[k]]])
+    for th1 in range(len(theta1)):
+        for th2 in range(len(theta2)):
+            print(f"at theta1 {theta1[th1]} | at theta2 {theta2[th2]}")
+            theta = np.array([[theta1[th1]], [theta2[th2]]])
             link_pose = robot.forward_kinematic(theta, return_link_pos=True)
             linearm1 = collision_class.ObjLine2D(link_pose[0][0], link_pose[0][1], link_pose[1][0], link_pose[1][1])
             linearm2 = collision_class.ObjLine2D(link_pose[1][0], link_pose[1][1], link_pose[2][0], link_pose[2][1])
@@ -31,16 +39,16 @@ def configuration_generate_plannar_rr(robot, obs_list):
                 col.extend((col1, col2))
 
             if True in col:
-                grid_map[j, k] = 1
+                grid_map[th2, th1] = 1
 
     return 1 - grid_map
 
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+    from map.map_value_range import map_multi_val
     from map.taskmap_geo_format import task_rectangle_obs_1
     from robot.planar_rr import PlanarRR
-    from map.map_value_range import map_multi_val
 
     # SECTION - robot class
     r = PlanarRR()
@@ -59,7 +67,7 @@ if __name__ == "__main__":
 
     # SECTION - configuration space
     grid_np = configuration_generate_plannar_rr(r, obs_list)
-    grid_np[theta_index[0, 0], theta_index[1, 0]] = 2  # add a point in index of grid
+    grid_np[theta_index[1, 0], theta_index[0, 0]] = 2  # add a point in index of grid
 
     # SECTION - plot configspace in image format
     plt.imshow(grid_np)

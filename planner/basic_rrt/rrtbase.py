@@ -1,29 +1,47 @@
+""" RRT Base 2D.
+Map Type : Continuous configuration space 2D
+Sampling Method : Uniform
+Collsion : Geometry based
+Path Searcher : Naive Seach. the nodes near to x_goal -> add x_goal to tree and find path. we can do better, but for simplication just use this.
+                trace back to the start node using the parent node information.
+                we are able to use this beacause we exploit the fact that a node can only have 1 parent but have many child.
+
+"""
+
 import os
 import sys
+
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from collision_check_geometry.collision_class import obj_line2d, obj_point2d, intersect_point_v_rectangle, intersect_line_v_rectangle
+from collision_check_geometry.collision_class import ObjLine2D, ObjPoint2D, intersect_point_v_rectangle, intersect_line_v_rectangle
+
 
 class node:
-    def __init__(self, x, y, parent=None)-> None:
+
+    def __init__(self, x, y, parent=None) -> None:
         self.x = x
         self.y = y
         self.parent = parent
 
+
 class rrtbase():
-    def __init__(self, map, obstacle_list, x_start, x_goal, eta=0.3, maxiteration=1000)-> None:
+
+    def __init__(self, search_area, obstacle_list, x_start, x_goal, eta=0.3, maxiteration=1000) -> None:
         # map properties
-        self.map = map
-        self.x_start = node(x_start[0,0], x_start[1,0])
-        self.x_goal  = node(x_goal[0,0], x_goal[1,0])
+        self.x_min = search_area[0][0]
+        self.x_max = search_area[0][1]
+        self.y_min = search_area[1][0]
+        self.y_max = search_area[1][1]
+        self.x_start = node(x_start[0, 0], x_start[1, 0])
+        self.x_goal = node(x_goal[0, 0], x_goal[1, 0])
         self.obs = obstacle_list
 
         # properties of planner
         self.maxiteration = maxiteration
-        self.eta = eta # distance step update per iteration
+        self.eta = eta  # distance step update per iteration
 
         # start with a tree vertex have start node and empty branch
         self.tree_vertex = [self.x_start]
@@ -39,18 +57,17 @@ class rrtbase():
                 continue
             else:
                 self.tree_vertex.append(x_new)
-    
+
     def search_path(self):
         # search path from the construted tree
         # connect the x_goal to the nearest node of the tree
-        x_near_to_goal = self.nearest_node(self.x_goal) # naive connect, we can do better, but for simplication just use this
+        x_near_to_goal = self.nearest_node(self.x_goal)
         self.x_goal.parent = x_near_to_goal
 
         # initialize the path with the goal node
         path = [self.x_goal]
         curr_node = self.x_goal
 
-        # trace back to the start node using the parent node informationwe are able to use this beacause we exploit the fact that a node can only have 1 parent but have many child
         while curr_node != self.x_start:
             curr_node = curr_node.parent
             path.append(curr_node)
@@ -61,8 +78,8 @@ class rrtbase():
         return path
 
     def sampling(self):
-        x = np.random.uniform(low=0, high=self.map.shape[0])
-        y = np.random.uniform(low=0, high=self.map.shape[1])
+        x = np.random.uniform(low=self.x_min, high=self.x_max)
+        y = np.random.uniform(low=self.y_min, high=self.y_max)
         x_rand = node(x, y)
         return x_rand
 
@@ -86,13 +103,13 @@ class rrtbase():
             x_new = x_rand
         else:
             direction = np.arctan2(dist_y, dist_x)
-            new_x = self.eta*np.cos(direction) + x_nearest.x
-            new_y = self.eta*np.sin(direction) + x_nearest.y
+            new_x = self.eta * np.cos(direction) + x_nearest.x
+            new_y = self.eta * np.sin(direction) + x_nearest.y
             x_new = node(new_x, new_y)
         return x_new
 
     def collision_check_node(self, x_new):
-        nodepoint = obj_point2d(x_new.x, x_new.y)
+        nodepoint = ObjPoint2D(x_new.x, x_new.y)
 
         col = []
         for obs in self.obs:
@@ -105,7 +122,7 @@ class rrtbase():
             return False
 
     def collision_check_line(self, x_nearest, x_new):
-        line = obj_line2d(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
+        line = ObjLine2D(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
 
         col = []
         for obs in self.obs:
@@ -116,7 +133,7 @@ class rrtbase():
             return True
         else:
             return False
-        
+
     def plot_env(self):
         # plot obstacle
         for obs in self.obs:
@@ -129,10 +146,11 @@ class rrtbase():
         # plot tree branh
         for k in self.tree_vertex:
             if k is not self.x_start:
-                plt.plot([k.x, k.parent.x],[k.y, k.parent.y], color="green")
+                plt.plot([k.x, k.parent.x], [k.y, k.parent.y], color="green")
 
         # plot start and goal node
         plt.scatter([self.x_start.x, self.x_goal.x], [self.x_start.y, self.x_goal.y], color='cyan')
+
 
 if __name__ == "__main__":
     from map.taskmap_geo_format import task_rectangle_obs_7
@@ -140,33 +158,28 @@ if __name__ == "__main__":
     from map.map_format_converter import mapimg2geo
     np.random.seed(9)
 
-
     # SECTION - Experiment 1
-    # start = np.array([4,4]).reshape(2,1)
-    # goal = np.array([7,8]).reshape(2,1)
-    # map = np.ones((10,10))
+    # search_area = [[0, 10], [0, 10]]
+    # start = np.array([4, 4]).reshape(2, 1)
+    # goal = np.array([7, 8]).reshape(2, 1)
     # obslist = task_rectangle_obs_7()
 
-
     # SECTION - Experiment 2
-    start = np.array([4,4]).reshape(2,1)
-    goal = np.array([8.5,1]).reshape(2,1)
-    map = np.ones((10,10))
-    obslist = mapimg2geo(bmap(), minmax=[0,10], free_space_value=1)
-
+    search_area = [[0, 10], [0, 10]]
+    start = np.array([4, 4]).reshape(2, 1)
+    goal = np.array([8.5, 1]).reshape(2, 1)
+    obslist = mapimg2geo(bmap(), minmax=[0, 10], free_space_value=1)
 
     # SECTION - plot task space
-    plt.scatter([start[0,0], goal[0,0]], [start[1,0], goal[1,0]])
+    plt.scatter([start[0, 0], goal[0, 0]], [start[1, 0], goal[1, 0]])
     for o in obslist:
         o.plot()
     plt.show()
 
-
     # SECTION - Planning Section
-    planner = rrtbase(map, obslist, start, goal, eta=1, maxiteration=1000)
+    planner = rrtbase(search_area=search_area, obstacle_list=obslist, x_start=start, x_goal=goal, eta=1, maxiteration=1000)
     planner.planning()
     path = planner.search_path()
-
 
     # SECTION - plot planning result
     planner.plot_env()

@@ -1,7 +1,32 @@
+""" Map Class for Path Planning. Costmap is in Image format
+- MapLoader:
+    - loadarray : load from numpy array
+    - loadsave : load from numpy save
+    - increase map size
+    - obstacle dilation
+    - padding size
+    - probabilitizer
+    - grid map probability : do all of above
+
+- MapClass:
+    - load cost map
+    - define the min and max value of configuration space eg. [-pi, pi]
+    - convert costmap to geometry format in rectangle for collision checking
+
+- map value : map number to specific range
+- map vector : map vector to specific range
+"""
+import os
+import sys
+
+wd = os.path.abspath(os.getcwd())
+sys.path.append(str(wd))
+
 import numpy as np
 import matplotlib.pyplot as plt
 import glob
 from scipy.ndimage import binary_dilation
+from collision_check_geometry.collision_class import ObjRec
 
 
 class MapLoader:
@@ -74,9 +99,32 @@ class MapClass:
             self.xmin, self.xmax = maprange[0][0], maprange[0][1]
             self.ymin, self.ymax = maprange[1][0], maprange[1][1]
 
+    def costmap2geo(self, free_space_value=1):
+        size_x = self.costmap.shape[1]
+        size_y = self.costmap.shape[0]
+
+        xval = np.linspace(self.xmin, self.xmax, size_x)
+        yval = np.linspace(self.ymin, self.ymax, size_y)
+
+        obj = [ObjRec(xval[i], yval[j], xval[i + 1] - xval[i], yval[j + 1] - yval[j], p=free_space_value) for i in range(len(xval) - 1) for j in range(len(yval) - 1) if self.costmap[j, i] != free_space_value]
+
+        return obj
+
+
+def map_val(x, in_min, in_max, out_min, out_max):
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+
+
+def map_vec(in_array, in_min, in_max, out_min, out_max):
+    out_array = np.zeros_like(in_array)
+    for index, _ in enumerate(in_array):
+        out_array[index, 0] = (in_array[index, 0] - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+    return out_array
+
 
 if __name__ == "__main__":
     import taskmap_img_format
+    from taskmap_img_format import map_2d_1, map_2d_2, pmap, bmap
 
     # SECTION - load from numpy array
     loader = MapLoader.loadarray(taskmap_img_format.map_2d_1())
@@ -93,3 +141,30 @@ if __name__ == "__main__":
     print(map.xmin, map.xmax, map.ymin, map.ymax)
     plt.imshow(map.costmap)
     plt.show()
+
+    # # SECTION - convert from image to geometry format
+    obj_list = map.costmap2geo(free_space_value=1)
+    for obs in obj_list:
+        obs.plot()
+    plt.show()
+
+
+
+
+
+
+
+    # SECTION - convert joint angle to pixel value (after inverse kinematic -> convert to pixel value -> planning)
+    theta = np.pi
+    pixel_val = map_val(theta, -np.pi, np.pi, 0, 360)
+    print("==>> pixel_val: ", pixel_val)
+
+    # SECTION - convert pixel value to joint angle (after planning -> convert to joint angle -> forward kinematic)
+    pixel = 180
+    theta_val = map_val(pixel, 0, 360, -np.pi, np.pi)
+    print("==>> theta_val: ", theta_val)
+
+    # SECTION - map value but the input is in array of shape (N,1)
+    theta_arr = np.array([[np.pi], [-np.pi], [2]])
+    pixel_val = map_vec(theta_arr, -np.pi, np.pi, 0, 360)
+    print("==>> pixel_val: ", pixel_val)

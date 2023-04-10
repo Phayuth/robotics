@@ -1,3 +1,9 @@
+""" Inverse Kinematic based on geometry derived. Main script to apply code from robot class
+- Robot Type : Planar RRR
+- DOF : 3
+- Option : Elbow up and Elbow Down
+"""
+
 import os
 import sys
 

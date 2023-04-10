@@ -1,8 +1,12 @@
+""" Support Vector machine for classify 2 class of data
+https://towardsdatascience.com/understanding-the-hyperplane-of-scikit-learns-svc-model-f8515a109222
+"""
+
 import matplotlib.pyplot as plt
 from sklearn import svm
 from sklearn.inspection import DecisionBoundaryDisplay
 import numpy as np
-# https://towardsdatascience.com/understanding-the-hyperplane-of-scikit-learns-svc-model-f8515a109222
+
 # we create 20 points seperable in two labels
 X = np.array([
     [-1.0, 2.0],
