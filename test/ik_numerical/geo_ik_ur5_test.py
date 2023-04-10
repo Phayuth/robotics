@@ -7,7 +7,7 @@ import numpy as np
 from numpy import pi
 from rigid_body_transformation.homogeneous_transformation import inverse_hom_trans as invht
 from rigid_body_transformation.dh_parameter import dh_transformation as dh
-from robot.ur5e import ur5e
+from robot.ur5e import UR5e
 import matplotlib.pyplot as plt
 from numpy import linalg
 
@@ -176,7 +176,7 @@ index_solution = 2
 T06 = HTrans(thetaette,index_solution)
 print("==>> T06: \n", T06)
 
-rob = ur5e()
+rob = UR5e()
 ttt = rob.forward_kinematic(thetaette[:,index_solution], return_full_H=True)
 print("==>> ttt: \n", ttt)
 

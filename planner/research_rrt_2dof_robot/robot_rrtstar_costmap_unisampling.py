@@ -11,7 +11,7 @@ from map.map_value_range import map_val
 
 
 class node:
-    def __init__(self, x: float, y: float, cost: float = 0, parent = None):
+    def __init__(self, x: float, y: float, cost: float = 0, parent=None):
         self.x = x
         self.y = y
         self.cost = cost
@@ -29,17 +29,13 @@ class RobotRRTStarCostMapUniSampling:
         eta: float = None,
         maxiteration: int = 1000,
     ):
-        # map properties
         self.map = map
         self.x_init = node(x_init[0, 0], x_init[1, 0])
         self.x_goal = node(x_goal[0, 0], x_goal[1, 0])
         self.nodes = [self.x_init]
 
-        # planner properties
         self.maxiteration = maxiteration
-        # self.m = map.shape[0] * map.shape[1]
-        # self.r = (2 * (1 + 1 / 2) ** (1 / 2)) * (self.m / np.pi) ** (1 / 2)
-        # self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration) ** (1 / 2)
+
         self.eta = 0.3
         self.w1 = w1
         self.w2 = w2
@@ -49,7 +45,6 @@ class RobotRRTStarCostMapUniSampling:
         self.graph_sample_num = 0
         self.graph_data = np.array([[0, 0]])
 
-        # timing
         self.s = time.time()
         self.e = None
         self.sampling_elapsed = 0
@@ -57,7 +52,6 @@ class RobotRRTStarCostMapUniSampling:
         self.rewire_elapsed = 0
 
     def uniform_sampling(self) -> node:
-
         x = np.random.uniform(low=self.map.xmin, high=self.map.xmax)
         y = np.random.uniform(low=self.map.ymin, high=self.map.ymax)
 
@@ -70,34 +64,6 @@ class RobotRRTStarCostMapUniSampling:
 
         return distance_cost
 
-    # def obstacle_cost(self, start: float, end: float) -> float:
-    #     seg_length = 1
-    #     seg_point = int(np.ceil(self.distance_cost(start, end) / seg_length))
-
-    #     value = 0
-    #     if seg_point > 1:
-    #         v = np.array([end.x - start.x, end.y - start.y]) / (seg_point)
-
-    #         for i in range(seg_point + 1):
-    #             seg = np.array([start.x, start.y]) + i * v
-    #             seg = np.around(seg)
-    #             if 1 - self.map.costmap[int(seg[1]), int(seg[0])] == 1:
-    #                 cost = 1e10
-
-    #                 return cost
-    #             else:
-    #                 value += 1 - self.map.costmap[int(seg[1]), int(seg[0])]
-
-    #         cost = value / (seg_point + 1)
-
-    #         return cost
-
-    #     else:
-    #         value = (self.map.costmap[int(start.y), int(start.x)] + self.map.costmap[int(end.y), int(end.x)])
-    #         cost = value / 2
-
-    #         return cost
-
     def segmented_line(self, q_base, q_far, num_seg=10):
         x1 = q_base.x
         y1 = q_base.y
@@ -108,22 +74,22 @@ class RobotRRTStarCostMapUniSampling:
         segment_length = distance / (num_seg - 1)
         points = [q_base]
         for i in range(1, num_seg - 1):
-            x = x1 + i * segment_length * (q_far.x - q_base.x)/distance
-            y = y1 + i * segment_length * (q_far.y - q_base.y)/distance
+            x = x1 + i * segment_length * (q_far.x - q_base.x) / distance
+            y = y1 + i * segment_length * (q_far.y - q_base.y) / distance
             point = node(x, y)
             points.append(point)
         points.append(q_far)
 
         return points
-    
+
     def getcost(self, q):
+        if self.map.xmin < q.x < self.map.xmax and self.map.ymin < q.y < self.map.ymax:
+            ind_x = int((map_val(q.x, self.map.xmin, self.map.xmax, 0,
+                                 self.map.costmap.shape[0])))
+            ind_y = int((map_val(q.y, self.map.ymin, self.map.ymax, 0,
+                                 self.map.costmap.shape[1])))
 
-        if self.map.xmin < q.x < self.map.xmax and self.map.ymin < q.y < self.map.ymax: # value must inside the range, not even equal pi
-
-            ind_x = int((map_val(q.x, self.map.xmin, self.map.xmax, 0, self.map.costmap.shape[0])))
-            ind_y = int((map_val(q.y, self.map.ymin, self.map.ymax, 0, self.map.costmap.shape[1])))
-
-            return self.map.costmap[ind_y, ind_x] # in img format row is y, column is x, spend weeks cause of this
+            return self.map.costmap[ind_y, ind_x]
 
     def obstacle_cost(self, q_base, q_far, num_seg=10):
         seg = self.segmented_line(q_base, q_far, num_seg=num_seg)
@@ -137,8 +103,9 @@ class RobotRRTStarCostMapUniSampling:
             return cost
 
     def line_cost(self, start: node, end: node) -> float:
-
-        cost = self.w1 * (self.distance_cost(start, end) / (self.eta)) + self.w2 * (self.obstacle_cost(start, end))
+        cost = self.w1 * (self.distance_cost(start, end) /
+                          (self.eta)) + self.w2 * (self.obstacle_cost(
+                              start, end))
 
         return cost
 
@@ -209,17 +176,19 @@ class RobotRRTStarCostMapUniSampling:
     def rewire(self, x_new: node):
         for x_near in self.nodes:
             if x_near is not x_new.parent:
-                if (self.distance_cost(x_near, x_new) <= self.eta):  # and self.obstacle_cost(x_new, x_near) < 1
-                    if x_new.cost + self.line_cost(x_new, x_near) < x_near.cost:
+                if self.distance_cost(x_near, x_new) <= self.eta:
+                    if x_new.cost + self.line_cost(x_new,
+                                                   x_near) < x_near.cost:
                         x_near.parent = x_new
-                        x_near.cost = x_new.cost + self.line_cost(x_new, x_near)
+                        x_near.cost = x_new.cost + self.line_cost(
+                            x_new, x_near)
 
     def get_path(self) -> list:
         temp_path = []
         path = []
         n = 0
         for i in self.nodes:
-            if self.distance_cost(i, self.x_goal) < self.eta:  # 5
+            if self.distance_cost(i, self.x_goal) < self.eta:
                 cost = i.cost + self.line_cost(self.x_goal, i)
                 temp_path.append([cost, n, i])
                 n += 1
@@ -252,113 +221,58 @@ class RobotRRTStarCostMapUniSampling:
     def draw_path(self, path: list):
         for i in path:
             if i is not self.x_init:
-                plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "r", linewidth=2.5)
+                plt.plot([i.x, i.parent.x], [i.y, i.parent.y],
+                         "r",
+                         linewidth=2.5)
 
     def start_planning(self):
         """start planning loop"""
         while True:
-            # start record sampling time
-            time_sampling_start = time.time()
             while True:
-                # create random node by start uniform sampling
                 x_rand = self.uniform_sampling()
-                # update number of iteration
                 self.total_iter += 1
-                # find the nearest node to sampling
                 x_nearest = self.nearest(x_rand)
-                # create new node in the direction of random and nearest to nearest node
                 x_new = self.steer(x_rand, x_nearest)
-                # check whether to add new node to tree or not, if yes then add and breeak out of sampling loop, if not then continue sampling loop
                 b = self.new_check(x_new)
                 if b == True:
                     break
-                # stop if the sampling iteration reach maximum
                 if self.total_iter == self.maxiteration:
                     break
-            # stop record sampling time
-            time_sampling_end = time.time()
-            # determine sampling time elapsed
-            self.sampling_elapsed += time_sampling_end - time_sampling_start
-            # stop the entire planner if iteration reach maximum
             if self.total_iter == self.maxiteration:
                 break
-            # update sample taken number
             self.sample_taken += 1
             print("==>> self.sample_taken: ", self.sample_taken)
 
-            # start record addparent time
-            time_addparent_start = time.time()
-            # create xnew node with xnearest as its parent
             x_new = self.add_parent(x_new, x_nearest)
-            # stop record addparent time
-            time_addparent_end = time.time()
-            # determine addparent time elapsed
-            self.addparent_elapsed += time_addparent_end - time_addparent_start
-            # add xnew to rrt tree nodes
             self.nodes.append(x_new)
 
-            # start record rewire time
-            time_rewire_start = time.time()
-            # start rewire tree
             self.rewire(x_new)
-            # stop record rewire time
-            time_rewire_end = time.time()
-            # determine rewire time elapsed
-            self.rewire_elapsed += time_rewire_end - time_rewire_start
-
-        # record end of planner loop
-        self.e = time.time()
-
-    def print_time(self):
-        print("total time : ", self.e - self.s, "second")
-        print(
-            "sampling time : ",
-            self.sampling_elapsed,
-            "second",
-            (self.sampling_elapsed * 100) / (self.e - self.s),
-            "%",
-        )
-        print(
-            "add_parent time : ",
-            self.addparent_elapsed,
-            "second",
-            (self.addparent_elapsed * 100) / (self.e - self.s),
-            "%",
-        )
-        print(
-            "rewire time : ",
-            self.rewire_elapsed,
-            "second",
-            (self.rewire_elapsed * 100) / (self.e - self.s),
-            "%",
-        )
-        print("total_iteration = ", self.total_iter)
-        print("cost : ", self.x_goal.cost)
 
 
 if __name__ == "__main__":
     from map.mapclass import MapClass, MapLoader
     from map.map_loader import grid_map_binary
+
     np.random.seed(0)
 
-    # SECTION - experiment 1
     loader = MapLoader.loadsave(maptype="task", mapindex=1, reverse=False)
-    map = MapClass(loader, maprange=[[-np.pi, np.pi],[-np.pi, np.pi]])
+    map = MapClass(loader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
     plt.imshow(map.costmap)
     plt.show()
     x_init = np.array([0, 1]).reshape(2, 1)
     x_goal = np.array([2, 0]).reshape(2, 1)
 
-
-    # SECTION - planner
     distance_weight = 0.5
     obstacle_weight = 0.5
-    rrt = RobotRRTStarCostMapUniSampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
+    rrt = RobotRRTStarCostMapUniSampling(map,
+                                         x_init,
+                                         x_goal,
+                                         distance_weight,
+                                         obstacle_weight,
+                                         maxiteration=1000)
     rrt.start_planning()
-    # path = rrt.get_path()
 
-    # SECTION - result
     plt.imshow(map.costmap)
     rrt.draw_tree()
-    # rrt.draw_path(path)
+
     plt.show()

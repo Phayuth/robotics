@@ -15,12 +15,12 @@ class node:
         self.cost = cost
 
 class infm_rrtstar:
-    def __init__(self, map, obstacle_list, startnode, goalnode, eta=None, maxiteration=1000)-> None:
+    def __init__(self, map, obstacle_list, x_start, x_goal, eta=None, maxiteration=1000)-> None:
         # map properties
         self.map = map
-        self.startnode = node(startnode[0,0], startnode[1,0])
-        self.startnode.cost = 0.0
-        self.goalnode  = node(goalnode[0,0], goalnode[1,0])
+        self.x_start = node(x_start[0,0], x_start[1,0])
+        self.x_start.cost = 0.0
+        self.x_goal  = node(x_goal[0,0], x_goal[1,0])
         self.obs = obstacle_list
 
         # properties of planner
@@ -30,7 +30,7 @@ class infm_rrtstar:
         self.eta = self.radius * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
 
         # start with a tree vertex have start node and empty branch
-        self.tree_vertex = [self.startnode]
+        self.tree_vertex = [self.x_start]
         self.X_soln = []
 
     def planning(self):
@@ -38,11 +38,11 @@ class infm_rrtstar:
         for itera in range(self.maxiteration):
             print(itera)
             for x_soln in self.X_soln:
-                c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode)
-                if x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode) < c_best:
-                    c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.goalnode)
+                c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.x_goal)
+                if x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.x_goal) < c_best:
+                    c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.x_goal)
 
-            x_rand = self.sampling(self.startnode, self.goalnode, c_best)
+            x_rand = self.sampling(self.x_start, self.x_goal, c_best)
 
             x_nearest = self.nearest_node(x_rand)
             x_new = self.steer(x_nearest, x_rand)
@@ -82,14 +82,14 @@ class infm_rrtstar:
 
     def search_path(self):
         for xbest in self.X_soln:
-            if self.collision_check_line(xbest, self.goalnode):
+            if self.collision_check_line(xbest, self.x_goal):
                 continue
-            self.goalnode.parent = xbest
+            self.x_goal.parent = xbest
 
-            path = [self.goalnode]
-            curr_node = self.goalnode
+            path = [self.x_goal]
+            curr_node = self.x_goal
 
-            while curr_node != self.startnode:
+            while curr_node != self.x_start:
                 curr_node = curr_node.parent
                 path.append(curr_node)
 
@@ -137,7 +137,7 @@ class infm_rrtstar:
         return x_rand
     
     def ingoal_region(self, x_new):
-        if np.linalg.norm([self.goalnode.x - x_new.x, self.goalnode.y - x_new.y]) <= 1 :# self.eta:
+        if np.linalg.norm([self.x_goal.x - x_new.x, self.x_goal.y - x_new.y]) <= 1 :# self.eta:
             return True
         else:
             return False
@@ -221,11 +221,11 @@ class infm_rrtstar:
 
         # plot tree branh
         for k in self.tree_vertex:
-            if k is not self.startnode:
+            if k is not self.x_start:
                 plt.plot([k.x, k.parent.x], [k.y, k.parent.y], color="green")
 
         # plot start and goal node
-        plt.scatter([self.startnode.x, self.goalnode.x], [self.startnode.y, self.goalnode.y], color='cyan')
+        plt.scatter([self.x_start.x, self.x_goal.x], [self.x_start.y, self.x_goal.y], color='cyan')
 
         # plot ingoal region node
         for l in self.X_soln:
@@ -234,7 +234,7 @@ class infm_rrtstar:
 if __name__ == "__main__":
     from map.taskmap_geo_format import task_rectangle_obs_7
     from map.taskmap_img_format import bmap
-    from map.map_format_converter import img_to_geo
+    from map.map_format_converter import mapimg2geo
     from collision_check_geometry.collision_class import obj_rec
     np.random.seed(9)
 
@@ -247,10 +247,10 @@ if __name__ == "__main__":
 
 
     # SECTION - Experiment 2
-    # start = np.array([4,4]).reshape(2,1)
-    # goal = np.array([8.5,1]).reshape(2,1)
-    # map = np.ones((10,10))
-    # obslist = img_to_geo(bmap(), minmax=[0,10], free_space_value=1)
+    start = np.array([4,4]).reshape(2,1)
+    goal = np.array([8.5,1]).reshape(2,1)
+    map = np.ones((10,10))
+    obslist = mapimg2geo(bmap(), minmax=[0,10], free_space_value=1)
     # obsborder = [obj_rec(0,0,0.1,10), obj_rec(0,0,10,0.1), obj_rec(10,0,10,0.1), obj_rec(0,10,0.1,10)]
     # obslist = obslist + obsborder
 

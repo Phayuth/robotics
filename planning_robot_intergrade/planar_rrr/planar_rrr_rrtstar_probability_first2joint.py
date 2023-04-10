@@ -11,11 +11,11 @@ from config_space_2d.generate_config_planar_rrr import configuration_generate_pl
 from map.map_value_range import map_multi_val, map_val
 from map.taskmap_geo_format import task_rectangle_obs_6
 from planner.research_rrtstar_3d.rrtstar_costmap_biassampling import node, rrt_star
-from robot.planar_rrr import planar_rrr
+from robot.planar_rrr import PlanarRRR
 from util.coord_transform import circle_plt, polar2cats
 from util.extract_path_class import extract_path_class_3d
 
-robot = planar_rrr()
+robot = PlanarRRR()
 
 # define task space init point and goal point
 init_pose = np.array([[2.5],[0],[0]])

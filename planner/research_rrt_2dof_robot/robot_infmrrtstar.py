@@ -234,7 +234,7 @@ class infm_rrtstar:
 if __name__ == "__main__":
     from map.taskmap_geo_format import task_rectangle_obs_7
     from map.taskmap_img_format import bmap
-    from map.map_format_converter import img_to_geo
+    from map.map_format_converter import mapimg2geo
     from collision_check_geometry.collision_class import obj_rec
     np.random.seed(9)
 

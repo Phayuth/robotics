@@ -7,7 +7,7 @@ import numpy as np
 import torch.nn as nn
 import torch
 import torch.optim as optim
-from robot.planar_rr import planar_rr
+from robot.planar_rr import PlanarRR
 from planar_rr_kinematic_dataset import planar_rr_generate_dataset
 
 # original code save here just to compare the progress of understanding
@@ -34,7 +34,7 @@ def check_cuda():
         return "cpu"
 
 
-robot = planar_rr()
+robot = PlanarRR()
 
 def train_arc():
     

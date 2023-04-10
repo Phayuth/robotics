@@ -25,12 +25,12 @@ class node(object):
         self.parent = parent
 
 class rrt_general():
-    def __init__(self, map:np.ndarray, x_init:np.ndarray, x_goal:np.ndarray, obs:list, obstacle_center:list, collision_range:float, eta:float=None, maxiteration:int=1000):
+    def __init__(self, map:np.ndarray, x_start:np.ndarray, x_goal:np.ndarray, obs:list, obstacle_center:list, collision_range:float, eta:float=None, maxiteration:int=1000):
         """General RRT star method of planning with Uniform sampling
 
         Args:
             map (np.ndarray): occupancy grid map
-            x_init (np.ndarray): start configuration np.ndarray
+            x_start (np.ndarray): start configuration np.ndarray
             x_goal (np.ndarray): end configuration np.ndarray
             eta (float): RRT* constants
             obs (list): list of obstacle generate from [generate obstcle from map]
@@ -40,9 +40,9 @@ class rrt_general():
         """
         # map properties
         self.map = map
-        self.x_init = node(x_init[0,0], x_init[1,0])
+        self.x_start = node(x_start[0,0], x_start[1,0])
         self.x_goal = node(x_goal[0,0], x_goal[1,0])
-        self.nodes = [self.x_init]
+        self.nodes = [self.x_start]
         self.obs = obs
         self.obstacle_center = obstacle_center
         self.collision_range = collision_range
@@ -223,10 +223,10 @@ class rrt_general():
             i = closest_node
             self.x_goal.cost = temp_path[0][0]
 
-            while i is not self.x_init:
+            while i is not self.x_start:
                 path.append(i)
                 i = i.parent
-            path.append(self.x_init)
+            path.append(self.x_start)
 
             self.x_goal.parent = path[0]
             path.insert(0, self.x_goal)
@@ -237,7 +237,7 @@ class rrt_general():
         """draw rrt tree on plot
         """
         for i in self.nodes:
-            if i is not self.x_init:
+            if i is not self.x_start:
                 plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "blue")
 
     def Draw_obs(self):
@@ -257,7 +257,7 @@ class rrt_general():
         """
 
         for i in path:
-            if i is not self.x_init:
+            if i is not self.x_start:
                 plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "r", linewidth=2.5)
 
     def Cost_Graph(self):
@@ -356,12 +356,12 @@ if __name__=="__main__":
     map, obstacle, obstacle_center = obstacle_generate_from_map(index=0)
     obs = Obstacle_generater(obstacle)
     collision_range = (2**(1/2))/2
-    x_init = np.array([5,5]).reshape(2,1)
+    x_start = np.array([5,5]).reshape(2,1)
     x_goal = np.array([20,20]).reshape(2,1)
 
 
     # SECTION - planning
-    planner = rrt_general(map, x_init, x_goal, obs, obstacle_center, collision_range, maxiteration=1000)
+    planner = rrt_general(map, x_start, x_goal, obs, obstacle_center, collision_range, maxiteration=1000)
     planner.start_planning()
     path = planner.Get_Path()
 

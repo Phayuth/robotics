@@ -4,11 +4,11 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from robot.planar_rr import planar_rr
+from robot.planar_rr import PlanarRR
 from planar_rr_kinematic_dataset import planar_rr_generate_dataset
 
 # create robot class
-robot = planar_rr()
+robot = PlanarRR()
 
 # create dataset of forward kinematic
 sample_theta, sample_endeffector_pose = planar_rr_generate_dataset(robot)

@@ -11,13 +11,13 @@ from config_space_2d.generate_config_planar_rr import configuration_generate_pla
 from map.map_value_range import map_multi_val, map_val
 from map.taskmap_geo_format import task_rectangle_obs_5
 from planner.research_rrt_2dof.rrtstar_costmap_biassampling import node, rrt_star
-from robot.planar_rr import planar_rr
+from robot.planar_rr import PlanarRR
 from util.coord_transform import polar2cats, circle_plt
 from util.extract_path_class import extract_path_class_2d
 
 
 # robot, inverse kinematic and plot
-robot = planar_rr()
+robot = PlanarRR()
 
 # init pose
 init_pose = np.array([[4],[0]])

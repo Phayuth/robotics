@@ -5,6 +5,7 @@ from scipy.ndimage import binary_dilation
 
 
 class MapLoader:
+
     def __init__(self, costmap) -> None:
         self.costmap = costmap
 
@@ -24,26 +25,12 @@ class MapLoader:
             costmap = 1 - costmap
         return cls(costmap)
 
-
-class MapClass:
-    def __init__(self, maploader:MapLoader, maprange:list=None) -> None:
-        self.costmap = maploader.costmap
-        if maprange is None:
-            self.givenrange = False
-            self.xmin, self.xmax = 0, self.costmap.shape[1] # colum is x
-            self.ymin, self.ymax = 0, self.costmap.shape[0] # row is y
-        else:
-            self.givenrange = True
-            self.xmin,self.xmax = maprange[0][0], maprange[0][1]
-            self.ymin,self.ymax = maprange[1][0], maprange[1][1]
+    def getcostmap(self):
+        return self.costmap
 
     def increase_map_size(self, multiplier=4):
         self.costmap = np.repeat(self.costmap, multiplier, axis=1)
         self.costmap = np.repeat(self.costmap, multiplier, axis=0)
-
-        if self.givenrange == False:
-            self.xmin, self.xmax = 0, self.costmap.shape[1]
-            self.ymin, self.ymax = 0, self.costmap.shape[0]
 
     def obs_dilation(self):
         self.costmap = binary_dilation(1 - self.costmap).astype(self.costmap.dtype)
@@ -60,28 +47,32 @@ class MapClass:
             self.costmap = np.vstack((self.costmap, f2))
             self.costmap = np.vstack((f2, self.costmap))
 
-        if self.givenrange == False:
-            self.xmin, self.xmax = 0, self.costmap.shape[1]
-            self.ymin, self.ymax = 0, self.costmap.shape[0]
-
     def probabilitizer(self, size=3):
         kernel_map = np.array([])
         for i in range(size, self.costmap.shape[0] - size):
             for j in range(size, self.costmap.shape[1] - size):
-                print(i,j)
-                cell_value = np.sum(self.costmap[i - size:i + size + 1, j - size:j + size + 1]) / ((2 * size + 1) ** 2)
+                print(i, j)
+                cell_value = np.sum(self.costmap[i - size:i + size + 1, j - size:j + size + 1]) / ((2 * size + 1)**2)
                 kernel_map = np.append(kernel_map, cell_value)
         self.costmap = np.reshape(kernel_map, (self.costmap.shape[0] - 2 * size, self.costmap.shape[1] - 2 * size))
-
-        if self.givenrange == False:
-            self.xmin, self.xmax = 0, self.costmap.shape[1]
-            self.ymin, self.ymax = 0, self.costmap.shape[0]
 
     def grid_map_probability(self, size=3):
         self.increase_map_size(multiplier=4)
         self.obs_dilation()
         self.padding_four_size(size)
         self.probabilitizer(size)
+
+
+class MapClass:
+
+    def __init__(self, maploader: MapLoader, maprange: list = None) -> None:
+        self.costmap = maploader.costmap
+        if maprange is None:
+            self.xmin, self.xmax = 0, self.costmap.shape[1]  # colum is x
+            self.ymin, self.ymax = 0, self.costmap.shape[0]  # row is y
+        else:
+            self.xmin, self.xmax = maprange[0][0], maprange[0][1]
+            self.ymin, self.ymax = maprange[1][0], maprange[1][1]
 
 
 if __name__ == "__main__":
@@ -92,27 +83,13 @@ if __name__ == "__main__":
     plt.imshow(loader.costmap)
     plt.show()
 
-
     # SECTION - load from numpy save
     loader = MapLoader.loadsave(maptype="task", mapindex=0, reverse=False)
     plt.imshow(loader.costmap)
     plt.show()
 
-
     # SECTION - create map class and probibilitize step by step
-    map = MapClass(loader, maprange=[[-np.pi, np.pi],[-np.pi, np.pi]])
-    map.increase_map_size(multiplier=4)
-    map.obs_dilation()
-    map.padding_four_size()
-    map.probabilitizer()
-    print(map.xmin, map.xmax, map.ymin, map.ymax)
-    plt.imshow(map.costmap)
-    plt.show()
-
-
-    # SECTION - create map class and probibilitize direct
-    map = MapClass(loader, maprange=[[-np.pi, np.pi],[-np.pi, np.pi]])
-    map.grid_map_probability()
+    map = MapClass(loader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
     print(map.xmin, map.xmax, map.ymin, map.ymax)
     plt.imshow(map.costmap)
     plt.show()

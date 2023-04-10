@@ -14,11 +14,11 @@ class node:
         self.parent = parent
 
 class rrtbase():
-    def __init__(self, map, obstacle_list, startnode, goalnode, eta=0.3, maxiteration=1000)-> None:
+    def __init__(self, map, obstacle_list, x_start, x_goal, eta=0.3, maxiteration=1000)-> None:
         # map properties
         self.map = map
-        self.startnode = node(startnode[0,0], startnode[1,0])
-        self.goalnode  = node(goalnode[0,0], goalnode[1,0])
+        self.x_start = node(x_start[0,0], x_start[1,0])
+        self.x_goal  = node(x_goal[0,0], x_goal[1,0])
         self.obs = obstacle_list
 
         # properties of planner
@@ -26,16 +26,15 @@ class rrtbase():
         self.eta = eta # distance step update per iteration
 
         # start with a tree vertex have start node and empty branch
-        self.tree_vertex = [self.startnode]
+        self.tree_vertex = [self.x_start]
 
-    def planing(self):
-
-        # create the tree
-        for _ in range(self.maxiteration):
+    def planning(self):
+        for itera in range(self.maxiteration):
+            print(itera)
             x_rand = self.sampling()
             x_nearest = self.nearest_node(x_rand)
             x_new = self.steer(x_nearest, x_rand)
-            x_new.parent = x_nearest # add parent of the x_new as x_nearest of graph seacher
+            x_new.parent = x_nearest
             if self.collision_check_node(x_new) or self.collision_check_line(x_nearest, x_new):
                 continue
             else:
@@ -43,17 +42,16 @@ class rrtbase():
     
     def search_path(self):
         # search path from the construted tree
-
         # connect the x_goal to the nearest node of the tree
-        x_near_to_goal = self.nearest_node(self.goalnode) # naive connect, we can do better, but for simplication just use this
-        self.goalnode.parent = x_near_to_goal
+        x_near_to_goal = self.nearest_node(self.x_goal) # naive connect, we can do better, but for simplication just use this
+        self.x_goal.parent = x_near_to_goal
 
         # initialize the path with the goal node
-        path = [self.goalnode]
-        curr_node = self.goalnode
+        path = [self.x_goal]
+        curr_node = self.x_goal
 
-        # trace back to the start node using the parent node information, we are able to use this beacause we exploit the fact that a node can only have 1 parent but have many child
-        while curr_node != self.startnode:
+        # trace back to the start node using the parent node informationwe are able to use this beacause we exploit the fact that a node can only have 1 parent but have many child
+        while curr_node != self.x_start:
             curr_node = curr_node.parent
             path.append(curr_node)
 
@@ -130,16 +128,16 @@ class rrtbase():
 
         # plot tree branh
         for k in self.tree_vertex:
-            if k is not self.startnode:
+            if k is not self.x_start:
                 plt.plot([k.x, k.parent.x],[k.y, k.parent.y], color="green")
 
         # plot start and goal node
-        plt.scatter([self.startnode.x, self.goalnode.x], [self.startnode.y, self.goalnode.y], color='cyan')
+        plt.scatter([self.x_start.x, self.x_goal.x], [self.x_start.y, self.x_goal.y], color='cyan')
 
 if __name__ == "__main__":
     from map.taskmap_geo_format import task_rectangle_obs_7
     from map.taskmap_img_format import bmap
-    from map.map_format_converter import img_to_geo
+    from map.map_format_converter import mapimg2geo
     np.random.seed(9)
 
 
@@ -154,7 +152,7 @@ if __name__ == "__main__":
     start = np.array([4,4]).reshape(2,1)
     goal = np.array([8.5,1]).reshape(2,1)
     map = np.ones((10,10))
-    obslist = img_to_geo(bmap(), minmax=[0,10], free_space_value=1)
+    obslist = mapimg2geo(bmap(), minmax=[0,10], free_space_value=1)
 
 
     # SECTION - plot task space
@@ -166,7 +164,7 @@ if __name__ == "__main__":
 
     # SECTION - Planning Section
     planner = rrtbase(map, obslist, start, goal, eta=1, maxiteration=1000)
-    planner.planing()
+    planner.planning()
     path = planner.search_path()
 
 

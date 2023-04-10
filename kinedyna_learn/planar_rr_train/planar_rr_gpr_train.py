@@ -7,9 +7,9 @@ sys.path.append(str(wd))
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
-from robot.planar_rr import planar_rr
+from robot.planar_rr import PlanarRR
 
-robot = planar_rr()
+robot = PlanarRR()
 
 # # define dataset
 # X, y = planar_rr_generate_dataset(robot)

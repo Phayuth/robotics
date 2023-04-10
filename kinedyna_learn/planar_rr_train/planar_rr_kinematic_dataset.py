@@ -4,7 +4,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from robot.planar_rr import planar_rr
+from robot.planar_rr import PlanarRR
 
 def planar_rr_generate_dataset(robot):
 
@@ -29,7 +29,7 @@ def planar_rr_generate_dataset(robot):
 
 if __name__=="__main__":
 
-    robot = planar_rr()
+    robot = PlanarRR()
 
     X, y = planar_rr_generate_dataset(robot)
     

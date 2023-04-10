@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from robot.planar_rr import planar_rr
+from robot.planar_rr import PlanarRR
 from planar_rr_kinematic_dataset import planar_rr_generate_dataset
 
 # the result is obviously wrong, but this is just a foundation of research methodology, we can find another training model that work
@@ -50,7 +50,7 @@ class CustomDataset(Dataset):
         y = torch.from_numpy(self.label[idx]).to(check_cuda()).float()
         return (x,y)
 
-robot = planar_rr()
+robot = PlanarRR()
 
 def train_arc():
     

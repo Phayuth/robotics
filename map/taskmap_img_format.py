@@ -1,16 +1,21 @@
+"""
+Taskspace costmap in imageformat
+----
+Represented in numpy or image format thus can not directly use it must convert into continuous coordinate format
+
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 
-# task space map represented in numpy or image format
-# thus can not directly use it
-# must convert into continuous coordinate format
 
 def map_2d_1():
     map = np.zeros([31, 31])
     map[22:28, 10:21] = 1
     map[4:11, 10:21] = 1
     return 1 - map
+
 
 def map_2d_2():
     map = np.zeros([201, 101])
@@ -19,18 +24,22 @@ def map_2d_2():
     map[25:60, 40:60] = 1
     return 1 - map
 
+
 def map_2d_empty():
     map = np.zeros([300, 300])
     return 1 - map
+
 
 def map_3d():
     map = np.ones((51, 51, 51))
     map[0:51, 25:51, 0:51] = 0
     return map
 
+
 def map_3d_empty():
     map = np.ones((51, 51, 51))
     return map
+
 
 def pmap(return_rgb=False):
     image_size = 30
@@ -61,6 +70,7 @@ def pmap(return_rgb=False):
         return imgArray
     else:
         return map
+
 
 def bmap(return_rgb=False):
     image_size = 50

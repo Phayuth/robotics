@@ -133,7 +133,7 @@ class RobotRRT():
 
 if __name__ == "__main__":
     from map.taskmap_img_format import bmap
-    from map.map_format_converter import img_to_geo
+    from map.map_format_converter import mapimg2geo
     np.random.seed(9)
 
 
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     start = np.array([0,0]).reshape(2,1)
     goal = np.array([1,1]).reshape(2,1)
     map = np.ones((10,10))
-    obslist = img_to_geo(bmap(), minmax=[-np.pi,np.pi], free_space_value=1)
+    obslist = mapimg2geo(bmap(), minmax=[-np.pi,np.pi], free_space_value=1)
 
 
     # SECTION - plot task space
