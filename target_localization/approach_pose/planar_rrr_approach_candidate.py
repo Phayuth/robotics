@@ -21,7 +21,6 @@ r_outer = r_inner + 0.1
 x_inner, y_inner = polar2cats(r_inner, t_targ, x_targ, y_targ)
 x_outer, y_outer = polar2cats(r_outer, t_targ, x_targ, y_targ)
 
-
 # SECTION - search for pose candidate
 candidate = []
 for i in range(len(x_inner)):
@@ -44,7 +43,6 @@ for i in range(len(x_inner)):
         pass
 
     candidate.append(inv_solu)
-
 
 # SECTION - plot task space
 plt.axes().set_aspect('equal')

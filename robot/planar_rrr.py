@@ -24,13 +24,9 @@ class PlanarRRR:
         theta3 = theta[2, 0]
 
         H01 = np.array([[np.cos(theta1), -np.sin(theta1), 0, 0], [np.sin(theta1), np.cos(theta1), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-
         H12 = np.array([[np.cos(theta2), -np.sin(theta2), 0, self.a1], [np.sin(theta2), np.cos(theta2), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-
         H23 = np.array([[np.cos(theta3), -np.sin(theta3), 0, self.a2], [np.sin(theta3), np.cos(theta3), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-
         H34 = np.array([[1, 0, 0, self.a3], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-
         H04 = H01 @ H12 @ H23 @ H34
         phi = theta1 + theta2 + theta3
 
@@ -72,17 +68,13 @@ class PlanarRRR:
         return J
 
     def plot_arm(self, theta, plt_basis=False, plt_show=False):
-
         theta1 = theta[0, 0]
         theta2 = theta[1, 0]
         theta3 = theta[2, 0]
 
         H01 = np.array([[np.cos(theta1), -np.sin(theta1), 0, 0], [np.sin(theta1), np.cos(theta1), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-
         H12 = np.array([[np.cos(theta2), -np.sin(theta2), 0, self.a1], [np.sin(theta2), np.cos(theta2), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-
         H23 = np.array([[np.cos(theta3), -np.sin(theta3), 0, self.a2], [np.sin(theta3), np.cos(theta3), 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
-
         H34 = np.array([[1, 0, 0, self.a3], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]])
 
         p1 = H01
@@ -105,7 +97,6 @@ class PlanarRRR:
             plt.show()
 
     def inverse_kinematic_geometry(self, desired_config, elbow_option=0):
-
         x = desired_config[0, 0]
         y = desired_config[1, 0]
         phi = desired_config[2, 0]

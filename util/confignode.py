@@ -5,7 +5,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from map.map_value_range import map_val
+from map.mapclass import map_val
 
 class confignode:
     def __init__(self, q1, q2, pv) -> None:

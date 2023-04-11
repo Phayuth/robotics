@@ -16,15 +16,16 @@
 - map value : map number to specific range
 - map vector : map vector to specific range
 """
+
 import os
 import sys
 
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-import numpy as np
-import matplotlib.pyplot as plt
 import glob
+import matplotlib.pyplot as plt
+import numpy as np
 from scipy.ndimage import binary_dilation
 from collision_check_geometry.collision_class import ObjRec
 
@@ -39,7 +40,7 @@ class MapLoader:
         return cls(costmap)
 
     @classmethod
-    def loadsave(cls, maptype, mapindex, reverse):
+    def loadsave(cls, maptype, mapindex, reverse=False):
         task_map_list = glob.glob('./map/mapdata/task_space/*.npy')
         config_map_list = glob.glob('./map/mapdata/config_space_data_2d/*.npy')
         if maptype == "task":
@@ -76,7 +77,6 @@ class MapLoader:
         kernel_map = np.array([])
         for i in range(size, self.costmap.shape[0] - size):
             for j in range(size, self.costmap.shape[1] - size):
-                print(i, j)
                 cell_value = np.sum(self.costmap[i - size:i + size + 1, j - size:j + size + 1]) / ((2 * size + 1)**2)
                 kernel_map = np.append(kernel_map, cell_value)
         self.costmap = np.reshape(kernel_map, (self.costmap.shape[0] - 2 * size, self.costmap.shape[1] - 2 * size))
@@ -124,7 +124,7 @@ def map_vec(in_array, in_min, in_max, out_min, out_max):
 
 if __name__ == "__main__":
     import taskmap_img_format
-    from taskmap_img_format import map_2d_1, map_2d_2, pmap, bmap
+    from taskmap_img_format import bmap, map_2d_1, map_2d_2, pmap
 
     # SECTION - load from numpy array
     loader = MapLoader.loadarray(taskmap_img_format.map_2d_1())

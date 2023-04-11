@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from map.taskmap_geo_format import task_rectangle_obs_6
 from robot.planar_rrr import PlanarRRR
 import numpy as np
-from map.map_value_range import map_val, map_multi_val
+from map.mapclass import map_val, map_vec
 from config_space_2d.generate_config_planar_rrr import configuration_generate_plannar_rrr
 from planner.research_rrt_3dof.rrtstar_costmap_biassampling import node , rrt_star
 from util.extract_path_class import extract_path_class_3d
@@ -27,9 +27,9 @@ theta_goal = robot.inverse_kinematic_geometry(desired_pose, elbow_option=0)
 # grid size
 grid_size = 75
 # calculate theta init index inside confuration 
-theta_init_index = (map_multi_val(theta_init, -np.pi, np.pi, 0, grid_size)).astype(int)
+theta_init_index = (map_vec(theta_init, -np.pi, np.pi, 0, grid_size)).astype(int)
 # calculate theta goal index
-theta_goal_index = (map_multi_val(theta_goal, -np.pi, np.pi, 0, grid_size)).astype(int)
+theta_goal_index = (map_vec(theta_goal, -np.pi, np.pi, 0, grid_size)).astype(int)
 
 
 # task space plot view

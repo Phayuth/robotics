@@ -48,7 +48,6 @@ class UR5e:
         return R
 
     def forward_kinematic(self, theta, return_full_H=False, return_each_H=False):
-
         A1 = self.dh_transformation(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
         A2 = self.dh_transformation(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
         A3 = self.dh_transformation(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
@@ -76,7 +75,6 @@ class UR5e:
             return x_current
 
     def jacobian(self, theta):
-
         A1 = self.dh_transformation(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
         A2 = self.dh_transformation(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
         A3 = self.dh_transformation(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
@@ -132,7 +130,6 @@ class UR5e:
         return J
 
     def jacobian_analytical(self, theta, roll, pitch, yaw):
-
         B = np.array([[np.cos(yaw)*np.sin(pitch), -np.sin(yaw), 0],
                       [np.sin(yaw)*np.sin(pitch),  np.cos(yaw), 0],
                       [            np.cos(pitch),            0, 1]])
@@ -263,7 +260,6 @@ class UR5e:
         return theta
 
     def plot_arm(self, theta, plt_basis=False, plt_show=False):
-
         A1 = self.dh_transformation(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
         A2 = self.dh_transformation(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
         A3 = self.dh_transformation(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])

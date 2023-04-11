@@ -32,7 +32,6 @@ class SpatialRRP:
         H_3_to_0 = H_1_to_0 @ H_2_to_1 @ H_3_to_2
 
         p3 = np.array([[0], [0], [0], [1]])
-
         p0 = H_3_to_0 @ p3
 
         return p0

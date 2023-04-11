@@ -36,7 +36,6 @@ class Puma560:
         return R
 
     def forward_kinematic(self, theta, return_full_H=False, return_each_H=False):
-
         T01 = self.dh_transformation_mod(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
         T12 = self.dh_transformation_mod(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
         T23 = self.dh_transformation_mod(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
@@ -52,30 +51,13 @@ class Puma560:
             return T01, T12, T23, T34, T45, T56
 
     def inverse_kinematic_geometry(self, goal_desired):
-
         T06 = goal_desired
         px, py, pz = T06[0, 3], T06[1, 3], T06[2, 3]
 
-        d1 = self.d[0, 0]
-        d2 = self.d[1, 0]
         d3 = self.d[2, 0]
         d4 = self.d[3, 0]
-        d5 = self.d[4, 0]
-        d6 = self.d[5, 0]
-
-        a0 = self.a[0, 0]
-        a1 = self.a[1, 0]
         a2 = self.a[2, 0]
         a3 = self.a[3, 0]
-        a4 = self.a[4, 0]
-        a5 = self.a[5, 0]
-
-        alpha0 = self.alpha[0, 0]
-        alpha1 = self.alpha[1, 0]
-        alpha2 = self.alpha[2, 0]
-        alpha3 = self.alpha[3, 0]
-        alpha4 = self.alpha[4, 0]
-        alpha5 = self.alpha[5, 0]
 
         theta = np.zeros((6, 8))
 

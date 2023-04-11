@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from robot.planar_rr import PlanarRR
 from config_space_2d.generate_config_planar_rr import configuration_generate_plannar_rr
 from map.taskmap_geo_format import task_rectangle_obs_1
-from map.map_value_range import map_val
+from map.mapclass import map_val
 from util.coord_transform import polar2cats, circle_plt
 
 # create robot instance
@@ -48,7 +48,7 @@ theta1_app_index = int(map_val(t_app[0].item(), -np.pi, np.pi, 0, 360))
 theta2_app_index = int(map_val(t_app[1].item(), -np.pi, np.pi, 0, 360))
 theta1_goal_index = int(map_val(t_targ[0].item(), -np.pi, np.pi, 0, 360))
 theta2_goal_index = int(map_val(t_targ[1].item(), -np.pi, np.pi, 0, 360))
-grid_np[theta1_app_index, theta2_app_index] = 2
-grid_np[theta1_goal_index, theta2_goal_index] = 3
+grid_np[theta2_app_index, theta1_app_index] = 2
+grid_np[theta2_goal_index, theta1_goal_index] = 3
 plt.imshow(grid_np)
 plt.show()

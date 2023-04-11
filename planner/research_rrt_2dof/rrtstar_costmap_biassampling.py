@@ -426,16 +426,14 @@ class rrt_star():
 
 
 if __name__ == "__main__":
-    from map.map_loader import grid_map_probability
-    from map.taskmap_img_format import map_2d_empty
-
+    from map.mapclass import MapLoader
     np.random.seed(1)
 
 
     # SECTION - Experiment 1
-    map_index = 2
-    filter_size = 3  # 1 = 3x3, 2 = 5x5, 3 = 7x7
-    map = grid_map_probability(map_index, filter_size)
+    maploader = MapLoader.loadsave(maptype="task", mapindex=2)
+    maploader.grid_map_probability(size=3)
+    map = maploader.getcostmap()
     x_init = np.array([19.5, 110]).reshape(2, 1)
     x_goal = np.array([110, 17]).reshape(2, 1)
 
@@ -443,7 +441,7 @@ if __name__ == "__main__":
     # SECTION - planner
     distance_weight = 0.5
     obstacle_weight = 0.5
-    rrt = rrt_star(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=2)
+    rrt = rrt_star(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
     rrt.start_planning()
     path = rrt.Get_Path()
 

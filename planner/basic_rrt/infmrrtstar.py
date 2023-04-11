@@ -42,7 +42,7 @@ class infm_rrtstar:
         # properties of planner
         self.maxiteration = maxiteration
         self.m = (self.x_max - self.x_min) * (self.y_max - self.y_min)
-        self.radius = (2 * (1 + 1 / 2)**(1 / 2)) * (self.m / np.pi)**(1 / 2)
+        self.radius = (2 * (1 + 1/2)**(1 / 2)) * (self.m / np.pi)**(1 / 2)
         self.eta = self.radius * (np.log(self.maxiteration) / self.maxiteration)**(1 / 2)
 
         # start with a tree vertex have start node and empty branch
@@ -127,7 +127,7 @@ class infm_rrtstar:
             L = np.diag([r1, r2])
             while True:
                 x_ball = self.sampleUnitBall()
-                x_rand = (C @ L @ x_ball) + x_center
+                x_rand = (C@L@x_ball) + x_center
                 x_rand = node(x_rand[0, 0], x_rand[1, 0])
                 if (self.x_min < x_rand.x < self.x_max) and (self.y_min < x_rand.y < self.y_max):  # check if outside configspace
                     break
@@ -245,8 +245,7 @@ class infm_rrtstar:
 if __name__ == "__main__":
     from map.taskmap_geo_format import task_rectangle_obs_7
     from map.taskmap_img_format import bmap
-    from map.map_format_converter import mapimg2geo
-    from collision_check_geometry.collision_class import ObjRec
+    from map.mapclass import MapLoader, MapClass
     np.random.seed(9)
 
     # SECTION - Experiment 1
@@ -256,11 +255,12 @@ if __name__ == "__main__":
     obslist = task_rectangle_obs_7()
 
     # SECTION - Experiment 2
-    # start = np.array([4, 4]).reshape(2, 1)
-    # goal = np.array([8.5, 1]).reshape(2, 1)
-    # obslist = mapimg2geo(bmap(), minmax=[0, 10], free_space_value=1)
-    # obsborder = [ObjRec(0,0,0.1,10), ObjRec(0,0,10,0.1), ObjRec(10,0,10,0.1), ObjRec(0,10,0.1,10)]
-    # obslist = obslist + obsborder
+    search_area = [[0, 10], [0, 10]]
+    start = np.array([4, 4]).reshape(2, 1)
+    goal = np.array([8.5, 1]).reshape(2, 1)
+    maploader = MapLoader.loadarray(bmap())
+    mapclass = MapClass(maploader, maprange=[[0, 10], [0, 10]])
+    obslist = mapclass.costmap2geo(free_space_value=1)
 
     # SECTION - plot task space
     plt.scatter([start[0, 0], goal[0, 0]], [start[1, 0], goal[1, 0]])

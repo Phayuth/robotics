@@ -5,7 +5,6 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from map.map_loader import grid_map_probability
 import matplotlib.pyplot as plt
 
 
@@ -128,16 +127,16 @@ def start_sampling(map, number_sampling, sampling_mode):
 
 
 if __name__ == "__main__":
+    from map.mapclass import MapLoader
+    maploader = MapLoader.loadsave(maptype="task", mapindex=0)
+    maploader.grid_map_probability(size=3)
+    map = maploader.getcostmap()
 
-    map1 = grid_map_probability(0, 0)
-    map2 = grid_map_probability(0, 3)
-    map3 = grid_map_probability(0, 3)
-
-    # start_sampling(map3, number_sampling=1000, sampling_mode="uniform")
+    start_sampling(map, number_sampling=1000, sampling_mode="uniform")
 
     # SECTION - Test code
-    row = map3.shape[0]
-    p = np.ravel(map3) / np.sum(map3)
+    row = map.shape[0]
+    p = np.ravel(map) / np.sum(map)
     x_sample = np.random.choice(len(p), p=p)
     x = x_sample // row
     y = x_sample % row
