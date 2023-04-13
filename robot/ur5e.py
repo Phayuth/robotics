@@ -46,6 +46,13 @@ class UR5e:
                     [              0,                np.sin(alpha),                np.cos(alpha),               d],
                     [              0,                            0,                            0,               1]])
         return R
+    
+    def dh_transformation_mod(self, theta, alpha, d, a): # modified dh method from craig
+        R = np.array([[              np.cos(theta),              -np.sin(theta),              0,                a],
+                      [np.sin(theta)*np.cos(alpha), np.cos(theta)*np.cos(alpha), -np.sin(alpha), -np.sin(alpha)*d],
+                      [np.sin(theta)*np.sin(alpha), np.cos(theta)*np.sin(alpha),  np.cos(alpha),  np.cos(alpha)*d],
+                      [                          0,                           0,              0,                1]])
+        return R
 
     def forward_kinematic(self, theta, return_full_H=False, return_each_H=False):
 
@@ -175,17 +182,17 @@ class UR5e:
         alpha6 = self.alpha[5, 0]
 
         theta = np.zeros((6, 8))
-        P05 = T06 @ np.array([[0], [0], [-d6], [1]]) - np.array([[0], [0], [0], [1]])
 
         # theta 1
-        p05y = P05[1, 0]
+        P05 = T06 @ np.array([[0], [0], [-d6], [1]])
         p05x = P05[0, 0]
+        p05y = P05[1, 0]
         psi = np.arctan2(p05y, p05x)
         phi = np.arccos(d4 / np.sqrt(p05x**2 + p05y**2))
-        #The two solutions for theta1 correspond to the shoulder being either left or right
-        theta[0, 0:4] = np.pi / 2 + psi + phi
-        theta[0, 4:8] = np.pi / 2 + psi - phi
-        theta = theta.real
+        theta1_1 = psi + phi + np.pi/2
+        theta1_2 = psi - phi + np.pi/2
+        theta[0, 0], theta[0, 1], theta[0, 2], theta[0, 3] = theta1_1, theta1_1, theta1_1, theta1_1
+        theta[0, 4], theta[0, 5], theta[0, 6], theta[0, 7] = theta1_2, theta1_2, theta1_2, theta1_2
 
         # theta 5 # wrist up or down
         cl = [0, 4]
@@ -206,7 +213,7 @@ class UR5e:
             c = cl[i]
             T01 = self.dh_transformation(theta[0, c], alpha1, d1, a1)
             T10 = invht(T01)
-            T16 = T06 @ T10
+            T16 = T10 @ T06
             zy = T16[1, 2]
             zx = T16[0, 2]
             term1 = -zy / np.sin(theta[4, c])
@@ -249,7 +256,7 @@ class UR5e:
             p13 = T14 @ np.array([[0], [-d4], [0], [1]]) - np.array([[0], [0], [0], [1]])
 
             # theta 2
-            theta[1, c] = -np.arctan2(p13[1], -p13[0]) + np.arcsin(a3 * np.sin(theta[2, c]) / np.linalg.norm(p13))
+            theta[1, c] = -np.arctan2(p13[1,0], -p13[0,0]) + (np.arcsin(a3 * np.sin(theta[2, c]) / np.linalg.norm(p13)))
 
             # theta 4
             T23 = self.dh_transformation(theta[2, c], alpha3, d3, a3)
