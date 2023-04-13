@@ -4,13 +4,14 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-import numpy as np
-import matplotlib.pyplot as plt
 import time
-from map.map_value_range import map_val
+import matplotlib.pyplot as plt
+import numpy as np
+from map.mapclass import map_val
 
 
 class node:
+
     def __init__(self, x: float, y: float, cost: float = 0, parent=None):
         self.x = x
         self.y = y
@@ -19,23 +20,20 @@ class node:
 
 
 class RobotRRTStarCostMapUniSampling:
-    def __init__(
-        self,
-        map,
-        x_init: node,
-        x_goal: node,
-        w1: float,
-        w2: float,
-        eta: float = None,
-        maxiteration: int = 1000,
-    ):
-        self.map = map
+
+    def __init__(self, mapclass, x_init: node, x_goal: node, w1: float, w2: float, eta: float = None, maxiteration: int = 1000):
+        # map properties
+        self.mapclass = mapclass
+        self.x_min = self.mapclass.xmin
+        self.x_max = self.mapclass.xmax
+        self.y_min = self.mapclass.ymin
+        self.y_max = self.mapclass.ymax
         self.x_init = node(x_init[0, 0], x_init[1, 0])
         self.x_goal = node(x_goal[0, 0], x_goal[1, 0])
         self.nodes = [self.x_init]
 
+        # planner properties
         self.maxiteration = maxiteration
-
         self.eta = 0.3
         self.w1 = w1
         self.w2 = w2
@@ -52,16 +50,13 @@ class RobotRRTStarCostMapUniSampling:
         self.rewire_elapsed = 0
 
     def uniform_sampling(self) -> node:
-        x = np.random.uniform(low=self.map.xmin, high=self.map.xmax)
-        y = np.random.uniform(low=self.map.ymin, high=self.map.ymax)
-
+        x = np.random.uniform(low=self.x_min, high=self.x_max)
+        y = np.random.uniform(low=self.y_min, high=self.y_max)
         x_rand = node(x, y)
-
         return x_rand
 
     def distance_cost(self, start: node, end: node) -> float:
         distance_cost = np.linalg.norm([start.x - end.x, start.y - end.y])
-
         return distance_cost
 
     def segmented_line(self, q_base, q_far, num_seg=10):
@@ -71,7 +66,7 @@ class RobotRRTStarCostMapUniSampling:
         y2 = q_far.y
 
         distance = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
-        segment_length = distance / (num_seg - 1)
+        segment_length = distance / (num_seg-1)
         points = [q_base]
         for i in range(1, num_seg - 1):
             x = x1 + i * segment_length * (q_far.x - q_base.x) / distance
@@ -84,10 +79,8 @@ class RobotRRTStarCostMapUniSampling:
 
     def getcost(self, q):
         if self.map.xmin < q.x < self.map.xmax and self.map.ymin < q.y < self.map.ymax:
-            ind_x = int((map_val(q.x, self.map.xmin, self.map.xmax, 0,
-                                 self.map.costmap.shape[0])))
-            ind_y = int((map_val(q.y, self.map.ymin, self.map.ymax, 0,
-                                 self.map.costmap.shape[1])))
+            ind_x = int((map_val(q.x, self.map.xmin, self.map.xmax, 0, self.map.costmap.shape[0])))
+            ind_y = int((map_val(q.y, self.map.ymin, self.map.ymax, 0, self.map.costmap.shape[1])))
 
             return self.map.costmap[ind_y, ind_x]
 
@@ -103,10 +96,7 @@ class RobotRRTStarCostMapUniSampling:
             return cost
 
     def line_cost(self, start: node, end: node) -> float:
-        cost = self.w1 * (self.distance_cost(start, end) /
-                          (self.eta)) + self.w2 * (self.obstacle_cost(
-                              start, end))
-
+        cost = self.w1 * (self.distance_cost(start, end) / (self.eta)) + self.w2 * (self.obstacle_cost(start, end))
         return cost
 
     def nearest(self, x_rand: node) -> node:
@@ -177,11 +167,9 @@ class RobotRRTStarCostMapUniSampling:
         for x_near in self.nodes:
             if x_near is not x_new.parent:
                 if self.distance_cost(x_near, x_new) <= self.eta:
-                    if x_new.cost + self.line_cost(x_new,
-                                                   x_near) < x_near.cost:
+                    if x_new.cost + self.line_cost(x_new, x_near) < x_near.cost:
                         x_near.parent = x_new
-                        x_near.cost = x_new.cost + self.line_cost(
-                            x_new, x_near)
+                        x_near.cost = x_new.cost + self.line_cost(x_new, x_near)
 
     def get_path(self) -> list:
         temp_path = []
@@ -221,9 +209,7 @@ class RobotRRTStarCostMapUniSampling:
     def draw_path(self, path: list):
         for i in path:
             if i is not self.x_init:
-                plt.plot([i.x, i.parent.x], [i.y, i.parent.y],
-                         "r",
-                         linewidth=2.5)
+                plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "r", linewidth=2.5)
 
     def start_planning(self):
         """start planning loop"""
@@ -251,12 +237,10 @@ class RobotRRTStarCostMapUniSampling:
 
 if __name__ == "__main__":
     from map.mapclass import MapClass, MapLoader
-    from map.map_loader import grid_map_binary
-
     np.random.seed(0)
 
-    loader = MapLoader.loadsave(maptype="task", mapindex=1, reverse=False)
-    map = MapClass(loader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
+    maploader = MapLoader.loadsave(maptype="task", mapindex=1, reverse=False)
+    mapclass = MapClass(maploader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
     plt.imshow(map.costmap)
     plt.show()
     x_init = np.array([0, 1]).reshape(2, 1)
@@ -264,12 +248,7 @@ if __name__ == "__main__":
 
     distance_weight = 0.5
     obstacle_weight = 0.5
-    rrt = RobotRRTStarCostMapUniSampling(map,
-                                         x_init,
-                                         x_goal,
-                                         distance_weight,
-                                         obstacle_weight,
-                                         maxiteration=1000)
+    rrt = RobotRRTStarCostMapUniSampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
     rrt.start_planning()
 
     plt.imshow(map.costmap)

@@ -11,7 +11,6 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from rigid_body_transformation.rotation_matrix import rotx, roty, rotz
 from robot.puma560 import Puma560
 np.set_printoptions(suppress=True)
 
@@ -19,12 +18,13 @@ np.set_printoptions(suppress=True)
 robot = Puma560()
 
 theta_original = np.array([2, 1, 0.5, 2, 1, 0]).reshape(6, 1)
-print("==>> theta_original: \n", theta_original)
+print("==>> theta_original: \n", theta_original.reshape(1,6))
 
 Tforward_original = robot.forward_kinematic(theta_original, return_full_H=True)
 print("==>> Tforward_original: \n", Tforward_original)
 
 theta_ik = robot.inverse_kinematic_geometry(Tforward_original)
+# print("==>> theta_ik: \n", theta_ik)
 
 for i in range(8):
     tt = theta_ik[:, i].reshape(6, 1)

@@ -7,10 +7,9 @@ References:
     - https://www.baeldung.com/cs/circle-line-segment-collision-detection
 
 """
+
 import os
 import sys
-
-import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -114,7 +113,7 @@ def intersect_aabb_v_point(aabb, point):
 
 def intersect_sphere_v_point(point, sphere):
     # we are using multiplications because is faster than calling Math.pow
-    distance = math.sqrt((point.x - sphere.x) * (point.x - sphere.x) + (point.y - sphere.y) * (point.y - sphere.y) + (point.z - sphere.z) * (point.z - sphere.z))
+    distance = np.sqrt((point.x - sphere.x) * (point.x - sphere.x) + (point.y - sphere.y) * (point.y - sphere.y) + (point.z - sphere.z) * (point.z - sphere.z))
     return distance <= sphere.r
 
 
@@ -125,7 +124,7 @@ def intersect_sphere_v_aabb(aabb, sphere):
     z = max(aabb.z_min, min(sphere.z, aabb.z_max))
 
     # this is the same as isPointInsideSphere
-    distance = math.sqrt((x - sphere.x) * (x - sphere.x) + (y - sphere.y) * (y - sphere.y) + (z - sphere.z) * (z - sphere.z))
+    distance = np.sqrt((x - sphere.x) * (x - sphere.x) + (y - sphere.y) * (y - sphere.y) + (z - sphere.z) * (z - sphere.z))
     return distance <= sphere.r
 
 
@@ -154,10 +153,10 @@ def intersect_triangle_v_point(trig, point):
     px = point.x
     py = point.y
 
-    areaOrig = abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1))
-    area1 = abs((x1 - px) * (y2 - py) - (x2 - px) * (y1 - py))
-    area2 = abs((x2 - px) * (y3 - py) - (x3 - px) * (y2 - py))
-    area3 = abs((x3 - px) * (y1 - py) - (x1 - px) * (y3 - py))
+    areaOrig = abs((x2-x1) * (y3-y1) - (x3-x1) * (y2-y1))
+    area1 = abs((x1-px) * (y2-py) - (x2-px) * (y1-py))
+    area2 = abs((x2-px) * (y3-py) - (x3-px) * (y2-py))
+    area3 = abs((x3-px) * (y1-py) - (x1-px) * (y3-py))
 
     if area1 + area2 + area3 == areaOrig:
         return True
@@ -223,8 +222,8 @@ def intersect_line_v_line(line1, line2):
     x4 = line2.xe
     y4 = line2.ye
 
-    uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1))
-    uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1))
+    uA = ((x4-x3) * (y1-y3) - (y4-y3) * (x1-x3)) / ((y4-y3) * (x2-x1) - (x4-x3) * (y2-y1))
+    uB = ((x2-x1) * (y1-y3) - (y2-y1) * (x1-x3)) / ((y4-y3) * (x2-x1) - (x4-x3) * (y2-y1))
 
     if uA >= 0 and uA <= 1 and uB >= 0 and uB <= 1:
         return True

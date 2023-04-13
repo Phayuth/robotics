@@ -5,7 +5,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 from node_tool import node
-from map.map_value_range import map_val
+from map.mapclass import map_val
 
 
 def distance(q_base, q_far):

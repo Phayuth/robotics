@@ -420,16 +420,15 @@ class rrt_star():
 
 if __name__=="__main__":
     from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map
-    from map.map_loader import grid_map_binary
+    from map.mapclass import MapLoader
     np.random.seed(0)
 
 
     # SECTION - Experiment 1
     index = 0
-    map = grid_map_binary(index)
+    map, obstacle, obstacle_center  = obstacle_generate_from_map(index)
     plt.imshow(map)
     plt.show()
-    mm, obstacle, obstacle_center  = obstacle_generate_from_map(index)
     obs = Obstacle_generater(obstacle)
     collision_range = (2**(1/2))/2
     x_init = np.array([15, 15]).reshape(2,1)

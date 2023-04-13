@@ -46,7 +46,7 @@ def configuration_generate_plannar_rr(robot, obs_list):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    from map.map_value_range import map_multi_val
+    from map.mapclass import map_vec
     from map.taskmap_geo_format import task_rectangle_obs_1
     from robot.planar_rr import PlanarRR
 
@@ -55,8 +55,8 @@ if __name__ == "__main__":
     init_pose = np.array([[1.8], [3.3]])
     desired_pose = np.array([[3.5], [1.8]])
     theta = r.inverse_kinematic_geometry(desired_pose, elbow_option=0)
-    theta_index = map_multi_val(theta, -np.pi, np.pi, 0, 360).astype(int)  # map theta to index image (option elbow up)
-    theta_val = map_multi_val(theta_index, 0, 360, -np.pi, np.pi)  # map index image to theta (option elbow up)
+    theta_index = map_vec(theta, -np.pi, np.pi, 0, 360).astype(int)  # map theta to index image (option elbow up)
+    theta_val = map_vec(theta_index, 0, 360, -np.pi, np.pi)  # map index image to theta (option elbow up)
     obs_list = task_rectangle_obs_1()
 
     # SECTION - plot task space

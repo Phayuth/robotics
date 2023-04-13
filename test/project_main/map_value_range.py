@@ -5,7 +5,7 @@ def map_val(x, in_min, in_max, out_min, out_max):
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
 
-def map_multi_val(in_array, in_min, in_max, out_min, out_max):
+def map_vec(in_array, in_min, in_max, out_min, out_max):
     out_array = np.zeros_like(in_array)
     for index, _ in enumerate(in_array):
         out_array[index, 0] = (in_array[index, 0] - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
@@ -26,5 +26,5 @@ if __name__ == "__main__":
 
     # SECTION - map value but the input is in array of shape (N,1)
     theta_arr = np.array([[np.pi], [-np.pi], [2]])
-    pixel_val = map_multi_val(theta_arr, -np.pi, np.pi, 0, 360)
+    pixel_val = map_vec(theta_arr, -np.pi, np.pi, 0, 360)
     print("==>> pixel_val: ", pixel_val)

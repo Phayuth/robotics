@@ -155,7 +155,7 @@ class rrtbase():
 if __name__ == "__main__":
     from map.taskmap_geo_format import task_rectangle_obs_7
     from map.taskmap_img_format import bmap
-    from map.map_format_converter import mapimg2geo
+    from map.mapclass import MapLoader, MapClass
     np.random.seed(9)
 
     # SECTION - Experiment 1
@@ -168,7 +168,9 @@ if __name__ == "__main__":
     search_area = [[0, 10], [0, 10]]
     start = np.array([4, 4]).reshape(2, 1)
     goal = np.array([8.5, 1]).reshape(2, 1)
-    obslist = mapimg2geo(bmap(), minmax=[0, 10], free_space_value=1)
+    maploader = MapLoader.loadarray(bmap())
+    mapclass = MapClass(maploader, maprange=[[0, 10], [0, 10]])
+    obslist = mapclass.costmap2geo(free_space_value=1)
 
     # SECTION - plot task space
     plt.scatter([start[0, 0], goal[0, 0]], [start[1, 0], goal[1, 0]])

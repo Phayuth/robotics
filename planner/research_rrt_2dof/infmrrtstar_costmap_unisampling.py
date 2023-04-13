@@ -360,29 +360,30 @@ class infmrrtstar_costmap_unisampling:
 
 
 if __name__ == "__main__":
-    from map.map_loader import grid_map_binary
+    from map.mapclass import MapLoader
     np.random.seed(0)
 
     # SECTION - Experiment 1
-    # map = grid_map_binary(index=1)
-    # plt.imshow(map)
-    # plt.show()
-    # x_init = np.array([24, 12]).reshape(2, 1)
-    # x_goal = np.array([1.20, 13.20]).reshape(2, 1)
+    maploader = MapLoader.loadsave(maptype="task", mapindex=1)
+    map = maploader.getcostmap()
+    plt.imshow(map)
+    plt.show()
+    x_init = np.array([24, 12]).reshape(2, 1)
+    x_goal = np.array([1.20, 13.20]).reshape(2, 1)
 
 
     # SECTION - Experiment 2
-    map = np.ones((500,500))
-    plt.imshow(map)
-    plt.show()
-    x_init = np.array([20, 20]).reshape(2, 1)
-    x_goal = np.array([400, 400]).reshape(2, 1)
+    # map = np.ones((500,500))
+    # plt.imshow(map)
+    # plt.show()
+    # x_init = np.array([20, 20]).reshape(2, 1)
+    # x_goal = np.array([400, 400]).reshape(2, 1)
 
 
     # SECTION - planner
     distance_weight = 0.5
     obstacle_weight = 0.5
-    rrt = infmrrtstar_binarymap_unisampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=500)
+    rrt = infmrrtstar_costmap_unisampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=500)
     rrt.start_planning()
     path = rrt.get_path()
 
