@@ -1,8 +1,11 @@
-""" Robot Class for UR5 and UR5e
+"""
+Robot Class for UR5 and UR5e
 
 Reference:
 - DH Parameter
-    1. DH parameter, Forward and Inverse Kinematic is from : http://rasmusan.dk/wp-content/uploads/ur5_kinematics.pdf
+    1. DH parameter 1 is from https://www.researchgate.net/publication/347021253_Mathematical_Modelling_and_Simulation_of_Human-Robot_Collaboration
+    2. DH parameter 2 is from https://github.com/yorgoon/ur5_Final_Project/tree/master/inv_kin
+    3. DH parameter 3, Forward and Inverse Kinematic is from : http://rasmusan.dk/wp-content/uploads/ur5_kinematics.pdf
 
 - Convert TF to RPY
     # x - y - z sequence
@@ -10,7 +13,6 @@ Reference:
     # tan(pitch)= -r31/(sqrt(r32^2 + r33^2))
     # tan(yaw)  = r21/r11
     # np.arctan2(y, x)
-
 """
 
 import os
@@ -29,12 +31,24 @@ ax = plt.axes(projection='3d')
 class UR5e:
 
     def __init__(self):
-        # DH
-        self.alpha = np.array([     [0], [np.pi/2],      [0],      [0], [np.pi/2], [-np.pi/2]])
-        self.a     = np.array([     [0],       [0], [-0.425], [-0.392],       [0],        [0]])
-        self.d     = np.array([ [0.089],       [0],      [0],  [0.109],   [0.094],    [0.082]])
+        # DH 1
+        # self.a     = np.array([      [0], [-0.425], [-0.3922],       [0],        [0],      [0]])
+        # self.alpha = np.array([[np.pi/2],      [0],       [0], [np.pi/2], [-np.pi/2],      [0]])
+        # self.d     = np.array([ [0.1625],      [0],       [0],  [0.1333],   [0.0997], [0.0996]])
 
-    def dh_transformation(self, theta, alpha, d, a): # modified dh method from craig
+        # DH 2
+        self.a     = np.array([      [0], [-0.425],  [-0.392],       [0],        [0],      [0]])
+        self.alpha = np.array([[np.pi/2],      [0],       [0], [np.pi/2], [-np.pi/2],      [0]])
+        self.d     = np.array([  [0.089],      [0],       [0],   [0.109],    [0.094],  [0.082]])
+
+    def dh_transformation(self,theta,alpha,d,a):
+        R = np.array([[np.cos(theta), -np.sin(theta)*np.cos(alpha),  np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
+                    [  np.sin(theta),  np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
+                    [              0,                np.sin(alpha),                np.cos(alpha),               d],
+                    [              0,                            0,                            0,               1]])
+        return R
+    
+    def dh_transformation_mod(self, theta, alpha, d, a): # modified dh method from craig
         R = np.array([[              np.cos(theta),              -np.sin(theta),              0,                a],
                       [np.sin(theta)*np.cos(alpha), np.cos(theta)*np.cos(alpha), -np.sin(alpha), -np.sin(alpha)*d],
                       [np.sin(theta)*np.sin(alpha), np.cos(theta)*np.sin(alpha),  np.cos(alpha),  np.cos(alpha)*d],
@@ -42,23 +56,23 @@ class UR5e:
         return R
 
     def forward_kinematic(self, theta, return_full_H=False, return_each_H=False):
-        T01 = self.dh_transformation(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-        T12 = self.dh_transformation(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
-        T23 = self.dh_transformation(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
-        T34 = self.dh_transformation(theta[3, 0], self.alpha[3, 0], self.d[3, 0], self.a[3, 0])
-        T45 = self.dh_transformation(theta[4, 0], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-        T56 = self.dh_transformation(theta[5, 0], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
+        A1 = self.dh_transformation(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
+        A2 = self.dh_transformation(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
+        A3 = self.dh_transformation(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
+        A4 = self.dh_transformation(theta[3, 0], self.alpha[3, 0], self.d[3, 0], self.a[3, 0])
+        A5 = self.dh_transformation(theta[4, 0], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
+        A6 = self.dh_transformation(theta[5, 0], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
 
-        T06 = T01 @ T12 @ T23 @ T34 @ T45 @ T56
+        T06 = A1 @ A2 @ A3 @ A4 @ A5 @ A6
 
         if return_full_H:
             # option to return transformation from base to end effector
             return T06
-
+        
         if return_each_H:
             # option to return all transformation
-            return T01, T12, T23, T34, T45, T56
-
+            return A1, A2, A3, A4, A5, A6
+        
         if not return_each_H and not return_each_H:
             # option to return 6 X 1 vector pose
             roll = np.arctan2(T06[2, 1], T06[2, 2])
@@ -89,7 +103,7 @@ class UR5e:
         Z3 = np.array([[T03[0, 2]], [T03[1, 2]], [T03[2, 2]]])
         Z4 = np.array([[T04[0, 2]], [T04[1, 2]], [T04[2, 2]]])
         Z5 = np.array([[T05[0, 2]], [T05[1, 2]], [T05[2, 2]]])
-
+        
         O0 = np.array([[0], [0], [0]])
         O1 = np.array([[T01[3, 0]], [T01[3, 1]], [T01[3, 2]]])
         O2 = np.array([[T02[3, 0]], [T02[3, 1]], [T02[3, 2]]])
@@ -142,126 +156,114 @@ class UR5e:
         return Ja
 
     def inverse_kinematic_geometry(self, goal_desired):
-        T06 = goal_desired  # given 4x4 transformation
+        T06 = goal_desired # given 4x4 transformation
+
+        d1 = self.d[0, 0]
+        d2 = self.d[1, 0]
+        d3 = self.d[2, 0]
+        d4 = self.d[3, 0]
+        d5 = self.d[4, 0]
+        d6 = self.d[5, 0]
+
+        a1 = self.a[0, 0]
+        a2 = self.a[1, 0]
+        a3 = self.a[2, 0]
+        a4 = self.a[3, 0]
+        a5 = self.a[4, 0]
+        a6 = self.a[5, 0]
+
+        alpha1 = self.alpha[0, 0]
+        alpha2 = self.alpha[1, 0]
+        alpha3 = self.alpha[2, 0]
+        alpha4 = self.alpha[3, 0]
+        alpha5 = self.alpha[4, 0]
+        alpha6 = self.alpha[5, 0]
 
         theta = np.zeros((6, 8))
 
         # theta 1
-        P05 = T06 @ np.array([0, 0, -self.d[5, 0], 1]).reshape(4, 1)
+        P05 = T06 @ np.array([[0], [0], [-d6], [1]])
         p05x = P05[0, 0]
         p05y = P05[1, 0]
-        p05xy = np.sqrt((p05x**2) + (p05y**2))
-        if self.d[3, 0] > p05xy:
-            print("no solution for th1")
         psi = np.arctan2(p05y, p05x)
-        phi = np.arccos(self.d[3, 0] / p05xy)
-        theta1_1 = psi + phi + np.pi / 2
-        theta1_2 = psi - phi + np.pi / 2
+        phi = np.arccos(d4 / np.sqrt(p05x**2 + p05y**2))
+        theta1_1 = psi + phi + np.pi/2
+        theta1_2 = psi - phi + np.pi/2
         theta[0, 0], theta[0, 1], theta[0, 2], theta[0, 3] = theta1_1, theta1_1, theta1_1, theta1_1
         theta[0, 4], theta[0, 5], theta[0, 6], theta[0, 7] = theta1_2, theta1_2, theta1_2, theta1_2
 
-        # theta5
-        col = [0, 1, 4, 5]
-        for i in range(8):
-            p06x = T06[0, 3]
-            p06y = T06[1, 3]
-            theta5 = np.arccos((p06x * np.sin(theta[0, i]) - p06y * np.cos(theta[0, i]) - self.d[3, 0]) / self.d[5, 0])
+        # theta 5 # wrist up or down
+        cl = [0, 4]
+        for i in range(0, len(cl)):
+            c = cl[i]
+            T10 = invht(self.dh_transformation(theta[0, c], alpha1, d1, a1))
+            T16 = T10 @ T06
+            p16z = T16[2, 3]
+            theta[4, c:c + 2] = np.arccos((p16z - d4) / d6)
+            theta[4, c + 2:c + 4] = -np.arccos((p16z - d4) / d6)
+        theta = theta.real
 
-            if abs(p06x * np.sin(theta[0, i]) - p06y * np.cos(theta[0, i]) - self.d[3, 0]) >= abs(self.d[5, 0]):
-                print("no solution for th5")
+        # theta 6
+        # theta 6 is not well-defined when sin(theta5) = 0 or when T16(1,3), T16(2,3) = 0.
 
-            if i in col:
-                theta[4, i] = theta5
-            else:
-                theta[4, i] = -theta5
+        cl = [0, 2, 4, 6]
+        for i in range(0, len(cl)):
+            c = cl[i]
+            T01 = self.dh_transformation(theta[0, c], alpha1, d1, a1)
+            T10 = invht(T01)
+            T16 = T10 @ T06
+            zy = T16[1, 2]
+            zx = T16[0, 2]
+            term1 = -zy / np.sin(theta[4, c])
+            term2 = zx / np.sin(theta[4, c])
+            theta[5, c:c + 2] = np.arctan2(term1, term2)
+        theta = theta.real
 
-        # theta6
-        for i in range(8):
-            T60 = invht(T06)
-            Xy60 = T60[1, 0]
-            Yy60 = T60[1, 1]
-            Xx60 = T60[0, 0]
-            Yx60 = T60[0, 1]
+        # theta 3
+        cl = [0, 2, 4, 6]
+        for i in range(0, len(cl)):
+            c = cl[i]
+            T01 = self.dh_transformation(theta[0, c], alpha1, d1, a1)
+            T10 = invht(T01)
+            T56 = self.dh_transformation(theta[5, c], alpha6, d6, a6)
+            T65 = invht(T56)
+            T45 = self.dh_transformation(theta[4, c], alpha5, d5, a5)
+            T54 = invht(T45)
 
-            theta6_term1 = ((-Xy60 * np.sin(theta[0, i])) + (Yy60 * np.cos(theta[0, i]))) / np.sin(theta[4, i])
-            theta6_term2 = ((Xx60 * np.sin(theta[0, i])) - (Yx60 * np.cos(theta[0, i]))) / np.sin(theta[4, i])
-            theta6 = np.arctan2(theta6_term1, theta6_term2)
+            T14 = T10 @ T06 @ T65 @ T54
 
-            if np.sin(theta[4, i]) == 0:
-                print("theta6 solution is underdetermine in this case theta 6 can be random")
-                theta6 = 0
+            p13 = T14 @ np.array([[0], [-d4], [0], [1]]) - np.array([[0], [0], [0], [1]])
 
-            theta[5, i] = theta6
+            term = (np.linalg.norm(p13)**2 - a2**2 - a3**2) / (2 * a2 * a3)
+            theta[2, c] = np.arccos(term)
+            theta[2, c + 1] = -np.arccos(term)
+        theta = theta.real
 
-        # theta3
-        col1 = [0, 2, 4, 6]
-        col2 = [1, 3, 5, 7]
-        for i in range(8):
-            T01 = self.dh_transformation(theta[0, i], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-            T45 = self.dh_transformation(theta[4, i], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-            T56 = self.dh_transformation(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
+        #theta 2 and theta 4
+        cl = [0, 1, 2, 3, 4, 5, 6, 7]
+        for i in range(0, len(cl)):
+            c = cl[i]
+            T01 = self.dh_transformation(theta[0, c], alpha1, d1, a1)
+            T10 = invht(T01)
+            T56 = self.dh_transformation(theta[5, c], alpha6, d6, a6)
+            T65 = invht(T56)
+            T45 = self.dh_transformation(theta[4, c], alpha5, d5, a5)
+            T54 = invht(T45)
 
-            T46 = T45 @ T56
-            T60 = invht(T06)
-            T40 = T46 @ T60
-            T41 = T40 @ T01
-            T14 = invht(T41)
+            T14 = T10 @ T06 @ T65 @ T54
+            p13 = T14 @ np.array([[0], [-d4], [0], [1]]) - np.array([[0], [0], [0], [1]])
 
-            p14x = T14[0, 3]
-            p14z = T14[2, 3]
+            # theta 2
+            theta[1, c] = -np.arctan2(p13[1,0], -p13[0,0]) + (np.arcsin(a3 * np.sin(theta[2, c]) / np.linalg.norm(p13)))
 
-            p14xz = np.sqrt(p14x**2 + p14z**2)
-
-            theta3 = np.arccos((p14xz**2 - (self.a[2, 0]**2) - (self.a[3, 0]**2)) / (2 * self.a[2, 0] * self.a[3, 0]))
-
-            if i in col1:
-                theta[2, i] = theta3
-            else:
-                theta[2, i] = -theta3
-
-        # theta2
-        for i in range(8):
-            T01 = self.dh_transformation(theta[0, i], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-            T45 = self.dh_transformation(theta[4, i], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-            T56 = self.dh_transformation(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
-
-            T46 = T45 @ T56
-            T60 = invht(T06)
-            T40 = T46 @ T60
-            T41 = T40 @ T01
-            T14 = invht(T41)
-
-            p14x = T14[0, 3]
-            p14z = T14[2, 3]
-
-            p14xz = np.sqrt(p14x**2 + p14z**2)
-
-            theta2_term1 = np.arctan2(-p14z, -p14x)
-            theta2_term2 = np.arcsin((-self.a[3, 0] * np.sin(theta[2, i])) / p14xz)
-
-            theta2 = theta2_term1 - theta2_term2
-
-            theta[1, i] = theta2
-
-        # theta 4
-        for i in range(8):
-            T01 = self.dh_transformation(theta[0, i], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-            T12 = self.dh_transformation(theta[1, i], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
-            T23 = self.dh_transformation(theta[2, i], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
-            T03 = T01 @ T12 @ T23
-
-            T45 = self.dh_transformation(theta[4, i], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-            T56 = self.dh_transformation(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
-            T46 = T45 @ T56
-
-            T30 = invht(T03)
-            T64 = invht(T46)
-            T34 = T30 @ T06 @ T64
-
-            Xy34 = T34[1, 0]
-            Xx34 = T34[0, 0]
-            theta4 = np.arctan2(Xy34, Xx34)
-            theta[3, i] = theta4
+            # theta 4
+            T23 = self.dh_transformation(theta[2, c], alpha3, d3, a3)
+            T32 = invht(T23)
+            T12 = self.dh_transformation(theta[1, c], alpha2, d2, a2)
+            T21 = invht(T12)
+            T34 = T32 @ T21 @ T14
+            theta[3, c] = np.arctan2(T34[1, 0], T34[0, 0])
+        theta = theta.real
 
         return theta
 
