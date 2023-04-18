@@ -420,7 +420,7 @@ class rrt_star():
 
 if __name__=="__main__":
     from map.generate_obstacle_space import Obstacle_generater, obstacle_generate_from_map
-    from map.mapclass import MapLoader
+    from map.mapclass import CostMapLoader
     np.random.seed(0)
 
 

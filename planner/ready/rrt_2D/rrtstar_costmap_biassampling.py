@@ -25,7 +25,7 @@ class node(object):
         self.cost = cost
         self.parent = parent
 
-class rrt_star():
+class RrtstarCostmapBiassampling():
     def __init__(self, map:np.ndarray, x_init:node, x_goal:node, w1:float, w2:float, eta:float=None, maxiteration:int=1000):
         """YeongMin proposed method of planning using RRT*, Bias sampling, Probability Costmap
 
@@ -426,12 +426,12 @@ class rrt_star():
 
 
 if __name__ == "__main__":
-    from map.mapclass import MapLoader
+    from map.mapclass import CostMapLoader
     np.random.seed(1)
 
 
     # SECTION - Experiment 1
-    maploader = MapLoader.loadsave(maptype="task", mapindex=2)
+    maploader = CostMapLoader.loadsave(maptype="task", mapindex=2)
     maploader.grid_map_probability(size=3)
     map = maploader.getcostmap()
     x_init = np.array([19.5, 110]).reshape(2, 1)
@@ -441,7 +441,7 @@ if __name__ == "__main__":
     # SECTION - planner
     distance_weight = 0.5
     obstacle_weight = 0.5
-    rrt = rrt_star(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
+    rrt = RrtstarCostmapBiassampling(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
     rrt.start_planning()
     path = rrt.Get_Path()
 

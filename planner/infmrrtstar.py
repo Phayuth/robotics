@@ -26,18 +26,23 @@ class node:
         self.cost = cost
 
 
-class infm_rrtstar:
+class InfmRrtstar:
 
-    def __init__(self, search_area, obstacle_list, x_start, x_goal, eta=None, maxiteration=1000) -> None:
+    def __init__(self, mapclass, x_start, x_goal, eta=None, maxiteration=1000) -> None:
         # map properties
-        self.x_min = search_area[0][0]
-        self.x_max = search_area[0][1]
-        self.y_min = search_area[1][0]
-        self.y_max = search_area[1][1]
+        self.mapclass = mapclass
+        self.x_min = self.mapclass.xmin
+        self.x_max = self.mapclass.xmax
+        self.y_min = self.mapclass.ymin
+        self.y_max = self.mapclass.ymax
         self.x_start = node(x_start[0, 0], x_start[1, 0])
         self.x_start.cost = 0.0
         self.x_goal = node(x_goal[0, 0], x_goal[1, 0])
-        self.obs = obstacle_list
+
+        if mapclass.__class__.__name__ == "CostMapClass":
+            self.obs = self.mapclass.costmap2geo()
+        else:
+            self.obs = self.mapclass.obj
 
         # properties of planner
         self.maxiteration = maxiteration
@@ -220,19 +225,17 @@ class infm_rrtstar:
         else:
             return False
 
-    def plot_env(self):
+    def plot_env(self, after_plan=False):
         # plot obstacle
         for obs in self.obs:
             obs.plot()
 
-        # plot tree vertex and start and goal node
-        for j in self.tree_vertex:
-            plt.scatter(j.x, j.y, color="red")
-
-        # plot tree branh
-        for k in self.tree_vertex:
-            if k is not self.x_start:
-                plt.plot([k.x, k.parent.x], [k.y, k.parent.y], color="green")
+        if after_plan:
+            # plot tree vertex and branches
+            for j in self.tree_vertex:
+                plt.scatter(j.x, j.y, color="red")  # vertex
+                if j is not self.x_start:
+                    plt.plot([j.x, j.parent.x], [j.y, j.parent.y], color="green")  # branch
 
         # plot start and goal node
         plt.scatter([self.x_start.x, self.x_goal.x], [self.x_start.y, self.x_goal.y], color='cyan')
@@ -245,35 +248,28 @@ class infm_rrtstar:
 if __name__ == "__main__":
     from map.taskmap_geo_format import task_rectangle_obs_7
     from map.taskmap_img_format import bmap
-    from map.mapclass import MapLoader, MapClass
+    from map.mapclass import CostMapLoader, CostMapClass, GeoMapClass
     np.random.seed(9)
 
     # SECTION - Experiment 1
-    search_area = [[0, 10], [0, 10]]
     start = np.array([4, 4]).reshape(2, 1)
     goal = np.array([7, 8]).reshape(2, 1)
-    obslist = task_rectangle_obs_7()
+    mapclass = GeoMapClass(geomap=task_rectangle_obs_7(), maprange=[[0, 10], [0, 10]])
 
     # SECTION - Experiment 2
-    search_area = [[0, 10], [0, 10]]
-    start = np.array([4, 4]).reshape(2, 1)
-    goal = np.array([8.5, 1]).reshape(2, 1)
-    maploader = MapLoader.loadarray(bmap())
-    mapclass = MapClass(maploader, maprange=[[0, 10], [0, 10]])
-    obslist = mapclass.costmap2geo(free_space_value=1)
-
-    # SECTION - plot task space
-    plt.scatter([start[0, 0], goal[0, 0]], [start[1, 0], goal[1, 0]])
-    for o in obslist:
-        o.plot()
-    plt.show()
+    # start = np.array([4, 4]).reshape(2, 1)
+    # goal = np.array([8.5, 1]).reshape(2, 1)
+    # maploader = CostMapLoader.loadarray(bmap())
+    # mapclass = CostMapClass(maploader, maprange=[[0, 10], [0, 10]])
 
     # SECTION - Planing Section
-    planner = infm_rrtstar(search_area=search_area, obstacle_list=obslist, x_start=start, x_goal=goal, maxiteration=500)
+    planner = InfmRrtstar(mapclass=mapclass, x_start=start, x_goal=goal, maxiteration=500)
+    planner.plot_env()
+    plt.show()
     planner.planning()
     path = planner.search_path()
 
     # SECTION - plot planning result
-    planner.plot_env()
+    planner.plot_env(after_plan=True)
     plt.plot([node.x for node in path], [node.y for node in path], color='blue')
     plt.show()

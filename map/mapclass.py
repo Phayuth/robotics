@@ -30,7 +30,7 @@ from scipy.ndimage import binary_dilation
 from collision_check_geometry.collision_class import ObjRec
 
 
-class MapLoader:
+class CostMapLoader:
 
     def __init__(self, costmap) -> None:
         self.costmap = costmap
@@ -88,9 +88,9 @@ class MapLoader:
         self.probabilitizer(size)
 
 
-class MapClass:
+class CostMapClass:
 
-    def __init__(self, maploader: MapLoader, maprange: list = None) -> None:
+    def __init__(self, maploader: CostMapLoader, maprange: list = None) -> None:
         self.costmap = maploader.costmap
         if maprange is None:
             self.xmin, self.xmax = 0, self.costmap.shape[1]  # colum is x
@@ -111,6 +111,14 @@ class MapClass:
         return obj
 
 
+class GeoMapClass:
+
+    def __init__(self, geomap, maprange: list) -> None:
+        self.xmin, self.xmax = maprange[0][0], maprange[0][1]
+        self.ymin, self.ymax = maprange[1][0], maprange[1][1]
+        self.obj = geomap
+
+
 def map_val(x, in_min, in_max, out_min, out_max):
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 
@@ -127,22 +135,22 @@ if __name__ == "__main__":
     from taskmap_img_format import bmap, map_2d_1, map_2d_2, pmap
 
     # SECTION - load from numpy array
-    loader = MapLoader.loadarray(taskmap_img_format.map_2d_1())
+    loader = CostMapLoader.loadarray(taskmap_img_format.map_2d_1())
     plt.imshow(loader.costmap)
     plt.show()
 
     # SECTION - load from numpy save
-    loader = MapLoader.loadsave(maptype="task", mapindex=0, reverse=False)
+    loader = CostMapLoader.loadsave(maptype="task", mapindex=0, reverse=False)
     plt.imshow(loader.costmap)
     plt.show()
 
     # SECTION - create map class and probibilitize step by step
-    map = MapClass(loader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
+    map = CostMapClass(loader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
     print(map.xmin, map.xmax, map.ymin, map.ymax)
     plt.imshow(map.costmap)
     plt.show()
 
-    # # SECTION - convert from image to geometry format
+    # SECTION - convert from image to geometry format
     obj_list = map.costmap2geo(free_space_value=1)
     for obs in obj_list:
         obs.plot()

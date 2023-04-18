@@ -9,7 +9,7 @@ from robot.planar_rrr import PlanarRRR
 import numpy as np
 from map.mapclass import map_val, map_vec
 from config_space_2d.generate_config_planar_rrr import configuration_generate_plannar_rrr
-from planner.research_rrt_3dof.rrtstar_costmap_biassampling import node , rrt_star
+from rrtstar_costmap_biassampling3d import node , rrt_star
 from util.extract_path_class import extract_path_class_3d
 
 # robot, inverse kinematic and plot

@@ -127,8 +127,8 @@ def start_sampling(map, number_sampling, sampling_mode):
 
 
 if __name__ == "__main__":
-    from map.mapclass import MapLoader
-    maploader = MapLoader.loadsave(maptype="task", mapindex=0)
+    from map.mapclass import CostMapLoader
+    maploader = CostMapLoader.loadsave(maptype="task", mapindex=0)
     maploader.grid_map_probability(size=3)
     map = maploader.getcostmap()
 

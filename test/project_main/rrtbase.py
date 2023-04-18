@@ -27,7 +27,7 @@ class node:
         self.parent = parent
 
 
-class rrtbase():
+class Rrtbase():
 
     def __init__(self, search_area, obstacle_list, x_start, x_goal, eta=0.3, maxiteration=1000) -> None:
         # map properties
@@ -155,7 +155,7 @@ class rrtbase():
 if __name__ == "__main__":
     from map.taskmap_geo_format import task_rectangle_obs_7
     from map.taskmap_img_format import bmap
-    from map.mapclass import MapLoader, MapClass
+    from map.mapclass import CostMapLoader, CostMapClass
     np.random.seed(9)
 
     # SECTION - Experiment 1
@@ -168,8 +168,8 @@ if __name__ == "__main__":
     search_area = [[0, 10], [0, 10]]
     start = np.array([4, 4]).reshape(2, 1)
     goal = np.array([8.5, 1]).reshape(2, 1)
-    maploader = MapLoader.loadarray(bmap())
-    mapclass = MapClass(maploader, maprange=[[0, 10], [0, 10]])
+    maploader = CostMapLoader.loadarray(bmap())
+    mapclass = CostMapClass(maploader, maprange=[[0, 10], [0, 10]])
     obslist = mapclass.costmap2geo(free_space_value=1)
 
     # SECTION - plot task space
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     plt.show()
 
     # SECTION - Planning Section
-    planner = rrtbase(search_area=search_area, obstacle_list=obslist, x_start=start, x_goal=goal, eta=1, maxiteration=1000)
+    planner = Rrtbase(search_area=search_area, obstacle_list=obslist, x_start=start, x_goal=goal, eta=1, maxiteration=1000)
     planner.planning()
     path = planner.search_path()
 
