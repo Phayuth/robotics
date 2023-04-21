@@ -6,11 +6,12 @@ sys.path.append(str(wd))
 
 import matplotlib.pyplot as plt
 import numpy as np
-from robot.planar_rr import PlanarRR
-from map.taskmap_geo_format import task_rectangle_obs_1
+
 from config_space_2d.generate_config_planar_rr import configuration_generate_plannar_rr
-from map.mapclass import CostMapLoader, CostMapClass, GeoMapClass
+from map.mapclass import CostMapClass, CostMapLoader, GeoMapClass
+from map.taskmap_geo_format import task_rectangle_obs_1
 from planner.rrtbase import RRTBase
+from robot.planar_rr import PlanarRR
 from util.extract_path_class import extract_path_class_2d
 
 robot = PlanarRR()

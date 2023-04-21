@@ -1,15 +1,17 @@
 import os
 import sys
+
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import matplotlib.pyplot as plt
-from map.taskmap_geo_format import task_rectangle_obs_6
-from robot.planar_rrr import PlanarRRR
 import numpy as np
-from map.mapclass import map_val, map_vec
+
 from config_space_2d.generate_config_planar_rrr import configuration_generate_plannar_rrr
-from rrtstar_costmap_biassampling3d import node , rrt_star
+from map.mapclass import map_val, map_vec
+from map.taskmap_geo_format import task_rectangle_obs_6
+from planner.ready.rrt_2D.rrtstar_costmap_biassampling3d import node, rrt_star
+from robot.planar_rrr import PlanarRRR
 from util.extract_path_class import extract_path_class_3d
 
 # robot, inverse kinematic and plot
@@ -18,7 +20,7 @@ robot = PlanarRRR()
 # define task space init point and goal point
 init_pose = np.array([[2.5],[0],[0]])
 # desired_pose = np.array([[0.9],[0.9],[0]])
-desired_pose = np.array([[1.5],[1],[0]])
+desired_pose = np.array([[2],[1],[0]])
 
 # using inverse kinematic, determine the theta configuration space in continuous space
 theta_init = robot.inverse_kinematic_geometry(init_pose, elbow_option=0)
@@ -27,9 +29,8 @@ theta_goal = robot.inverse_kinematic_geometry(desired_pose, elbow_option=0)
 # grid size
 grid_size = 75
 # calculate theta init index inside confuration 
-theta_init_index = (map_vec(theta_init, -np.pi, np.pi, 0, grid_size)).astype(int)
-# calculate theta goal index
-theta_goal_index = (map_vec(theta_goal, -np.pi, np.pi, 0, grid_size)).astype(int)
+x_init = map_vec(theta_init, -np.pi, np.pi, 0, grid_size)
+x_goal = map_vec(theta_goal, -np.pi, np.pi, 0, grid_size)
 
 
 # task space plot view
@@ -46,8 +47,6 @@ map = configuration_generate_plannar_rrr(robot, obs_list)
 # map = np.load('.\map\mapdata\config_rrr.npy')
 
 # Planing
-x_init = theta_init_index
-x_goal = theta_goal_index
 distance_weight = 0.5
 obstacle_weight = 0.5
 rrt = rrt_star(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)

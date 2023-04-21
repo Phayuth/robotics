@@ -57,7 +57,7 @@ theta1_main_plt = int(map_val(t_app_main[0].item(), -np.pi, np.pi, 0, 360))
 theta2_main_plt = int(map_val(t_app_main[1].item(), -np.pi, np.pi, 0, 360))
 
 for u in range(len(theta1_plt)):
-    grid_np[theta1_plt[u], theta2_plt[u]] = 2
-grid_np[theta1_main_plt, theta2_main_plt] = 3
+    grid_np[theta2_plt[u], theta1_plt[u]] = 2
+grid_np[theta2_main_plt, theta1_main_plt] = 3
 plt.imshow(grid_np)
 plt.show()

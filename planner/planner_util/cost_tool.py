@@ -66,74 +66,31 @@ def line_cost(map, q_base, q_far, num_seg, return_index_cost=False):
         return cost
 
 
-def obstacle_cost(map, start, end):
+def obstacle_cost(costmap, start, end):
+    map_overlay = np.ones((30,30))
     seg_length = 1
     seg_point = int(np.ceil(distance(start, end) / seg_length))
-    value = 0
+
+    costv = []
     if seg_point > 1:
-        v = distance(start, end)/ (seg_point)
+        v = np.array([end.x - start.x, end.y - start.y]) / (seg_point)
+
         for i in range(seg_point + 1):
-            seg = np.array([start.x, start.y]) + i * v
+            seg = np.array([start.x, start.y]) + i*v
             seg = np.around(seg)
-            if 1 - map[int(seg[1]), int(seg[0])] == 1 :
+            map_overlay[int(seg[1]), int(seg[0])] = 0
+            if cost:= 1 - costmap[int(seg[1]), int(seg[0])] == 1:
                 cost = 1e10
-                return cost
-            else:
-                value += 1 - map[int(seg[1]), int(seg[0])]
-        cost = value / (seg_point + 1)
-        return cost
+            costv.append(cost)
+        cost = sum(costv) / (seg_point+1)
+        return map_overlay, cost
+
     else:
-        value = map[int(start.y), int(start.x)] + map[int(end.y), int(end.x)]
-        cost = value / 2
-        return cost
-    
+        map_overlay[int(start.y), int(start.x)] = 0
+        map_overlay[int(end.y), int(end.x)] = 0
+        cost = ((costmap[int(start.y), int(start.x)] + costmap[int(end.y), int(end.x)]))/2
 
-# def Obstacle_cost(self, start, end):
-#     seg_length = 1
-#     seg_point = int(np.ceil(np.linalg.norm(start.arr - end.arr) / seg_length))
-#     value = 0
-#     if seg_point > 1:
-#         v = (end.arr - start.arr) / (seg_point)
-#         for i in range(seg_point + 1):
-#             seg = start.arr + i * v
-#             seg = np.around(seg)
-#             if 1 - self.map[int(seg[0]), int(seg[1])] == 1:
-#                 cost = 1e10
-#                 return cost
-#             else:
-#                 value += 1 - self.map[int(seg[0]), int(seg[1])]
-#         cost = value / (seg_point + 1)
-#         return cost
-#     else:
-#         value = (self.map[int(start.arr[0]), int(start.arr[1])]+ self.map[int(end.arr[0]), int(end.arr[1])])
-#         cost = value / 2
-#         return cost
-    
-
-def obstacle_cost_mod(map, start, end):
-    seg_length = 1
-    seg_point = int(np.ceil(distance(start, end) / seg_length))
-    value = 0
-    sss = []
-    if seg_point > 1:
-        v = distance(start, end)/ (seg_point)
-        for i in range(seg_point + 1):
-            seg = np.array([start.x, start.y]) + i * v
-            seg = np.around(seg)
-            sss.append(seg)
-            print(sss)
-        #     if 1 - map[int(seg[1]), int(seg[0])] == 1 :
-        #         cost = 1e10
-        #         return cost
-        #     else:
-        #         value += 1 - map[int(seg[1]), int(seg[0])]
-        # cost = value / (seg_point + 1)
-        # return cost
-    # else:
-    #     value = map[int(start.y), int(start.x)] + map[int(end.y), int(end.x)]
-    #     cost = value / 2
-    #     return cost
-
+        return map_overlay, cost
 
 if __name__ == "__main__":
     from map.taskmap_img_format import map_2d_empty, map_2d_1
@@ -143,51 +100,15 @@ if __name__ == "__main__":
     # SECTION - obstacle cost
     map = map_2d_1()
     map = np.ones((30,30))
-    map[15,5] = 0
+    map[15,15] = 0
 
     
     q_start = node(5,5)
-    q_end = node(5,15)
+    q_end = node(6,6)
 
-    cost = obstacle_cost(map, q_start, q_end)
-    print("==>> cost: \n", cost)
+    mapover, cost = obstacle_cost(map, q_start, q_end)
+    print(f"==>> cost: \n{cost}")
 
-    cost = obstacle_cost_mod(map, q_start, q_end)
-    print("==>> cost: \n", cost)
-    plt.grid()
     plt.imshow(map)
-    plt.scatter([q_start.x, q_end.x], [q_start.y, q_end.y])
-    plt.plot([q_start.x, q_end.x], [q_start.y, q_end.y])
+    plt.imshow(mapover, cmap='gray',alpha=0.5)
     plt.show()
-
-
-    # SECTION - segmented line
-    # q_start = node(-1,-1)
-    # q_end = node(2, 1.5)
-    # q_seg = segmented_line(q_start, q_end, num_seg=10)
-    # for i in q_seg: plt.scatter(i.x, i.y)
-    # plt.show()
-
-
-    # SECTION - getcost
-    # q = node(-1,-1)
-    # cell = getcost(map, q, return_index_cost=True)
-    # plt.imshow(map, origin="lower")
-    # plt.scatter(cell[0], cell[1])
-    # plt.title(f"cell index and value: {cell}, realgeo value: {q.x, q.y}, map shape: {map.shape}")
-    # plt.show()
-
-
-    # SECTION - line cost
-    # q_start = node(-1,-1)
-    # q_end = node(2, 2)
-    # costline = line_cost(map, q_start, q_end, num_seg=16)
-    # print("==>> costline: \n", costline)
-
-    # line cost plot
-    # ss = line_cost(map, q_start, q_end, num_seg=16, return_index_cost=True)
-    # print("==>> ss: \n", ss)
-    # plt.grid()
-    # plt.imshow(map, origin="lower")
-    # for i in ss: plt.scatter(i[0], i[1])
-    # plt.show()

@@ -10,7 +10,8 @@ import numpy as np
 from config_space_2d.generate_config_planar_rr import configuration_generate_plannar_rr
 from map.mapclass import map_val, map_vec
 from map.taskmap_geo_format import task_rectangle_obs_1
-from planner.research_rrt_2dof.rrtstar_costmap_unisampling import node, rrt_star
+from map.mapclass import CostMapLoader, CostMapClass
+from planner.rrtstar_costmap import RrtstarCostmap
 from robot.planar_rr import PlanarRR
 from util.extract_path_class import extract_path_class_2d
 
@@ -25,11 +26,9 @@ desired_pose = np.array([[3.5],[1.8]])
 theta_init = robot.inverse_kinematic_geometry(init_pose, elbow_option=0)
 theta_goal = robot.inverse_kinematic_geometry(desired_pose, elbow_option=0)
 
-# calculate theta init index inside confuration 
-theta_init_index = map_vec(theta_init, -np.pi, np.pi, 0, 360)
-
-# calculate theta goal index
-theta_goal_index = map_vec(theta_goal, -np.pi, np.pi, 0, 360)
+# calculate theta index inside confuration 
+x_init = map_vec(theta_init, -np.pi, np.pi, 0, 360)
+x_goal = map_vec(theta_goal, -np.pi, np.pi, 0, 360)
 
 # task space plot view
 robot.plot_arm(theta_init, plt_basis=True)
@@ -41,31 +40,18 @@ plt.show()
 
 # create config grid and view
 map = configuration_generate_plannar_rr(robot, obs_list)
+maploader = CostMapLoader.loadarray(map)
+mapclass = CostMapClass(maploader=maploader)
 plt.imshow(map)
 plt.show()
 
-# Create start and end node
-x_init = theta_init_index
-x_goal = theta_goal_index
-
 # Create planner
-distance_weight = 0.5
-obstacle_weight = 0.5
-rrt = rrt_star(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
-
-# Seed random
 np.random.seed(0)
-
-# Start planner
-rrt.start_planning()
-
-# Get path
-path = rrt.Get_Path()
-
-# Draw rrt tree
-plt.imshow(map.T)
-rrt.Draw_Tree()
-rrt.Draw_path(path)
+rrt = RrtstarCostmap(mapclass, x_init, x_goal, distance_weight=0.5, obstacle_weight=0.5, maxiteration=2000)
+rrt.planning()
+path = rrt.get_path()
+rrt.plt_env()
+rrt.draw_path(path)
 plt.show()
 
 # plot task space motion

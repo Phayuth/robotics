@@ -7,6 +7,7 @@ sys.path.append(str(wd))
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+from map.mapclass import map_val
 
 
 class node(object):
@@ -18,7 +19,7 @@ class node(object):
         self.parent = parent
 
 
-class RrtstarCostmap():
+class RrtstarCostmapConfigspace():
 
     def __init__(self, mapclass, x_start: node, x_goal: node, distance_weight: float, obstacle_weight: float, eta: float = None, maxiteration: int = 1000):
         # map properties
@@ -34,7 +35,7 @@ class RrtstarCostmap():
 
         # planner properties
         self.maxiteration = maxiteration
-        self.m = self.costmap.shape[0] * self.costmap.shape[1]
+        self.m = (self.x_max - self.x_min) * (self.y_max - self.y_min)
         self.r = (2 * (1 + 1/2)**(1 / 2)) * (self.m / np.pi)**(1 / 2)
         self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration)**(1 / 2)
         self.w1 = distance_weight
@@ -52,8 +53,8 @@ class RrtstarCostmap():
         self.rewire_elapsed = 0
 
     def uniform_sampling(self) -> node:
-        x = np.random.uniform(low=self.x_min, high=self.x_max - 1)
-        y = np.random.uniform(low=self.y_min, high=self.y_max - 1)
+        x = np.random.uniform(low=self.x_min, high=self.x_max)
+        y = np.random.uniform(low=self.y_min, high=self.y_max)
         x_rand = node(x, y)
         return x_rand
 
@@ -63,8 +64,10 @@ class RrtstarCostmap():
         x_sample = np.random.choice(len(p), p=p)
         x = x_sample // row
         y = x_sample % row
-        x = np.random.uniform(low=x - 0.5, high=x + 0.5)
-        y = np.random.uniform(low=y - 0.5, high=y + 0.5)
+        x = np.random.uniform(low=x, high=x)
+        y = np.random.uniform(low=y, high=y)
+        x = map_val(x, 0, self.costmap.shape[1], self.x_min, self.x_max)
+        y = map_val(y, 0, self.costmap.shape[0], self.y_min, self.y_max)
         x_rand = node(x, y)
         return x_rand
 
@@ -73,27 +76,34 @@ class RrtstarCostmap():
         return distance_cost
 
     def obstacle_cost(self, start: float, end: float) -> float:
-        seg_length = 1
+        seg_length = (self.x_max - self.x_min) / self.costmap.shape[0]
         seg_point = int(np.ceil(self.distance_cost(start, end) / seg_length))
 
-        value = 0
+        costv = []
         if seg_point > 1:
             v = np.array([end.x - start.x, end.y - start.y]) / (seg_point)
 
             for i in range(seg_point + 1):
                 seg = np.array([start.x, start.y]) + i*v
-                seg = np.around(seg)
-                if 1 - self.costmap[int(seg[1]), int(seg[0])] == 1:
+                costindex_x = map_val(seg[1], self.x_min, self.x_max, 0, self.costmap.shape[1])
+                costindex_y = map_val(seg[0], self.y_min, self.y_max, 0, self.costmap.shape[0])
+
+                if cost := 1 - self.costmap[int(costindex_x), int(costindex_y)] == 1:
                     cost = 1e10
-                    return cost
-                else:
-                    value += 1 - self.costmap[int(seg[1]), int(seg[0])]
-            cost = value / (seg_point+1)
+
+                costv.append(cost)
+
+            cost = sum(costv) / (seg_point+1)
             return cost
 
         else:
-            value = (self.costmap[int(start.y), int(start.x)] + self.costmap[int(end.y), int(end.x)])
-            cost = value / 2
+            start_costindex_x = map_val(start.x, self.x_min, self.x_max, 0, self.costmap.shape[1])
+            start_costindex_y = map_val(start.y, self.y_min, self.y_max, 0, self.costmap.shape[0])
+
+            end_costindex_x = map_val(end.x, self.x_min, self.x_max, 0, self.costmap.shape[1])
+            end_costindex_y = map_val(end.y, self.y_min, self.y_max, 0, self.costmap.shape[0])
+
+            cost = ((self.costmap[int(start_costindex_y), int(start_costindex_x)] + self.costmap[int(end_costindex_y), int(end_costindex_x)])) / 2
             return cost
 
     def line_cost(self, start: node, end: node) -> float:
@@ -135,7 +145,9 @@ class RrtstarCostmap():
                 return True
 
     def new_check(self, x_new: node) -> bool:
-        x_pob = np.array([x_new.x, x_new.y])
+        costindex_x = map_val(x_new.x, self.x_min, self.x_max, 0, self.costmap.shape[1])
+        costindex_y = map_val(x_new.y, self.y_min, self.y_max, 0, self.costmap.shape[0])
+        x_pob = np.array([costindex_x, costindex_y])
         x_pob = np.around(x_pob)
 
         if x_pob[0] >= self.costmap.shape[0]:
@@ -168,7 +180,7 @@ class RrtstarCostmap():
     def rewire(self, x_new: node):
         for x_near in self.nodes:
             if x_near is not x_new.parent:
-                if self.distance_cost(x_near, x_new) <= self.eta:  #and self.obstacle_cost(x_new, x_near) < 1
+                if self.distance_cost(x_near, x_new) <= self.eta:
                     if x_new.cost + self.line_cost(x_new, x_near) < x_near.cost:
                         x_near.parent = x_new
                         x_near.cost = x_new.cost + self.line_cost(x_new, x_near)
@@ -204,12 +216,13 @@ class RrtstarCostmap():
             return path
 
     def plt_env(self):
-        plt.imshow(self.costmap)
+        obs = self.mapclass.costmap2geo(free_space_value=0)
+        for obs in obs:
+            obs.plot()
 
         for i in self.nodes:
             if i is not self.x_start:
                 plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "b")
-
 
     def draw_path(self, path: list):
         for i in path:
@@ -220,12 +233,12 @@ class RrtstarCostmap():
         while True:
             time_sampling_start = time.time()
             while True:
-                x_rand = self.uniform_sampling()
+                x_rand = self.bias_sampling()
                 self.total_iter += 1
                 x_nearest = self.nearest(x_rand)
                 x_new = self.steer(x_rand, x_nearest)
                 b = self.new_check(x_new)
-                if b == True:
+                if b:
                     break
                 if self.total_iter == self.maxiteration:
                     break
@@ -261,25 +274,36 @@ class RrtstarCostmap():
 if __name__ == "__main__":
     from map.mapclass import CostMapLoader, CostMapClass
     np.random.seed(1)
+    from util.extract_path_class import extract_path_class_2d
 
     # SECTION - Experiment 1
     maploader = CostMapLoader.loadsave(maptype="task", mapindex=2)
     maploader.grid_map_probability(size=3)
-    mapclass = CostMapClass(maploader=maploader)
-    plt.imshow(mapclass.costmap)
+    mapclass = CostMapClass(maploader=maploader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
+    plt.imshow(mapclass.costmap, origin="lower")
     plt.show()
-    x_start = np.array([19.5, 110]).reshape(2, 1)
-    x_goal = np.array([110, 17]).reshape(2, 1)
+    x_start = np.array([-2.5, -2.5]).reshape(2, 1)
+    x_goal = np.array([2.5, 2.5]).reshape(2, 1)
 
+    # SECTION - Experiment 2
+    # maper = np.ones((100,100))
+    # maploader = CostMapLoader.loadarray(costmap=maper)
+    # mapclass = CostMapClass(maploader=maploader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
+    # plt.imshow(mapclass.costmap)
+    # plt.show()
+    # x_start = np.array([0,0]).reshape(2, 1)
+    # x_goal = np.array([1,1]).reshape(2, 1)
 
     # SECTION - planner
     distance_weight = 0.5
     obstacle_weight = 0.5
-    rrt = RrtstarCostmap(mapclass, x_start, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
+    rrt = RrtstarCostmapUnisampling(mapclass, x_start, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
     rrt.planning()
     path = rrt.get_path()
 
-
+    px, py = extract_path_class_2d(path)
+    print(f"==>> px: \n{px}")
+    print(f"==>> py: \n{py}")
     # SECTION - result
     rrt.plt_env()
     rrt.draw_path(path)

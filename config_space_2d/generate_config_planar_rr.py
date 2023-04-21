@@ -18,7 +18,7 @@ from collision_check_geometry import collision_class
 
 
 def configuration_generate_plannar_rr(robot, obs_list):
-    grid_size = 180
+    grid_size = 360
     theta1 = np.linspace(-np.pi, np.pi, grid_size)
     theta2 = np.linspace(-np.pi, np.pi, grid_size)
 
