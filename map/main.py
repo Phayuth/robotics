@@ -21,15 +21,24 @@ plt.show()
 
 # SECTION - plot config space in 3d #slow
 map = np.load('./map/mapdata/config_space_data_3d/config3D.npy')
-ax = plt.figure().add_subplot(projection='3d')
-ax.voxels(map, edgecolor='k')
+print(f"==>> map.shape: \n{map.shape}")
+plt.imshow(map[:,:,39])
 plt.show()
+
+# map = np.load('./map/mapdata/config_rrr.npy')
+# ax = plt.figure().add_subplot(projection='3d')
+# ax.voxels(map, edgecolor='k')
+# plt.show()
+
+
+# SECTION - slice 3d to view easier
+# map = 
 
 
 # SECTION - point cloud
-map = np.load('./map/mapdata/point_cloud/xyz(0.3).npy')
-x_coord = map[:,0]
-y_coord = map[:,1]
-z_coord = map[:,2]
-plt.scatter(x_coord,y_coord,z_coord)
-plt.show()
+# map = np.load('./map/mapdata/point_cloud/xyz(0.3).npy')
+# x_coord = map[:,0]
+# y_coord = map[:,1]
+# z_coord = map[:,2]
+# plt.scatter(x_coord,y_coord,z_coord)
+# plt.show()

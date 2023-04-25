@@ -1,3 +1,8 @@
+""" Planning path with RRTstar Costmap
+Planner : RRTStar Costmap
+Approch Angle : Virtual Obstacle
+DOF : 3
+"""
 import os
 import sys
 
@@ -19,7 +24,6 @@ robot = PlanarRRR()
 
 # define task space init point and goal point
 init_pose = np.array([[2.5],[0],[0]])
-# desired_pose = np.array([[0.9],[0.9],[0]])
 desired_pose = np.array([[2],[1],[0]])
 
 # using inverse kinematic, determine the theta configuration space in continuous space
@@ -43,13 +47,11 @@ plt.show()
 
 # create config grid and view
 map = configuration_generate_plannar_rrr(robot, obs_list)
-# np.save('config_rrr.npy', map)
-# map = np.load('.\map\mapdata\config_rrr.npy')
+# np.save('./map/mapdata/config_rrr.npy', map)
+# map = np.load('./map/mapdata/config_rrr.npy')
 
 # Planing
-distance_weight = 0.5
-obstacle_weight = 0.5
-rrt = rrt_star(map, x_init, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
+rrt = rrt_star(map, x_init, x_goal, w1=0.5, w2=0.5, maxiteration=1000)
 np.random.seed(0)
 rrt.start_planning()
 path = rrt.Get_Path()

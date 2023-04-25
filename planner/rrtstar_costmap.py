@@ -1,3 +1,9 @@
+""" Path Planning with RRT Star
+- Map : Costmap
+- Collision : Costmap
+- Searcher : Cost search
+"""
+
 import os
 import sys
 

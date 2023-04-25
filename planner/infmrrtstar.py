@@ -3,7 +3,6 @@ Map Type : Continuous configuration space 2D
 Sampling Method : Informed Sampling + Uniform
 Collsion : Geometry based
 Path Searcher : Cosider all nodes in the radius of x_goal. -> Calculate Cost to x_start -> Choose best with the lowest cost.
-
 """
 
 import os

@@ -1,3 +1,9 @@
+""" Path Planning with RRT Star in true configuration space instead of sampling on image range, but I see the result between the 2 are the same.
+- Map : Costmap, but map to range of -pi to pi
+- Collision : Costmap
+- Searcher : Cost search
+"""
+
 import os
 import sys
 
@@ -297,7 +303,7 @@ if __name__ == "__main__":
     # SECTION - planner
     distance_weight = 0.5
     obstacle_weight = 0.5
-    rrt = RrtstarCostmapUnisampling(mapclass, x_start, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
+    rrt = RrtstarCostmapConfigspace(mapclass, x_start, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
     rrt.planning()
     path = rrt.get_path()
 

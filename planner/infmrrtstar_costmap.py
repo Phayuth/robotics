@@ -1,3 +1,10 @@
+""" Informed RRT star 2D.
+Map Type : Costmap
+Sampling Method : Informed Sampling + Uniform/Bias
+Collsion : Costmap Collsion check
+Path Searcher : Cosider all nodes in the radius of x_goal. -> Calculate Cost to x_start -> Choose best with the lowest cost.
+"""
+
 import os
 import sys
 

@@ -56,8 +56,15 @@ for i in range(len(x_inner)):
 
 score_candidate = np.array(score_candidate)
 print("==>> sc: \n", score_candidate)
+
+score_candidate_sorted = np.sort(score_candidate, axis=None)
+print(f"==>> score_candidate_sorted: \n{score_candidate_sorted}")
+
 maxim = np.argmax(score_candidate)  # find the maximum score
 print("==>> maxim: \n", maxim)
+
+maxim_sorted = np.argmax(score_candidate)  # find the maximum score
+print("==>> maxim_sorted: \n", maxim_sorted)
 
 
 # SECTION - plot pose angle
@@ -69,4 +76,6 @@ circle_plt(x_targ, y_targ, r_inner)
 for i in range(len(x_inner)):
     plt.plot([x_inner[i], x_outer[i]], [y_inner[i], y_outer[i]], c="orange")
 plt.plot([x_inner[maxim], x_outer[maxim]], [y_inner[maxim], y_outer[maxim]], c="cyan")  # plot the choosen angle
+plt.plot([x_inner[maxim_sorted], x_outer[maxim_sorted]], [y_inner[maxim_sorted], y_outer[maxim_sorted]], c="yellow")  # plot the choosen angle
+
 plt.show()
