@@ -69,6 +69,9 @@ def task_rectangle_obs_7():
     list_obs = [rec1, rec2, rec3, rec4]
     return list_obs
 
+def task_rectangle_obs_8():
+    rec1 = collision_class.ObjRec(x=1.5, y=0.5, h=0.01, w=1)
+    return [rec1]
 
 if __name__ == "__main__":
 

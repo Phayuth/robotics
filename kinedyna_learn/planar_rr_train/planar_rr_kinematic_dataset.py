@@ -19,8 +19,8 @@ def planar_rr_generate_dataset(robot):
     sample_size = 360
     theta_candidate = np.linspace(-np.pi, np.pi, sample_size)
 
-    sample_theta = []  # X sample_theta
-    sample_endeffector_pose = []  # y sample_endeffector_pose
+    sample_theta = [] # X
+    sample_endeffector_pose = []  #
 
     for i in range(sample_size):
         for j in range(sample_size):

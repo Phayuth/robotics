@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage.measure import profile_line
 from robot_used.plannar_rr.RobotArm2D import Robot
-from map.taskmap_img_format import pmap
+from map.taskmap_img_format import pmap, bmap
 
 def construct_config_space_2d(robot, map, grid = 361):
 
@@ -40,8 +40,7 @@ def construct_config_space_2d(robot, map, grid = 361):
 
     return c_map
 
-# Load probability task map = pmap is probability map
-map = pmap() #map()
+map = bmap() #map()
 
 # Load Robot
 base_position = [15, 15]

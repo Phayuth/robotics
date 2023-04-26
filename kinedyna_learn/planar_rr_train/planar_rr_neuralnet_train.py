@@ -61,9 +61,7 @@ class CustomDataset(Dataset):
         y = torch.from_numpy(self.label[idx]).to(check_cuda()).float()
         return (x, y)
 
-
 robot = PlanarRR()
-
 
 def train_arc():
 
@@ -124,5 +122,5 @@ def eval_arc():
 
 
 if __name__ == "__main__":
-    # train_arc()
-    eval_arc()
+    train_arc()
+    # eval_arc()
