@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 from collision_check_geometry.collision_class import ObjLine2D, ObjPoint2D, intersect_point_v_rectangle, intersect_line_v_rectangle
 
 
-class node:
+class Node:
 
     def __init__(self, x, y, parent=None, cost=0.0) -> None:
         self.x = x
@@ -26,16 +26,16 @@ class node:
 
 class RRTStar:
 
-    def __init__(self, mapclass, x_start, x_goal, eta=None, maxiteration=1000) -> None:
+    def __init__(self, mapclass, xStart, xGoal, eta=None, maxIteration=1000) -> None:
         # map properties
         self.mapclass = mapclass
-        self.x_min = self.mapclass.xmin
-        self.x_max = self.mapclass.xmax
-        self.y_min = self.mapclass.ymin
-        self.y_max = self.mapclass.ymax
-        self.x_start = node(x_start[0, 0], x_start[1, 0])
-        self.x_start.cost = 0.0
-        self.x_goal = node(x_goal[0, 0], x_goal[1, 0])
+        self.xMin = self.mapclass.xmin
+        self.xMax = self.mapclass.xmax
+        self.yMin = self.mapclass.ymin
+        self.yMax = self.mapclass.ymax
+        self.xStart = Node(xStart[0, 0], xStart[1, 0])
+        self.xStart.cost = 0.0
+        self.xGoal = Node(xGoal[0, 0], xGoal[1, 0])
 
         if mapclass.__class__.__name__ == "CostMapClass":
             self.obs = self.mapclass.costmap2geo()
@@ -43,115 +43,115 @@ class RRTStar:
             self.obs = self.mapclass.obj
 
         # properties of planner
-        self.maxiteration = maxiteration
-        self.m = (self.x_max - self.x_min) * (self.y_max - self.y_min)
+        self.maxIteration = maxIteration
+        self.m = (self.xMax - self.xMin) * (self.yMax - self.yMin)
         self.radius = (2 * (1 + 1/2)**(1 / 2)) * (self.m / np.pi)**(1 / 2)
-        self.eta = self.radius * (np.log(self.maxiteration) / self.maxiteration)**(1 / 2)
-        self.tree_vertex = [self.x_start]
+        self.eta = self.radius * (np.log(self.maxIteration) / self.maxIteration)**(1 / 2)
+        self.treeVertex = [self.xStart]
 
     def planning(self):
-        for itera in range(self.maxiteration):
+        for itera in range(self.maxIteration):
             print(itera)
-            x_rand = self.sampling()
-            x_nearest = self.nearest_node(x_rand)
-            x_new = self.steer(x_nearest, x_rand)
-            x_new.parent = x_nearest
-            x_new.cost = x_new.parent.cost + self.cost_line(x_new, x_new.parent)
-            if self.collision_check_node(x_new) or self.collision_check_line(x_new.parent, x_new):
+            xRand = self.sampling()
+            xNearest = self.nearest_node(xRand)
+            xNew = self.steer(xNearest, xRand)
+            xNew.parent = xNearest
+            xNew.cost = xNew.parent.cost + self.cost_line(xNew, xNew.parent)
+            if self.collision_check_node(xNew) or self.collision_check_line(xNew.parent, xNew):
                 continue
             else:
-                X_near = self.near(x_new, self.eta)
-                x_min = x_new.parent
-                c_min = x_min.cost + self.cost_line(x_min, x_new)
-                for x_near in X_near:
-                    if self.collision_check_line(x_near, x_new):
+                XNear = self.near(xNew, self.eta)
+                xMin = xNew.parent
+                cMin = xMin.cost + self.cost_line(xMin, xNew)
+                for xNear in XNear:
+                    if self.collision_check_line(xNear, xNew):
                         continue
 
-                    c_new = x_near.cost + self.cost_line(x_near, x_new)
-                    if c_new < c_min:
-                        x_min = x_near
-                        c_min = c_new
+                    cNew = xNear.cost + self.cost_line(xNear, xNew)
+                    if cNew < cMin:
+                        xMin = xNear
+                        cMin = cNew
 
-                x_new.parent = x_min
-                x_new.cost = c_min
-                self.tree_vertex.append(x_new)
+                xNew.parent = xMin
+                xNew.cost = cMin
+                self.treeVertex.append(xNew)
 
-                for x_near in X_near:
-                    if self.collision_check_line(x_near, x_new):
+                for xNear in XNear:
+                    if self.collision_check_line(xNear, xNew):
                         continue
-                    c_near = x_near.cost
-                    c_new = x_new.cost + self.cost_line(x_new, x_near)
-                    if c_new < c_near:
-                        x_near.parent = x_new
-                        x_near.cost = x_new.cost + self.cost_line(x_new, x_near)
+                    cNear = xNear.cost
+                    cNew = xNew.cost + self.cost_line(xNew, xNear)
+                    if cNew < cNear:
+                        xNear.parent = xNew
+                        xNear.cost = xNew.cost + self.cost_line(xNew, xNear)
 
     def search_path(self):
-        X_near = self.near(self.x_goal, self.eta)
-        for x_near in X_near:
-            if self.collision_check_line(x_near, self.x_goal):
+        XNear = self.near(self.xGoal, self.eta)
+        for xNear in XNear:
+            if self.collision_check_line(xNear, self.xGoal):
                 continue
-            self.x_goal.parent = x_near
+            self.xGoal.parent = xNear
 
-            path = [self.x_goal]
-            curr_node = self.x_goal
+            path = [self.xGoal]
+            currentNode = self.xGoal
 
-            while curr_node != self.x_start:
-                curr_node = curr_node.parent
-                path.append(curr_node)
+            while currentNode != self.xStart:
+                currentNode = currentNode.parent
+                path.append(currentNode)
 
             path.reverse()
-            best_path = path
+            bestPath = path
             cost = sum(i.cost for i in path)
 
-            if cost < sum(j.cost for j in best_path):
-                best_path = path
+            if cost < sum(j.cost for j in bestPath):
+                bestPath = path
 
-        return best_path
+        return bestPath
 
     def sampling(self):
-        x = np.random.uniform(low=self.x_min, high=self.x_max)
-        y = np.random.uniform(low=self.y_min, high=self.y_max)
-        x_rand = node(x, y)
-        return x_rand
+        x = np.random.uniform(low=self.xMin, high=self.xMax)
+        y = np.random.uniform(low=self.yMin, high=self.yMax)
+        xRand = Node(x, y)
+        return xRand
 
-    def nearest_node(self, x_rand):
-        vertex_list = []
-        for each_vertex in self.tree_vertex:
-            dist_x = x_rand.x - each_vertex.x
-            dist_y = x_rand.y - each_vertex.y
-            dist = np.linalg.norm([dist_x, dist_y])
-            vertex_list.append(dist)
-        min_index = np.argmin(vertex_list)
-        x_near = self.tree_vertex[min_index]
-        return x_near
+    def nearest_node(self, xRand):
+        vertexList = []
+        for eachVertex in self.treeVertex:
+            distX = xRand.x - eachVertex.x
+            distY = xRand.y - eachVertex.y
+            dist = np.linalg.norm([distX, distY])
+            vertexList.append(dist)
+        minIndex = np.argmin(vertexList)
+        xNear = self.treeVertex[minIndex]
+        return xNear
 
-    def steer(self, x_nearest, x_rand):
-        dist_x = x_rand.x - x_nearest.x
-        dist_y = x_rand.y - x_nearest.y
-        dist = np.linalg.norm([dist_x, dist_y])
+    def steer(self, xNearest, xRand):
+        distX = xRand.x - xNearest.x
+        distY = xRand.y - xNearest.y
+        dist = np.linalg.norm([distX, distY])
 
         if dist <= self.eta:
-            x_new = x_rand
+            xNew = xRand
         else:
-            direction = np.arctan2(dist_y, dist_x)
-            new_x = self.eta * np.cos(direction) + x_nearest.x
-            new_y = self.eta * np.sin(direction) + x_nearest.y
-            x_new = node(new_x, new_y)
-        return x_new
+            direction = np.arctan2(distY, distX)
+            newX = self.eta * np.cos(direction) + xNearest.x
+            newY = self.eta * np.sin(direction) + xNearest.y
+            xNew = Node(newX, newY)
+        return xNew
 
-    def near(self, x_new, min_step):
+    def near(self, xNew, minStep):
         neighbor = []
-        for index, vertex in enumerate(self.tree_vertex):
-            dist = np.linalg.norm([(x_new.x - vertex.x), (x_new.y - vertex.y)])
-            if dist <= min_step:
+        for index, vertex in enumerate(self.treeVertex):
+            dist = np.linalg.norm([(xNew.x - vertex.x), (xNew.y - vertex.y)])
+            if dist <= minStep:
                 neighbor.append(index)
-        return [self.tree_vertex[i] for i in neighbor]
+        return [self.treeVertex[i] for i in neighbor]
 
     def cost_line(self, xstart, xend):
         return np.linalg.norm([(xstart.x - xend.x), (xstart.y - xend.y)])
 
-    def collision_check_node(self, x_new):
-        nodepoint = ObjPoint2D(x_new.x, x_new.y)
+    def collision_check_node(self, xNew):
+        nodepoint = ObjPoint2D(xNew.x, xNew.y)
 
         col = []
         for obs in self.obs:
@@ -163,8 +163,8 @@ class RRTStar:
         else:
             return False
 
-    def collision_check_line(self, x_nearest, x_new):
-        line = ObjLine2D(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
+    def collision_check_line(self, xNearest, xNew):
+        line = ObjLine2D(xNearest.x, xNearest.y, xNew.x, xNew.y)
 
         col = []
         for obs in self.obs:
@@ -183,13 +183,13 @@ class RRTStar:
 
         if after_plan:
             # plot tree vertex and branches
-            for j in self.tree_vertex:
+            for j in self.treeVertex:
                 plt.scatter(j.x, j.y, color="red")  # vertex
-                if j is not self.x_start:
+                if j is not self.xStart:
                     plt.plot([j.x, j.parent.x], [j.y, j.parent.y], color="green")  # branch
 
-        # plot start and goal node
-        plt.scatter([self.x_start.x, self.x_goal.x], [self.x_start.y, self.x_goal.y], color='cyan')
+        # plot start and goal Node
+        plt.scatter([self.xStart.x, self.xGoal.x], [self.xStart.y, self.xGoal.y], color='cyan')
 
 
 if __name__ == "__main__":
@@ -213,7 +213,7 @@ if __name__ == "__main__":
 
 
     # SECTION - planning section
-    planner = RRTStar(mapclass, start, goal, maxiteration=1000)
+    planner = RRTStar(mapclass, start, goal, maxIteration=1000)
     planner.plot_env()
     plt.show()
     planner.planning()

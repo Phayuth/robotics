@@ -10,7 +10,6 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-import matplotlib.pyplot as plt
 from collision_check_geometry import collision_class
 
 
@@ -74,14 +73,21 @@ def task_rectangle_obs_8():
     return [rec1]
 
 if __name__ == "__main__":
-
+    import matplotlib.pyplot as plt
     plt.axes().set_aspect('equal')
     plt.axvline(x=0, c="green")
     plt.axhline(y=0, c="green")
 
-    # target = [1.5,1]
-    # plt.scatter(target[0],target[1])
-    list_obs = task_rectangle_obs_7()
-    for obs in list_obs:
-        obs.plot()
+    listTask = [task_rectangle_obs_1(),
+                task_rectangle_obs_2(),
+                task_rectangle_obs_3(),
+                task_rectangle_obs_4(),
+                task_rectangle_obs_5(),
+                task_rectangle_obs_6(),
+                task_rectangle_obs_7(),
+                task_rectangle_obs_8()]
+    
+    for task in listTask:
+        for obs in task:
+            obs.plot()
     plt.show()

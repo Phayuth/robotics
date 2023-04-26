@@ -100,7 +100,7 @@ obs_list = [linetop, linebot]
 # np.save('./map/mapdata/config_rrr_virtualobs.npy', map)
 map = np.load('./map/mapdata/config_rrr_virtualobs.npy')
 
-plt.imshow(map[:, :, 0])  # plt view of each index slice 3D into 2D image
+plt.imshow(map[:, :, 35])  # plt view of each index slice 3D into 2D image
 plt.show()
 
 from map.mapclass import map_val, map_vec

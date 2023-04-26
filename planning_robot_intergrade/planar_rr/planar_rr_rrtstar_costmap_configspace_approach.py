@@ -51,13 +51,13 @@ plt.show()
 # create config grid and view
 map = configuration_generate_plannar_rr(robot, obs_list)
 maploader = CostMapLoader.loadarray(map)
-mapclass = CostMapClass(maploader=maploader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
+mapClass = CostMapClass(maploader=maploader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
 plt.imshow(map)
 plt.show()
 
 # Planning
 np.random.seed(0)
-rrt = RrtstarCostmapConfigspace(mapclass, x_init, x_appr, distance_weight= 0.5, obstacle_weight= 0.5, maxiteration=1000)
+rrt = RrtstarCostmapConfigspace(mapClass, x_init, x_appr, distance_weight= 0.5, obstacle_weight= 0.5, maxiteration=1000)
 rrt.planning()
 path = rrt.get_path()
 rrt.plt_env()

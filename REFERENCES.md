@@ -1,3 +1,16 @@
+## Code Style
+This style is chosen just for personal preference
+```
+PascalCase = class
+camelCase = variable
+UPPERCASE = constant
+snake_case = function
+snake_case = function option
+snake_case = script/folder name
+
+unless there is some very important in math variable or something
+```
+
 ## Papers
 
 ### Kinematic

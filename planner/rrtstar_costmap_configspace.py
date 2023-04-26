@@ -16,7 +16,7 @@ import time
 from map.mapclass import map_val
 
 
-class node(object):
+class Node:
 
     def __init__(self, x: float, y: float, cost: float = 0, parent=None):
         self.x = x
@@ -27,254 +27,254 @@ class node(object):
 
 class RrtstarCostmapConfigspace():
 
-    def __init__(self, mapclass, x_start: node, x_goal: node, distance_weight: float, obstacle_weight: float, eta: float = None, maxiteration: int = 1000):
+    def __init__(self, mapClass, xStart: Node, xGoal: Node, distanceWeight: float, obstacleWeight: float, eta: float = None, maxIteration: int = 1000):
         # map properties
-        self.mapclass = mapclass
-        self.costmap = self.mapclass.costmap
-        self.x_min = self.mapclass.xmin
-        self.x_max = self.mapclass.xmax
-        self.y_min = self.mapclass.ymin
-        self.y_max = self.mapclass.ymax
-        self.x_start = node(x_start[0, 0], x_start[1, 0])
-        self.x_start.cost = 0.0
-        self.x_goal = node(x_goal[0, 0], x_goal[1, 0])
+        self.mapClass = mapClass
+        self.costMap = self.mapClass.costmap
+        self.xMinRange = self.mapClass.xmin
+        self.xMaxRange = self.mapClass.xmax
+        self.yMinRange = self.mapClass.ymin
+        self.yMaxRange = self.mapClass.ymax
+        self.xStart = Node(xStart[0, 0], xStart[1, 0])
+        self.xStart.cost = 0.0
+        self.xGoal = Node(xGoal[0, 0], xGoal[1, 0])
 
         # planner properties
-        self.maxiteration = maxiteration
-        self.m = (self.x_max - self.x_min) * (self.y_max - self.y_min)
+        self.maxIteration = maxIteration
+        self.m = (self.xMaxRange - self.xMinRange) * (self.yMaxRange - self.yMinRange)
         self.r = (2 * (1 + 1/2)**(1 / 2)) * (self.m / np.pi)**(1 / 2)
-        self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration)**(1 / 2)
-        self.w1 = distance_weight
-        self.w2 = obstacle_weight
-        self.nodes = [self.x_start]
+        self.eta = self.r * (np.log(self.maxIteration) / self.maxIteration)**(1 / 2)
+        self.w1 = distanceWeight
+        self.w2 = obstacleWeight
+        self.nodes = [self.xStart]
 
-        self.sample_taken = 0
-        self.total_iter = 0
+        self.sampleTaken = 0
+        self.totalIter = 0
 
         # timing
         self.s = time.time()
         self.e = None
-        self.sampling_elapsed = 0
-        self.addparent_elapsed = 0
-        self.rewire_elapsed = 0
+        self.samplingElapsed = 0
+        self.addparentElapsed = 0
+        self.rewireElapsed = 0
 
-    def uniform_sampling(self) -> node:
-        x = np.random.uniform(low=self.x_min, high=self.x_max)
-        y = np.random.uniform(low=self.y_min, high=self.y_max)
-        x_rand = node(x, y)
-        return x_rand
+    def uniform_sampling(self) -> Node:
+        x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
+        y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
+        xRand = Node(x, y)
+        return xRand
 
-    def bias_sampling(self) -> node:
-        row = self.costmap.shape[1]
-        p = np.ravel(self.costmap) / np.sum(self.costmap)
-        x_sample = np.random.choice(len(p), p=p)
-        x = x_sample // row
-        y = x_sample % row
+    def bias_sampling(self) -> Node:
+        row = self.costMap.shape[1]
+        p = np.ravel(self.costMap) / np.sum(self.costMap)
+        xSample = np.random.choice(len(p), p=p)
+        x = xSample // row
+        y = xSample % row
         x = np.random.uniform(low=x, high=x)
         y = np.random.uniform(low=y, high=y)
-        x = map_val(x, 0, self.costmap.shape[1], self.x_min, self.x_max)
-        y = map_val(y, 0, self.costmap.shape[0], self.y_min, self.y_max)
-        x_rand = node(x, y)
-        return x_rand
+        x = map_val(x, 0, self.costMap.shape[1], self.xMinRange, self.xMaxRange)
+        y = map_val(y, 0, self.costMap.shape[0], self.yMinRange, self.yMaxRange)
+        xRand = Node(x, y)
+        return xRand
 
-    def distance_cost(self, start: node, end: node) -> float:
-        distance_cost = np.linalg.norm([(start.x - end.x), (start.y - end.y)])
-        return distance_cost
+    def distance_cost(self, start: Node, end: Node) -> float:
+        distanceCost = np.linalg.norm([(start.x - end.x), (start.y - end.y)])
+        return distanceCost
 
     def obstacle_cost(self, start: float, end: float) -> float:
-        seg_length = (self.x_max - self.x_min) / self.costmap.shape[0]
-        seg_point = int(np.ceil(self.distance_cost(start, end) / seg_length))
+        segLength = (self.xMaxRange - self.xMinRange) / self.costMap.shape[0]
+        segPoint = int(np.ceil(self.distance_cost(start, end) / segLength))
 
         costv = []
-        if seg_point > 1:
-            v = np.array([end.x - start.x, end.y - start.y]) / (seg_point)
+        if segPoint > 1:
+            v = np.array([end.x - start.x, end.y - start.y]) / (segPoint)
 
-            for i in range(seg_point + 1):
+            for i in range(segPoint + 1):
                 seg = np.array([start.x, start.y]) + i*v
-                costindex_x = map_val(seg[1], self.x_min, self.x_max, 0, self.costmap.shape[1])
-                costindex_y = map_val(seg[0], self.y_min, self.y_max, 0, self.costmap.shape[0])
+                costIndexX = map_val(seg[1], self.xMinRange, self.xMaxRange, 0, self.costMap.shape[1])
+                costIndexY = map_val(seg[0], self.yMinRange, self.yMaxRange, 0, self.costMap.shape[0])
 
-                if cost := 1 - self.costmap[int(costindex_x), int(costindex_y)] == 1:
+                if cost := 1 - self.costMap[int(costIndexX), int(costIndexY)] == 1:
                     cost = 1e10
 
                 costv.append(cost)
 
-            cost = sum(costv) / (seg_point+1)
+            cost = sum(costv) / (segPoint+1)
             return cost
 
         else:
-            start_costindex_x = map_val(start.x, self.x_min, self.x_max, 0, self.costmap.shape[1])
-            start_costindex_y = map_val(start.y, self.y_min, self.y_max, 0, self.costmap.shape[0])
+            startCostIndexX = map_val(start.x, self.xMinRange, self.xMaxRange, 0, self.costMap.shape[1])
+            startCostIndexY = map_val(start.y, self.yMinRange, self.yMaxRange, 0, self.costMap.shape[0])
 
-            end_costindex_x = map_val(end.x, self.x_min, self.x_max, 0, self.costmap.shape[1])
-            end_costindex_y = map_val(end.y, self.y_min, self.y_max, 0, self.costmap.shape[0])
+            endCostIndexX = map_val(end.x, self.xMinRange, self.xMaxRange, 0, self.costMap.shape[1])
+            endCostIndexY = map_val(end.y, self.yMinRange, self.yMaxRange, 0, self.costMap.shape[0])
 
-            cost = ((self.costmap[int(start_costindex_y), int(start_costindex_x)] + self.costmap[int(end_costindex_y), int(end_costindex_x)])) / 2
+            cost = ((self.costMap[int(startCostIndexY), int(startCostIndexX)] + self.costMap[int(endCostIndexY), int(endCostIndexX)])) / 2
             return cost
 
-    def line_cost(self, start: node, end: node) -> float:
+    def line_cost(self, start: Node, end: Node) -> float:
         cost = self.w1 * (self.distance_cost(start, end) / (self.eta)) + self.w2 * (self.obstacle_cost(start, end))
         return cost
 
-    def nearest(self, x_rand: node) -> node:
+    def nearest(self, xRand: Node) -> Node:
         vertex = []
         i = 0
-        for x_near in self.nodes:
+        for xNear in self.nodes:
 
-            dist = self.distance_cost(x_near, x_rand)
-            vertex.append([dist, i, x_near])
+            dist = self.distance_cost(xNear, xRand)
+            vertex.append([dist, i, xNear])
             i += 1
 
         vertex.sort()
-        x_nearest = vertex[0][2]
+        xNearest = vertex[0][2]
 
-        return x_nearest
+        return xNearest
 
-    def steer(self, x_rand: node, x_nearest: node) -> node:
-        d = self.distance_cost(x_rand, x_nearest)
+    def steer(self, xRand: Node, xNearest: Node) -> Node:
+        d = self.distance_cost(xRand, xNearest)
 
         if d < self.eta:
-            x_new = node(x_rand.x, x_rand.y)
+            xNew = Node(xRand.x, xRand.y)
         else:
-            new_x = x_nearest.x + self.eta * ((x_rand.x - x_nearest.x) / d)
-            new_y = x_nearest.y + self.eta * ((x_rand.y - x_nearest.y) / d)
+            newX = xNearest.x + self.eta * ((xRand.x - xNearest.x) / d)
+            newY = xNearest.y + self.eta * ((xRand.y - xNearest.y) / d)
 
-            x_new = node(new_x, new_y)
+            xNew = Node(newX, newY)
 
-        return x_new
+        return xNew
 
-    def exist_check(self, x_new: node) -> bool:
-        for x_near in self.nodes:
-            if x_new.x == x_near.x and x_new.y == x_near.y:
+    def exist_check(self, xNew: Node) -> bool:
+        for xNear in self.nodes:
+            if xNew.x == xNear.x and xNew.y == xNear.y:
                 return False
             else:
                 return True
 
-    def new_check(self, x_new: node) -> bool:
-        costindex_x = map_val(x_new.x, self.x_min, self.x_max, 0, self.costmap.shape[1])
-        costindex_y = map_val(x_new.y, self.y_min, self.y_max, 0, self.costmap.shape[0])
-        x_pob = np.array([costindex_x, costindex_y])
-        x_pob = np.around(x_pob)
+    def new_check(self, xNew: Node) -> bool:
+        costIndexX = map_val(xNew.x, self.xMinRange, self.xMaxRange, 0, self.costMap.shape[1])
+        costIndexY = map_val(xNew.y, self.yMinRange, self.yMaxRange, 0, self.costMap.shape[0])
+        xPob = np.array([costIndexX, costIndexY])
+        xPob = np.around(xPob)
 
-        if x_pob[0] >= self.costmap.shape[0]:
-            x_pob[0] = self.costmap.shape[0] - 1
-        if x_pob[1] >= self.costmap.shape[1]:
-            x_pob[1] = self.costmap.shape[1] - 1
+        if xPob[0] >= self.costMap.shape[0]:
+            xPob[0] = self.costMap.shape[0] - 1
+        if xPob[1] >= self.costMap.shape[1]:
+            xPob[1] = self.costMap.shape[1] - 1
 
-        x_pob = self.costmap[int(x_pob[1]), int(x_pob[0])]
+        xPob = self.costMap[int(xPob[1]), int(xPob[0])]
         p = np.random.uniform(0, 1)
 
-        if x_pob > p and self.exist_check(x_new):
+        if xPob > p and self.exist_check(xNew):
             return True
         else:
             return False
 
-    def add_parent(self, x_new: node, x_nearest: node) -> node:
-        x_min = x_nearest
-        c_min = x_min.cost + self.line_cost(x_min, x_new)
+    def add_parent(self, xNew: Node, xNearest: Node) -> Node:
+        xMin = xNearest
+        cMin = xMin.cost + self.line_cost(xMin, xNew)
 
-        for x_near in self.nodes:
-            if self.distance_cost(x_near, x_new) <= self.eta:
-                if x_near.cost + self.line_cost(x_near, x_new) < c_min:
-                    x_min = x_near
-                    c_min = x_near.cost + self.line_cost(x_near, x_new)
-            x_new.parent = x_min
-            x_new.cost = c_min
+        for xNear in self.nodes:
+            if self.distance_cost(xNear, xNew) <= self.eta:
+                if xNear.cost + self.line_cost(xNear, xNew) < cMin:
+                    xMin = xNear
+                    cMin = xNear.cost + self.line_cost(xNear, xNew)
+            xNew.parent = xMin
+            xNew.cost = cMin
 
-        return x_new
+        return xNew
 
-    def rewire(self, x_new: node):
-        for x_near in self.nodes:
-            if x_near is not x_new.parent:
-                if self.distance_cost(x_near, x_new) <= self.eta:
-                    if x_new.cost + self.line_cost(x_new, x_near) < x_near.cost:
-                        x_near.parent = x_new
-                        x_near.cost = x_new.cost + self.line_cost(x_new, x_near)
+    def rewire(self, xNew: Node):
+        for xNear in self.nodes:
+            if xNear is not xNew.parent:
+                if self.distance_cost(xNear, xNew) <= self.eta:
+                    if xNew.cost + self.line_cost(xNew, xNear) < xNear.cost:
+                        xNear.parent = xNew
+                        xNear.cost = xNew.cost + self.line_cost(xNew, xNear)
 
     def get_path(self) -> list:
-        temp_path = []
+        tempPath = []
         path = []
         n = 0
         for i in self.nodes:
-            if self.distance_cost(i, self.x_goal) < self.eta:  #5
-                cost = i.cost + self.line_cost(self.x_goal, i)
-                temp_path.append([cost, n, i])
+            if self.distance_cost(i, self.xGoal) < self.eta:  #5
+                cost = i.cost + self.line_cost(self.xGoal, i)
+                tempPath.append([cost, n, i])
                 n += 1
-        temp_path.sort()
+        tempPath.sort()
 
-        if temp_path == []:
+        if tempPath == []:
             print("cannot find path")
             return None
 
         else:
-            closest_node = temp_path[0][2]
-            i = closest_node
-            self.x_goal.cost = temp_path[0][0]
+            closestNode = tempPath[0][2]
+            i = closestNode
+            self.xGoal.cost = tempPath[0][0]
 
-            while i is not self.x_start:
+            while i is not self.xStart:
                 path.append(i)
                 i = i.parent
-            path.append(self.x_start)
+            path.append(self.xStart)
 
-            self.x_goal.parent = path[0]
-            path.insert(0, self.x_goal)
+            self.xGoal.parent = path[0]
+            path.insert(0, self.xGoal)
 
             return path
 
     def plt_env(self):
-        obs = self.mapclass.costmap2geo(free_space_value=0)
+        obs = self.mapClass.costmap2geo(free_space_value=0)
         for obs in obs:
             obs.plot()
 
         for i in self.nodes:
-            if i is not self.x_start:
+            if i is not self.xStart:
                 plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "b")
 
     def draw_path(self, path: list):
         for i in path:
-            if i is not self.x_start:
+            if i is not self.xStart:
                 plt.plot([i.x, i.parent.x], [i.y, i.parent.y], "r", linewidth=2.5)
 
     def planning(self):
         while True:
-            time_sampling_start = time.time()
+            timeSamplingStart = time.time()
             while True:
-                x_rand = self.bias_sampling()
-                self.total_iter += 1
-                x_nearest = self.nearest(x_rand)
-                x_new = self.steer(x_rand, x_nearest)
-                b = self.new_check(x_new)
+                xRand = self.bias_sampling()
+                self.totalIter += 1
+                xNearest = self.nearest(xRand)
+                xNew = self.steer(xRand, xNearest)
+                b = self.new_check(xNew)
                 if b:
                     break
-                if self.total_iter == self.maxiteration:
+                if self.totalIter == self.maxIteration:
                     break
-            time_sampling_end = time.time()
-            self.sampling_elapsed += time_sampling_end - time_sampling_start
-            if self.total_iter == self.maxiteration:
+            timeSamplingEnd = time.time()
+            self.samplingElapsed += timeSamplingEnd - timeSamplingStart
+            if self.totalIter == self.maxIteration:
                 break
-            self.sample_taken += 1
-            print("==>> self.sample_taken: ", self.sample_taken)
+            self.sampleTaken += 1
+            print("==>> self.sampleTaken: ", self.sampleTaken)
 
-            time_addparent_start = time.time()
-            x_new = self.add_parent(x_new, x_nearest)
-            time_addparent_end = time.time()
-            self.addparent_elapsed += (time_addparent_end - time_addparent_start)
-            self.nodes.append(x_new)
+            timeAddparentStart = time.time()
+            xNew = self.add_parent(xNew, xNearest)
+            timeAddparentEnd = time.time()
+            self.addparentElapsed += (timeAddparentEnd - timeAddparentStart)
+            self.nodes.append(xNew)
 
-            time_rewire_start = time.time()
-            self.rewire(x_new)
-            time_rewire_end = time.time()
-            self.rewire_elapsed += (time_rewire_end - time_rewire_start)
+            timeRewireStart = time.time()
+            self.rewire(xNew)
+            timeRewireEnd = time.time()
+            self.rewireElapsed += (timeRewireEnd - timeRewireStart)
 
         self.e = time.time()
 
     def print_time(self):
         print("total time : ", self.e - self.s, "second")
-        print("sampling time : ", self.sampling_elapsed, "second", (self.sampling_elapsed * 100) / (self.e - self.s), "%")
-        print("add_parent time : ", self.addparent_elapsed, "second", (self.addparent_elapsed * 100) / (self.e - self.s), "%")
-        print("rewire time : ", self.rewire_elapsed, "second", (self.rewire_elapsed * 100) / (self.e - self.s), "%")
-        print("total_iteration = ", self.total_iter)
-        print("cost : ", self.x_goal.cost)
+        print("sampling time : ", self.samplingElapsed, "second", (self.samplingElapsed * 100) / (self.e - self.s), "%")
+        print("add_parent time : ", self.addparentElapsed, "second", (self.addparentElapsed * 100) / (self.e - self.s), "%")
+        print("rewire time : ", self.rewireElapsed, "second", (self.rewireElapsed * 100) / (self.e - self.s), "%")
+        print("total_iteration = ", self.totalIter)
+        print("cost : ", self.xGoal.cost)
 
 
 if __name__ == "__main__":
@@ -288,8 +288,8 @@ if __name__ == "__main__":
     mapclass = CostMapClass(maploader=maploader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
     plt.imshow(mapclass.costmap, origin="lower")
     plt.show()
-    x_start = np.array([-2.5, -2.5]).reshape(2, 1)
-    x_goal = np.array([2.5, 2.5]).reshape(2, 1)
+    xStart = np.array([-2.5, -2.5]).reshape(2, 1)
+    xGoal = np.array([2.5, 2.5]).reshape(2, 1)
 
     # SECTION - Experiment 2
     # maper = np.ones((100,100))
@@ -297,13 +297,11 @@ if __name__ == "__main__":
     # mapclass = CostMapClass(maploader=maploader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
     # plt.imshow(mapclass.costmap)
     # plt.show()
-    # x_start = np.array([0,0]).reshape(2, 1)
-    # x_goal = np.array([1,1]).reshape(2, 1)
+    # xStart = np.array([0,0]).reshape(2, 1)
+    # xGoal = np.array([1,1]).reshape(2, 1)
 
     # SECTION - planner
-    distance_weight = 0.5
-    obstacle_weight = 0.5
-    rrt = RrtstarCostmapConfigspace(mapclass, x_start, x_goal, distance_weight, obstacle_weight, maxiteration=1000)
+    rrt = RrtstarCostmapConfigspace(mapclass, xStart, xGoal, distanceWeight=0.5, obstacleWeight=0.5, maxIteration=1000)
     rrt.planning()
     path = rrt.get_path()
 

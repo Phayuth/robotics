@@ -2,7 +2,7 @@
 Map Type : Continuous configuration space 2D
 Sampling Method : Informed Sampling + Uniform
 Collsion : Geometry based
-Path Searcher : Cosider all nodes in the radius of x_goal. -> Calculate Cost to x_start -> Choose best with the lowest cost.
+Path Searcher : Cosider all nodes in the radius of xGoal. -> Calculate Cost to xStart -> Choose best with the lowest cost.
 """
 
 import os
@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from collision_check_geometry.collision_class import ObjLine2D, ObjPoint2D, intersect_point_v_rectangle, intersect_line_v_rectangle
 
 
-class node:
+class Node:
 
     def __init__(self, x, y, parent=None, cost=0.0) -> None:
         self.x = x
@@ -27,119 +27,119 @@ class node:
 
 class InfmRrtstar:
 
-    def __init__(self, mapclass, x_start, x_goal, eta=None, maxiteration=1000) -> None:
+    def __init__(self, mapclass, xStart, xGoal, eta=None, maxIteration=1000) -> None:
         # map properties
-        self.mapclass = mapclass
-        self.x_min = self.mapclass.xmin
-        self.x_max = self.mapclass.xmax
-        self.y_min = self.mapclass.ymin
-        self.y_max = self.mapclass.ymax
-        self.x_start = node(x_start[0, 0], x_start[1, 0])
-        self.x_start.cost = 0.0
-        self.x_goal = node(x_goal[0, 0], x_goal[1, 0])
+        self.mapClass = mapclass
+        self.xMinRange = self.mapClass.xmin
+        self.xMaxRange = self.mapClass.xmax
+        self.yMinRange = self.mapClass.ymin
+        self.yMaxRange = self.mapClass.ymax
+        self.xStart = Node(xStart[0, 0], xStart[1, 0])
+        self.xStart.cost = 0.0
+        self.xGoal = Node(xGoal[0, 0], xGoal[1, 0])
 
         if mapclass.__class__.__name__ == "CostMapClass":
-            self.obs = self.mapclass.costmap2geo()
+            self.obs = self.mapClass.costmap2geo()
         else:
-            self.obs = self.mapclass.obj
+            self.obs = self.mapClass.obj
 
         # properties of planner
-        self.maxiteration = maxiteration
-        self.m = (self.x_max - self.x_min) * (self.y_max - self.y_min)
+        self.maxIteration = maxIteration
+        self.m = (self.xMaxRange - self.xMinRange) * (self.yMaxRange - self.yMinRange)
         self.radius = (2 * (1 + 1/2)**(1 / 2)) * (self.m / np.pi)**(1 / 2)
-        self.eta = self.radius * (np.log(self.maxiteration) / self.maxiteration)**(1 / 2)
+        self.eta = self.radius * (np.log(self.maxIteration) / self.maxIteration)**(1 / 2)
 
         # start with a tree vertex have start node and empty branch
-        self.tree_vertex = [self.x_start]
-        self.X_soln = []
+        self.treeVertex = [self.xStart]
+        self.XSoln = []
 
     def planning(self):
-        c_best = np.inf
-        for itera in range(self.maxiteration):
+        cBest = np.inf
+        for itera in range(self.maxIteration):
             print(itera)
-            for x_soln in self.X_soln:
-                c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.x_goal)
-                if x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.x_goal) < c_best:
-                    c_best = x_soln.parent.cost + self.cost_line(x_soln.parent, x_soln) + self.cost_line(x_soln, self.x_goal)
+            for xSoln in self.XSoln:
+                cBest = xSoln.parent.cost + self.cost_line(xSoln.parent, xSoln) + self.cost_line(xSoln, self.xGoal)
+                if xSoln.parent.cost + self.cost_line(xSoln.parent, xSoln) + self.cost_line(xSoln, self.xGoal) < cBest:
+                    cBest = xSoln.parent.cost + self.cost_line(xSoln.parent, xSoln) + self.cost_line(xSoln, self.xGoal)
 
-            x_rand = self.sampling(self.x_start, self.x_goal, c_best)
+            xRand = self.sampling(self.xStart, self.xGoal, cBest)
 
-            x_nearest = self.nearest_node(x_rand)
-            x_new = self.steer(x_nearest, x_rand)
-            x_new.parent = x_nearest
-            x_new.cost = x_new.parent.cost + self.cost_line(x_new, x_new.parent)  # add the vertex new, which we have to calculate the cost and add parent as well
-            if self.collision_check_node(x_new) or self.collision_check_line(x_new.parent, x_new):
+            xNearest = self.nearest_node(xRand)
+            xNew = self.steer(xNearest, xRand)
+            xNew.parent = xNearest
+            xNew.cost = xNew.parent.cost + self.cost_line(xNew, xNew.parent)  # add the vertex new, which we have to calculate the cost and add parent as well
+            if self.collision_check_node(xNew) or self.collision_check_line(xNew.parent, xNew):
                 continue
             else:
-                X_near = self.near(x_new, self.eta)
-                x_min = x_new.parent
-                c_min = x_min.cost + self.cost_line(x_min, x_new)
-                for x_near in X_near:
-                    if self.collision_check_line(x_near, x_new):
+                XNear = self.near(xNew, self.eta)
+                xMin = xNew.parent
+                cMin = xMin.cost + self.cost_line(xMin, xNew)
+                for xNear in XNear:
+                    if self.collision_check_line(xNear, xNew):
                         continue
 
-                    c_new = x_near.cost + self.cost_line(x_near, x_new)
-                    if c_new < c_min:
-                        x_min = x_near
-                        c_min = c_new
+                    cNew = xNear.cost + self.cost_line(xNear, xNew)
+                    if cNew < cMin:
+                        xMin = xNear
+                        cMin = cNew
 
-                x_new.parent = x_min
-                x_new.cost = c_min
-                self.tree_vertex.append(x_new)
+                xNew.parent = xMin
+                xNew.cost = cMin
+                self.treeVertex.append(xNew)
 
-                for x_near in X_near:
-                    if self.collision_check_line(x_near, x_new):
+                for xNear in XNear:
+                    if self.collision_check_line(xNear, xNew):
                         continue
-                    c_near = x_near.cost
-                    c_new = x_new.cost + self.cost_line(x_new, x_near)
-                    if c_new < c_near:
-                        x_near.parent = x_new
-                        x_near.cost = x_new.cost + self.cost_line(x_new, x_near)
+                    cNear = xNear.cost
+                    cNew = xNew.cost + self.cost_line(xNew, xNear)
+                    if cNew < cNear:
+                        xNear.parent = xNew
+                        xNear.cost = xNew.cost + self.cost_line(xNew, xNear)
 
                 # in goal region
-                if self.ingoal_region(x_new):
-                    self.X_soln.append(x_new)
+                if self.ingoal_region(xNew):
+                    self.XSoln.append(xNew)
 
     def search_path(self):
-        for xbest in self.X_soln:
-            if self.collision_check_line(xbest, self.x_goal):
+        for xBest in self.XSoln:
+            if self.collision_check_line(xBest, self.xGoal):
                 continue
-            self.x_goal.parent = xbest
+            self.xGoal.parent = xBest
 
-            path = [self.x_goal]
-            curr_node = self.x_goal
-            while curr_node != self.x_start:
-                curr_node = curr_node.parent
-                path.append(curr_node)
+            path = [self.xGoal]
+            currentNode = self.xGoal
+            while currentNode != self.xStart:
+                currentNode = currentNode.parent
+                path.append(currentNode)
             path.reverse()
 
-            best_path = path
+            bestPath = path
             cost = sum(i.cost for i in path)
-            if cost < sum(j.cost for j in best_path):
-                best_path = path
+            if cost < sum(j.cost for j in bestPath):
+                bestPath = path
 
-        return best_path
+        return bestPath
 
-    def sampling(self, x_start, x_goal, c_max):
-        if c_max < np.inf:
-            c_min = self.cost_line(x_start, x_goal)
-            print(c_max, c_min)
-            x_center = np.array([(x_start.x + x_goal.x) / 2, (x_start.y + x_goal.y) / 2]).reshape(2, 1)
-            C = self.RotationToWorldFrame(x_start, x_goal)
-            r1 = c_max / 2
-            r2 = np.sqrt(c_max**2 - c_min**2) / 2
+    def sampling(self, xStart, xGoal, cMax):
+        if cMax < np.inf:
+            cMin = self.cost_line(xStart, xGoal)
+            print(cMax, cMin)
+            xCenter = np.array([(xStart.x + xGoal.x) / 2, (xStart.y + xGoal.y) / 2]).reshape(2, 1)
+            C = self.rotation_to_world_frame(xStart, xGoal)
+            r1 = cMax / 2
+            r2 = np.sqrt(cMax**2 - cMin**2) / 2
             L = np.diag([r1, r2])
             while True:
-                x_ball = self.sampleUnitBall()
-                x_rand = (C@L@x_ball) + x_center
-                x_rand = node(x_rand[0, 0], x_rand[1, 0])
-                if (self.x_min < x_rand.x < self.x_max) and (self.y_min < x_rand.y < self.y_max):  # check if outside configspace
+                xBall = self.unitballsampling()
+                xRand = (C@L@xBall) + xCenter
+                xRand = Node(xRand[0, 0], xRand[1, 0])
+                if (self.xMinRange < xRand.x < self.xMaxRange) and (self.yMinRange < xRand.y < self.yMaxRange):  # check if outside configspace
                     break
         else:
-            x_rand = self.unisampling()
-        return x_rand
+            xRand = self.unisampling()
+        return xRand
 
-    def sampleUnitBall(self):
+    def unitballsampling(self):
         r = np.random.uniform(low=0, high=1)
         theta = np.random.uniform(low=0, high=2 * np.pi)
         x = r * np.cos(theta)
@@ -147,74 +147,72 @@ class InfmRrtstar:
         return np.array([[x], [y]]).reshape(2, 1)
 
     def unisampling(self):
-        x = np.random.uniform(low=self.x_min, high=self.x_max)
-        y = np.random.uniform(low=self.y_min, high=self.y_max)
-        x_rand = node(x, y)
-        return x_rand
+        x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
+        y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
+        xRand = Node(x, y)
+        return xRand
 
-    def ingoal_region(self, x_new):
-        if np.linalg.norm([self.x_goal.x - x_new.x, self.x_goal.y - x_new.y]) <= 1:  # self.eta:
+    def ingoal_region(self, xNew):
+        if np.linalg.norm([self.xGoal.x - xNew.x, self.xGoal.y - xNew.y]) <= 1:  # self.eta:
             return True
         else:
             return False
 
-    def nearest_node(self, x_rand):
-        vertex_list = []
-        for each_vertex in self.tree_vertex:
-            dist_x = x_rand.x - each_vertex.x
-            dist_y = x_rand.y - each_vertex.y
-            dist = np.linalg.norm([dist_x, dist_y])
-            vertex_list.append(dist)
-        min_index = np.argmin(vertex_list)
-        x_near = self.tree_vertex[min_index]
-        return x_near
+    def nearest_node(self, xRand):
+        vertexList = []
+        for eachVertex in self.treeVertex:
+            distX = xRand.x - eachVertex.x
+            distY = xRand.y - eachVertex.y
+            dist = np.linalg.norm([distX, distY])
+            vertexList.append(dist)
+        minIndex = np.argmin(vertexList)
+        xNear = self.treeVertex[minIndex]
+        return xNear
 
-    def steer(self, x_nearest, x_rand):
-        dist_x = x_rand.x - x_nearest.x
-        dist_y = x_rand.y - x_nearest.y
-        dist = np.linalg.norm([dist_x, dist_y])
+    def steer(self, xNearest, xRand):
+        distX = xRand.x - xNearest.x
+        distY = xRand.y - xNearest.y
+        dist = np.linalg.norm([distX, distY])
         if dist <= self.eta:
-            x_new = x_rand
+            xNew = xRand
         else:
-            direction = np.arctan2(dist_y, dist_x)
-            new_x = self.eta * np.cos(direction) + x_nearest.x
-            new_y = self.eta * np.sin(direction) + x_nearest.y
-            x_new = node(new_x, new_y)
-        return x_new
+            direction = np.arctan2(distY, distX)
+            newX = self.eta * np.cos(direction) + xNearest.x
+            newY = self.eta * np.sin(direction) + xNearest.y
+            xNew = Node(newX, newY)
+        return xNew
 
-    def near(self, x_new, min_step):
+    def near(self, xNew, minStep):
         neighbor = []
-        for index, vertex in enumerate(self.tree_vertex):
-            dist = np.linalg.norm([(x_new.x - vertex.x), (x_new.y - vertex.y)])
-            if dist <= min_step:
+        for index, vertex in enumerate(self.treeVertex):
+            dist = np.linalg.norm([(xNew.x - vertex.x), (xNew.y - vertex.y)])
+            if dist <= minStep:
                 neighbor.append(index)
-        return [self.tree_vertex[i] for i in neighbor]
+        return [self.treeVertex[i] for i in neighbor]
 
-    def cost_line(self, xstart, xend):
-        return np.linalg.norm([(xstart.x - xend.x), (xstart.y - xend.y)])  # simple euclidean distance as cost
+    def cost_line(self, xStart, xEnd):
+        return np.linalg.norm([(xStart.x - xEnd.x), (xStart.y - xEnd.y)])  # simple euclidean distance as cost
 
-    def RotationToWorldFrame(self, x_start, x_goal):
-        theta = np.arctan2((x_goal.y - x_start.y), (x_goal.x - x_start.x))
+    def rotation_to_world_frame(self, xStart, xGoal):
+        theta = np.arctan2((xGoal.y - xStart.y), (xGoal.x - xStart.x))
 
         R = np.array([[np.cos(theta), np.sin(theta)], [-np.sin(theta), np.cos(theta)]]).T
 
         return R
 
-    def collision_check_node(self, x_new):
-        nodepoint = ObjPoint2D(x_new.x, x_new.y)
-
+    def collision_check_node(self, xNew):
+        nodepoint = ObjPoint2D(xNew.x, xNew.y)
         col = []
         for obs in self.obs:
             colide = intersect_point_v_rectangle(nodepoint, obs)
             col.append(colide)
-
         if True in col:
             return True
         else:
             return False
 
-    def collision_check_line(self, x_nearest, x_new):
-        line = ObjLine2D(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
+    def collision_check_line(self, xNearest, xNew):
+        line = ObjLine2D(xNearest.x, xNearest.y, xNew.x, xNew.y)
         col = []
         for obs in self.obs:
             colide = intersect_line_v_rectangle(line, obs)
@@ -231,16 +229,16 @@ class InfmRrtstar:
 
         if after_plan:
             # plot tree vertex and branches
-            for j in self.tree_vertex:
+            for j in self.treeVertex:
                 plt.scatter(j.x, j.y, color="red")  # vertex
-                if j is not self.x_start:
+                if j is not self.xStart:
                     plt.plot([j.x, j.parent.x], [j.y, j.parent.y], color="green")  # branch
 
         # plot start and goal node
-        plt.scatter([self.x_start.x, self.x_goal.x], [self.x_start.y, self.x_goal.y], color='cyan')
+        plt.scatter([self.xStart.x, self.xGoal.x], [self.xStart.y, self.xGoal.y], color='cyan')
 
         # plot ingoal region node
-        for l in self.X_soln:
+        for l in self.XSoln:
             plt.scatter(l.x, l.y, color="yellow")
 
 
@@ -262,7 +260,7 @@ if __name__ == "__main__":
     # mapclass = CostMapClass(maploader, maprange=[[0, 10], [0, 10]])
 
     # SECTION - Planing Section
-    planner = InfmRrtstar(mapclass=mapclass, x_start=start, x_goal=goal, maxiteration=500)
+    planner = InfmRrtstar(mapclass=mapclass, xStart=start, xGoal=goal, maxIteration=500)
     planner.plot_env()
     plt.show()
     planner.planning()
