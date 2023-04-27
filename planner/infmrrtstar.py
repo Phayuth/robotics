@@ -249,15 +249,15 @@ if __name__ == "__main__":
     np.random.seed(9)
 
     # SECTION - Experiment 1
-    start = np.array([4, 4]).reshape(2, 1)
-    goal = np.array([7, 8]).reshape(2, 1)
-    mapclass = GeoMapClass(geomap=task_rectangle_obs_7(), maprange=[[0, 10], [0, 10]])
+    # start = np.array([4, 4]).reshape(2, 1)
+    # goal = np.array([7, 8]).reshape(2, 1)
+    # mapclass = GeoMapClass(geomap=task_rectangle_obs_7(), maprange=[[0, 10], [0, 10]])
 
     # SECTION - Experiment 2
-    # start = np.array([4, 4]).reshape(2, 1)
-    # goal = np.array([8.5, 1]).reshape(2, 1)
-    # maploader = CostMapLoader.loadarray(bmap())
-    # mapclass = CostMapClass(maploader, maprange=[[0, 10], [0, 10]])
+    start = np.array([4, 4]).reshape(2, 1)
+    goal = np.array([8.5, 1]).reshape(2, 1)
+    maploader = CostMapLoader.loadarray(bmap())
+    mapclass = CostMapClass(maploader, maprange=[[0, 10], [0, 10]])
 
     # SECTION - Planing Section
     planner = InfmRrtstar(mapclass=mapclass, xStart=start, xGoal=goal, maxIteration=500)

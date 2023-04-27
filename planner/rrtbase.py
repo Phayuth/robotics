@@ -36,10 +36,10 @@ class RRTBase():
 
         # map properties
         self.mapClass = mapClass
-        self.xMin = self.mapClass.xmin
-        self.xMax = self.mapClass.xmax
-        self.yMin = self.mapClass.ymin
-        self.yMax = self.mapClass.ymax
+        self.xMinRange = self.mapClass.xmin
+        self.xMaxRange = self.mapClass.xmax
+        self.yMinRange = self.mapClass.ymin
+        self.yMaxRange = self.mapClass.ymax
         self.xStart = Node(xStart[0, 0], xStart[1, 0])
         self.xGoal = Node(xGoal[0, 0], xGoal[1, 0])
 
@@ -80,8 +80,8 @@ class RRTBase():
         return path
 
     def sampling(self):
-        x = np.random.uniform(low=self.xMin, high=self.xMax)
-        y = np.random.uniform(low=self.yMin, high=self.yMax)
+        x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
+        y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
         xRand = Node(x, y)
 
         return xRand

@@ -29,10 +29,10 @@ class RRTStar:
     def __init__(self, mapclass, xStart, xGoal, eta=None, maxIteration=1000) -> None:
         # map properties
         self.mapclass = mapclass
-        self.xMin = self.mapclass.xmin
-        self.xMax = self.mapclass.xmax
-        self.yMin = self.mapclass.ymin
-        self.yMax = self.mapclass.ymax
+        self.xMinRange = self.mapclass.xmin
+        self.xMaxRange = self.mapclass.xmax
+        self.yMinRange = self.mapclass.ymin
+        self.yMaxRange = self.mapclass.ymax
         self.xStart = Node(xStart[0, 0], xStart[1, 0])
         self.xStart.cost = 0.0
         self.xGoal = Node(xGoal[0, 0], xGoal[1, 0])
@@ -44,7 +44,7 @@ class RRTStar:
 
         # properties of planner
         self.maxIteration = maxIteration
-        self.m = (self.xMax - self.xMin) * (self.yMax - self.yMin)
+        self.m = (self.xMaxRange - self.xMinRange) * (self.yMaxRange - self.yMinRange)
         self.radius = (2 * (1 + 1/2)**(1 / 2)) * (self.m / np.pi)**(1 / 2)
         self.eta = self.radius * (np.log(self.maxIteration) / self.maxIteration)**(1 / 2)
         self.treeVertex = [self.xStart]
@@ -109,8 +109,8 @@ class RRTStar:
         return bestPath
 
     def sampling(self):
-        x = np.random.uniform(low=self.xMin, high=self.xMax)
-        y = np.random.uniform(low=self.yMin, high=self.yMax)
+        x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
+        y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
         xRand = Node(x, y)
         return xRand
 
@@ -200,20 +200,20 @@ if __name__ == "__main__":
 
 
     # SECTION - Experiment 1
-    mapclass = GeoMapClass(geomap=task_rectangle_obs_7(), maprange=[[0, 10], [0, 10]])
+    mapClass = GeoMapClass(geomap=task_rectangle_obs_7(), maprange=[[0, 10], [0, 10]])
     start = np.array([4,4]).reshape(2,1)
     goal = np.array([7,8]).reshape(2,1)
 
 
     # SECTION - Experiment 2
-    # maploader = CostMapLoader.loadarray(bmap())
-    # mapclass = CostMapClass(maploader=maploader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
+    # mapLoader = CostMapLoader.loadarray(bmap())
+    # mapClass = CostMapClass(maploader=mapLoader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
     # start = np.array([0, 0]).reshape(2, 1)
     # goal = np.array([1, 1]).reshape(2, 1)
 
 
     # SECTION - planning section
-    planner = RRTStar(mapclass, start, goal, maxIteration=1000)
+    planner = RRTStar(mapClass, start, goal, maxIteration=1000)
     planner.plot_env()
     plt.show()
     planner.planning()

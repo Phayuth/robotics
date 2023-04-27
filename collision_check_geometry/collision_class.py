@@ -10,8 +10,12 @@ References:
 
 import os
 import sys
+wd = os.path.abspath(os.getcwd())
+sys.path.append(str(wd))
+
 import numpy as np
 import matplotlib.pyplot as plt
+from rigid_body_transformation.rotation_matrix import rot2d
 
 
 class ObjAabb:
@@ -27,11 +31,12 @@ class ObjAabb:
 
 class ObjRec:
 
-    def __init__(self, x, y, h, w, p=None):
+    def __init__(self, x, y, h, w, angle=0.0, p=None):
         self.x = x
         self.y = y
         self.h = h
         self.w = w
+        self.angle = angle
         self.p = p  # probability value
 
     def plot(self):
@@ -39,10 +44,27 @@ class ObjRec:
             color = "r"
         else:
             color = "b"
-        plt.plot([self.x, self.x + self.w], [self.y, self.y], c=color)
-        plt.plot([self.x, self.x], [self.y, self.y + self.h], c=color)
-        plt.plot([self.x, self.x + self.w], [self.y + self.h, self.y + self.h], c=color)
-        plt.plot([self.x + self.w, self.x + self.w], [self.y, self.y + self.h], c=color)
+
+        v1 = np.array([0, 0]).reshape(2,1)
+        v2 = np.array([self.w, 0]).reshape(2,1)
+        v3 = np.array([self.w, self.h]).reshape(2,1)
+        v4 = np.array([0, self.h]).reshape(2,1)
+
+        v1 = rot2d(self.angle) @ v1 + np.array([self.x, self.y]).reshape(2,1)
+        v2 = rot2d(self.angle) @ v2 + np.array([self.x, self.y]).reshape(2,1)
+        v3 = rot2d(self.angle) @ v3 + np.array([self.x, self.y]).reshape(2,1)
+        v4 = rot2d(self.angle) @ v4 + np.array([self.x, self.y]).reshape(2,1)
+
+        plt.plot([v1[0,0], v2[0,0]], [v1[1,0],v2[1,0]], c=color)
+        plt.plot([v2[0,0], v3[0,0]], [v2[1,0],v3[1,0]], c=color)
+        plt.plot([v3[0,0], v4[0,0]], [v3[1,0],v4[1,0]], c=color)
+        plt.plot([v4[0,0], v1[0,0]], [v4[1,0],v1[1,0]], c=color)
+
+        # else:
+        #     plt.plot([self.x, self.x + self.w], [self.y, self.y], c=color)
+        #     plt.plot([self.x, self.x], [self.y, self.y + self.h], c=color)
+        #     plt.plot([self.x, self.x + self.w], [self.y + self.h, self.y + self.h], c=color)
+        #     plt.plot([self.x + self.w, self.x + self.w], [self.y, self.y + self.h], c=color)
 
 
 class ObjPoint3D:
@@ -231,10 +253,20 @@ def intersect_line_v_line(line1, line2):
 
 
 def intersect_line_v_rectangle(line, rec):
-    l1 = ObjLine2D(rec.x, rec.y, rec.x + rec.w, rec.y)
-    l2 = ObjLine2D(rec.x, rec.y, rec.x, rec.y + rec.h)
-    l3 = ObjLine2D(rec.x, rec.y + rec.h, rec.x + rec.w, rec.y + rec.h)
-    l4 = ObjLine2D(rec.x + rec.w, rec.y, rec.x + rec.w, rec.y + rec.h)
+    v1 = np.array([0, 0]).reshape(2,1)
+    v2 = np.array([rec.w, 0]).reshape(2,1)
+    v3 = np.array([rec.w, rec.h]).reshape(2,1)
+    v4 = np.array([0, rec.h]).reshape(2,1)
+
+    v1 = rot2d(rec.angle) @ v1 + np.array([rec.x, rec.y]).reshape(2,1)
+    v2 = rot2d(rec.angle) @ v2 + np.array([rec.x, rec.y]).reshape(2,1)
+    v3 = rot2d(rec.angle) @ v3 + np.array([rec.x, rec.y]).reshape(2,1)
+    v4 = rot2d(rec.angle) @ v4 + np.array([rec.x, rec.y]).reshape(2,1)
+
+    l1 = ObjLine2D(v1[0,0], v1[1,0], v2[0,0], v2[1,0])
+    l2 = ObjLine2D(v2[0,0], v2[1,0], v3[0,0], v3[1,0])
+    l3 = ObjLine2D(v3[0,0], v3[1,0], v4[0,0], v4[1,0])
+    l4 = ObjLine2D(v4[0,0], v4[1,0], v1[0,0], v1[1,0])
 
     if (intersect_line_v_line(line, l1) or intersect_line_v_line(line, l2) or intersect_line_v_line(line, l3) or intersect_line_v_line(line, l4)):
         return True
