@@ -36,7 +36,7 @@ mapclass = CostMapClass(maploader=maploader, maprange=[[-np.pi, np.pi], [-np.pi,
 planner = RRTBase(mapclass, start_theta, goal_theta, eta=0.1, maxiteration=2000)
 planner.plot_env()
 plt.show()
-planner.planing()
+planner.planning()
 planner.plot_env(after_plan=True)
 path = planner.search_path()
 plt.plot([node.x for node in path], [node.y for node in path], color='blue')

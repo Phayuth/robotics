@@ -53,8 +53,8 @@ def task_rectangle_obs_5():
 
 
 def task_rectangle_obs_6():
-    rec1 = collision_class.ObjRec(x=1.5, y=1.25, h=0.2, w=1)
-    rec2 = collision_class.ObjRec(x=1.5, y=0.5, h=0.2, w=1)
+    rec1 = collision_class.ObjRec(x=1.5, y=1.25, h=0.2, w=1, angle=1)
+    rec2 = collision_class.ObjRec(x=1.5, y=0.5, h=0.2, w=1, angle=0.3)
     list_obs = [rec1, rec2]
     return list_obs
 

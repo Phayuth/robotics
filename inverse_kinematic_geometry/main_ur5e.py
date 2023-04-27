@@ -14,17 +14,16 @@ import numpy as np
 from robot.ur5e import UR5e
 
 # SECTION - create class robot
-r = UR5e()
-jorgn = np.array([0.5,0.5,-0.5,0,0,0]).reshape(6,1)
-Torgn = r.forward_kinematic(jorgn, return_full_H=True)  # T06
-print("==>> Torgn: \n", Torgn)
-
+robot = UR5e()
+jointOriginal = np.array([0.5, 0.5, -0.5, 0, 0, 0]).reshape(6, 1)
+TOriginal = robot.forward_kinematic(jointOriginal, return_full_H=True)  # T06
+print("==>> TOriginal: \n", TOriginal)
 
 # SECTION - inverse kinematic
-theta_ik = r.inverse_kinematic_geometry(Torgn)
-print("==>> theta_ik: \n", theta_ik.T)
+thetaIk = robot.inverse_kinematic_geometry(TOriginal)
+print("==>> thetaIk: \n", thetaIk.T)
 # for i in range(8):
-#     th = theta_ik[:,i].reshape(6,1)
-#     print(f"==>> th {i+1}th: \n", th.T)
-    # Tik = r.forward_kinematic(th, return_full_H=True)
-    # print("==>> Tik: \n", Tik)
+#     possibleTheta = thetaIk[:,i].reshape(6,1)
+#     print(f"==>> possibleTheta {i+1}possibleTheta: \n", possibleTheta.T)
+#     TAfterIk = robot.forward_kinematic(possibleTheta, return_full_H=True)
+#     print("==>> TAfterIk: \n", TAfterIk)

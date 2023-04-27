@@ -50,8 +50,8 @@ class rrt_star():
         self.maxiteration = maxiteration
         self.m = map.shape[0] * map.shape[1] * map.shape[2]
         self.r = (2 * (1 + 1/2)**(1/2)) * (self.m/np.pi)**(1/2)
-        # self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
-        self.eta = 7
+        self.eta = self.r * (np.log(self.maxiteration) / self.maxiteration)**(1/2)
+        # self.eta = 7
         self.w1 = w1
         self.w2 = w2
 

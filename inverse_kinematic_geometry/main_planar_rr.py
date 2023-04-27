@@ -16,12 +16,12 @@ from robot.planar_rr import PlanarRR
 
 # SECTION - create class robot
 robot = PlanarRR()
-desired_pose = np.array([[1], [1]])
+desiredPose = np.array([[1], [1]])
 
 # SECTION - find ik for both option
-theta_up = robot.inverse_kinematic_geometry(desired_pose, elbow_option=0)
-theta_down = robot.inverse_kinematic_geometry(desired_pose, elbow_option=1)
+thetaUp = robot.inverse_kinematic_geometry(desiredPose, elbow_option=0)
+thetaDown = robot.inverse_kinematic_geometry(desiredPose, elbow_option=1)
 
 # SECTION - plot task space
-robot.plot_arm(theta_up)
+robot.plot_arm(thetaUp)
 plt.show()
