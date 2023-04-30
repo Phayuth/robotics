@@ -87,11 +87,11 @@ class PlanarRRR:
             plt.axvline(x=0, c="black")
             plt.axhline(y=0, c="black")
 
-        plt.plot([p1[0, 3], p2[0, 3]], [p1[1, 3], p2[1, 3]], c="blue", linewidth=3)  # link 1
-        plt.plot([p2[0, 3], p3[0, 3]], [p2[1, 3], p3[1, 3]], c="red", linewidth=3)  # link 2
-        plt.plot([p3[0, 3], p4[0, 3]], [p3[1, 3], p4[1, 3]], c="brown", linewidth=3)  # link 3
+        plt.plot([p1[0, 3], p2[0, 3]], [p1[1, 3], p2[1, 3]], c="royalblue", linewidth=3)  # link 1
+        plt.plot([p2[0, 3], p3[0, 3]], [p2[1, 3], p3[1, 3]], c="aqua", linewidth=3)  # link 2
+        plt.plot([p3[0, 3], p4[0, 3]], [p3[1, 3], p4[1, 3]], c="deeppink", linewidth=3)  # link 3
 
-        plt.scatter([p1[0, 3], p2[0, 3], p3[0, 3], p4[0, 3]], [p1[1, 3], p2[1, 3], p3[1, 3], p4[1, 3]], color='red')
+        plt.scatter([p1[0, 3], p2[0, 3], p3[0, 3], p4[0, 3]], [p1[1, 3], p2[1, 3], p3[1, 3], p4[1, 3]], color='darkviolet')
 
         if plt_show:
             plt.show()

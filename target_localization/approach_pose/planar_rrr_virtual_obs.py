@@ -45,8 +45,8 @@ circle_plt(xTarg, yTarg, radius=rCrop)
 plt.show()
 
 obsList = [recTop, recBot]
-map = configuration_generate_plannar_rrr(robot, obsList)
-np.save('./map/mapdata/config_rrr_virtualobs.npy', map)
+# map = configuration_generate_plannar_rrr(robot, obsList)
+# np.save('./map/mapdata/config_rrr_virtualobs.npy', map)
 # map = np.load('./map/mapdata/config_rrr_virtualobs.npy')
 
 # define task space init point and goal point

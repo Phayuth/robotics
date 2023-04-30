@@ -14,9 +14,9 @@ from robot.planar_rr import PlanarRR
 from collision_check_geometry import collision_class
 
 
-def collsion_dataset(robot, obs_list):
+def collision_dataset(robot, obs_list):
     # start sample
-    sample_size = 360
+    sample_size = 180
     theta_candidate = np.linspace(-np.pi, np.pi, sample_size)
 
     sample_theta = []  # X
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     robot = PlanarRR()
     obs_list = task_rectangle_obs_1()
 
-    X, y = collsion_dataset(robot, obs_list)
+    X, y = collision_dataset(robot, obs_list)
 
     print("==>> sample_theta.shape: \n", X.shape)
     print("==>> sample_endeffector_pose.shape: \n", y.shape)

@@ -30,6 +30,13 @@ def steer(q_base, q_rand, dist_step):
         # y_new = dist_step*(q_rand.y - q_base.y)/hypo + q_base.y
         # q_new = node(x_new, y_new)
 
+        # each dimension rate approach
+        # distX = q_rand.x - q_base.x
+        # distY = q_rand.y - q_base.y
+        # newX = dist_step*distX + q_base.x
+        # newY = dist_step*distY + q_base.y
+        # q_new = node(newX, newY)
+
     return q_new
 
 

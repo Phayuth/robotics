@@ -10,7 +10,7 @@ from util.coord_transform import polar2cats, circle_plt
 
 
 # SECTION - target define pose
-x_targ = 0.5
+x_targ = 1.5
 y_targ = 0.5
 t_targ = np.linspace(np.pi / 2, 3 * np.pi / 2, 50)  # Create canidate pose
 
@@ -76,6 +76,6 @@ circle_plt(x_targ, y_targ, r_inner)
 for i in range(len(x_inner)):
     plt.plot([x_inner[i], x_outer[i]], [y_inner[i], y_outer[i]], c="orange")
 plt.plot([x_inner[maxim], x_outer[maxim]], [y_inner[maxim], y_outer[maxim]], c="cyan")  # plot the choosen angle
-plt.plot([x_inner[maxim_sorted], x_outer[maxim_sorted]], [y_inner[maxim_sorted], y_outer[maxim_sorted]], c="yellow")  # plot the choosen angle
+plt.plot([x_inner[maxim_sorted], x_outer[maxim_sorted]], [y_inner[maxim_sorted], y_outer[maxim_sorted]], c="red")  # plot the choosen angle
 
 plt.show()
