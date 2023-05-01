@@ -47,7 +47,7 @@ plt.show()
 
 # Create planner
 np.random.seed(0)
-rrt = RrtstarCostmap(mapClass, x_init, x_goal, distance_weight=0.5, obstacle_weight=0.5, maxiteration=2000)
+rrt = RrtstarCostmap(mapClass, x_init, x_goal, distanceWeight=0.5, obstacleWeight=0.5, maxIteration=2000)
 rrt.planning()
 path = rrt.get_path()
 rrt.plt_env()

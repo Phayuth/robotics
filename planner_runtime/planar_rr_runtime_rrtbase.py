@@ -176,5 +176,5 @@ if __name__ == "__main__":
         plt.pause(0.1)
     plt.show()
 
-    plot_tree(planner.treeVertex, xStart, xGoal)
+    plot_tree(planner.treeVertex, path)
     plt.show()

@@ -57,7 +57,7 @@ plt.show()
 
 # Planning
 np.random.seed(0)
-rrt = RrtstarCostmapConfigspace(mapClass, x_init, x_appr, distance_weight= 0.5, obstacle_weight= 0.5, maxiteration=1000)
+rrt = RrtstarCostmapConfigspace(mapClass, x_init, x_appr, distanceWeight= 0.5, obstacleWeight= 0.5, maxIteration=1000)
 rrt.planning()
 path = rrt.get_path()
 rrt.plt_env()

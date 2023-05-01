@@ -23,7 +23,7 @@ class Node:
         self.cost = cost
 
 
-class RuntimeRRTBase():
+class RuntimeRRTStar():
 
     def __init__(self, robot, taskMapObs, xStart, xGoal, eta=0.3, maxIteration=1000) -> None:
         # robot and workspace
@@ -207,6 +207,7 @@ if __name__ == "__main__":
     from robot.planar_rrr import PlanarRRR
     from util.coord_transform import circle_plt
     from util.extract_path_class import extract_path_class_3d
+    from planner.planner_util.tree import plot_tree_3d
 
     robot = PlanarRRR()
 
@@ -222,7 +223,7 @@ if __name__ == "__main__":
     #     obs.plot()
     # plt.show()
 
-    # planner = RuntimeRRTBase(robot, taskMapObs, xStart, xGoal, eta=0.3, maxIteration=1000)
+    # planner = RuntimeRRTStar(robot, taskMapObs, xStart, xGoal, eta=0.3, maxIteration=1000)
     # planner.planning()
     # path = planner.search_path()
 
@@ -268,7 +269,7 @@ if __name__ == "__main__":
     circle_plt(xTarg, yTarg, radius=rCrop)
     plt.show()
 
-    planner = RuntimeRRTBase(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=1000)
+    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=1000)
     planner.planning()
     path = planner.search_path()
 
@@ -286,4 +287,7 @@ if __name__ == "__main__":
     for i in range(len(path)):
         robot.plot_arm(np.array([pathx[i], pathy[i], pathz[i]]).reshape(3, 1))
         plt.pause(1)
+    plt.show()
+
+    plot_tree_3d(planner.treeVertex, path)
     plt.show()

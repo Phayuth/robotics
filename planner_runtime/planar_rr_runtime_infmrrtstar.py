@@ -1,4 +1,4 @@
-""" Path Planning for Planar RR with RRT Star at runtime
+""" Path Planning for Planar RR with Informed RRT* at runtime
 """
 
 import os
@@ -7,10 +7,9 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-import matplotlib.pyplot as plt
 import numpy as np
-
-from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle
+import matplotlib.pyplot as plt
+from collision_check_geometry.collision_class import ObjLine2D, ObjPoint2D, intersect_point_v_rectangle, intersect_line_v_rectangle
 
 
 class Node:
@@ -22,7 +21,7 @@ class Node:
         self.cost = cost
 
 
-class RuntimeRRTStar():
+class RuntimeInformedRRTStar:
 
     def __init__(self, robot, taskMapObs, xStart, xGoal, eta=0.3, maxIteration=1000) -> None:
         # robot and workspace
@@ -32,6 +31,7 @@ class RuntimeRRTStar():
         self.xMaxRange = np.pi
         self.yMinRange = -np.pi
         self.yMaxRange = np.pi
+        self.probabilityGoalBias = 0.2
         self.xStart = Node(xStart[0, 0], xStart[1, 0])
         self.xGoal = Node(xGoal[0, 0], xGoal[1, 0])
 
@@ -39,15 +39,24 @@ class RuntimeRRTStar():
         self.maxIteration = maxIteration
         self.eta = eta
         self.treeVertex = [self.xStart]
+        self.XSoln = []
 
     def planning(self):
+        cBest = np.inf
         for itera in range(self.maxIteration):
             print(itera)
-            xRand = self.sampling()
+            for xSoln in self.XSoln:
+                cBest = xSoln.parent.cost + self.cost_line(xSoln.parent, xSoln) + self.cost_line(xSoln, self.xGoal)
+                if xSoln.parent.cost + self.cost_line(xSoln.parent, xSoln) + self.cost_line(xSoln, self.xGoal) < cBest:
+                    cBest = xSoln.parent.cost + self.cost_line(xSoln.parent, xSoln) + self.cost_line(xSoln, self.xGoal)
+
+            xRand = self.sampling(self.xStart, self.xGoal, cBest)
+            # xRand = self.uni_sampling()
+
             xNearest = self.nearest_node(xRand)
             xNew = self.steer(xNearest, xRand)
             xNew.parent = xNearest
-            xNew.cost = xNew.parent.cost + self.cost_line(xNew, xNew.parent)
+            xNew.cost = xNew.parent.cost + self.cost_line(xNew, xNew.parent)  # add the vertex new, which we have to calculate the cost and add parent as well
             if self.is_config_in_collision(xNew) or self.is_connect_config_possible(xNew.parent, xNew):
                 continue
             else:
@@ -76,35 +85,67 @@ class RuntimeRRTStar():
                         xNear.parent = xNew
                         xNear.cost = xNew.cost + self.cost_line(xNew, xNear)
 
+                # in goal region
+                if self.ingoal_region(xNew):
+                    self.XSoln.append(xNew)
+
     def search_path(self):
-        XNear = self.near(self.xGoal, self.eta)
-        for xNear in XNear:
-            if self.is_connect_config_possible(xNear, self.xGoal):
+        for xBest in self.XSoln:
+            if self.is_connect_config_possible(xBest, self.xGoal):
                 continue
-            self.xGoal.parent = xNear
+            self.xGoal.parent = xBest
 
             path = [self.xGoal]
             currentNode = self.xGoal
-
             while currentNode != self.xStart:
                 currentNode = currentNode.parent
                 path.append(currentNode)
-
             path.reverse()
+
             bestPath = path
             cost = sum(i.cost for i in path)
-
             if cost < sum(j.cost for j in bestPath):
                 bestPath = path
 
         return bestPath
 
-    def sampling(self):
+    def sampling(self, xStart, xGoal, cMax):
+        if cMax < np.inf:
+            cMin = self.cost_line(xStart, xGoal)
+            print(cMax, cMin)
+            xCenter = np.array([(xStart.x + xGoal.x) / 2, (xStart.y + xGoal.y) / 2]).reshape(2, 1)
+            C = self.rotation_to_world_frame(xStart, xGoal)
+            r1 = cMax / 2
+            r2 = np.sqrt(cMax**2 - cMin**2) / 2
+            L = np.diag([r1, r2])
+            while True:
+                xBall = self.unit_ball_sampling()
+                xRand = (C@L@xBall) + xCenter
+                xRand = Node(xRand[0, 0], xRand[1, 0])
+                if (self.xMinRange < xRand.x < self.xMaxRange) and (self.yMinRange < xRand.y < self.yMaxRange):  # check if outside configspace
+                    break
+        else:
+            xRand = self.uni_sampling()
+        return xRand
+
+    def unit_ball_sampling(self):
+        r = np.random.uniform(low=0, high=1)
+        theta = np.random.uniform(low=0, high=2 * np.pi)
+        x = r * np.cos(theta)
+        y = r * np.sin(theta)
+        return np.array([[x], [y]]).reshape(2, 1)
+
+    def uni_sampling(self):
         x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
         y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
         xRand = Node(x, y)
-
         return xRand
+
+    def ingoal_region(self, xNew):
+        if np.linalg.norm([self.xGoal.x - xNew.x, self.xGoal.y - xNew.y]) <= self.eta:
+            return True
+        else:
+            return False
 
     def nearest_node(self, xRand):
         vertexList = []
@@ -127,10 +168,10 @@ class RuntimeRRTStar():
 
         if dist <= self.eta:
             xNew = xRand
+
         else:
-            direction = np.arctan2(distY, distX)
-            newX = self.eta * np.cos(direction) + xNearest.x
-            newY = self.eta * np.sin(direction) + xNearest.y
+            newX = self.eta * distX + xNearest.x
+            newY = self.eta * distY + xNearest.y
             xNew = Node(newX, newY)
         return xNew
 
@@ -141,10 +182,17 @@ class RuntimeRRTStar():
             if dist <= minStep:
                 neighbor.append(index)
         return [self.treeVertex[i] for i in neighbor]
-    
-    def cost_line(self, xstart, xend):
-        return np.linalg.norm([(xstart.x - xend.x), (xstart.y - xend.y)])
-    
+
+    def cost_line(self, xStart, xEnd):
+        return np.linalg.norm([(xStart.x - xEnd.x), (xStart.y - xEnd.y)])
+
+    def rotation_to_world_frame(self, xStart, xGoal):
+        theta = np.arctan2((xGoal.y - xStart.y), (xGoal.x - xStart.x))
+
+        R = np.array([[np.cos(theta), np.sin(theta)], [-np.sin(theta), np.cos(theta)]]).T
+
+        return R
+
     def is_config_in_collision(self, xNew):
         theta = np.array([xNew.x, xNew.y]).reshape(2, 1)
         linkPose = self.robot.forward_kinematic(theta, return_link_pos=True)
@@ -158,7 +206,7 @@ class RuntimeRRTStar():
                     return True
         return False
 
-    def is_connect_config_possible(self, xNearest, xNew):  # check if connection between 2 node is possible
+    def is_connect_config_possible(self, xNearest, xNew):
         distX = xNew.x - xNearest.x
         distY = xNew.y - xNearest.y
         desiredStep = 10
@@ -178,6 +226,7 @@ if __name__ == "__main__":
     from robot.planar_rr import PlanarRR
     from map.taskmap_geo_format import task_rectangle_obs_1
     from util.extract_path_class import extract_path_class_2d
+    from planner.planner_util.tree import plot_tree
 
     robot = PlanarRR()
     taskMapObs = task_rectangle_obs_1()
@@ -191,7 +240,7 @@ if __name__ == "__main__":
         obs.plot()
     plt.show()
 
-    planner = RuntimeRRTStar(robot, taskMapObs, xStart, xGoal, eta=0.3, maxIteration=2000)
+    planner = RuntimeInformedRRTStar(robot, taskMapObs, xStart, xGoal, eta=0.3, maxIteration=1000)
     planner.planning()
     path = planner.search_path()
 
@@ -208,4 +257,7 @@ if __name__ == "__main__":
     for i in range(len(path)):
         robot.plot_arm(np.array([[pathx[i]], [pathy[i]]]))
         plt.pause(0.1)
+    plt.show()
+
+    plot_tree(planner.treeVertex, path)
     plt.show()
