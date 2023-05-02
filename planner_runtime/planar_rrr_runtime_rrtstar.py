@@ -263,7 +263,12 @@ if __name__ == "__main__":
     initPose = np.array([[2.5], [0], [0]])
     thetaInit = robot.inverse_kinematic_geometry(initPose, elbow_option=0)
 
+    approachPose = np.array([[rCrop * np.cos(target[2, 0] + np.pi) + target[0, 0]], [rCrop * np.sin(target[2, 0] + np.pi) + target[1, 0]], [target[2, 0]]])
+    thetaApp = robot.inverse_kinematic_geometry(approachPose, elbow_option=0)
+
+
     robot.plot_arm(thetaGoal, plt_basis=True)
+    robot.plot_arm(thetaApp)
     recTop.plot()
     recBot.plot()
     circle_plt(xTarg, yTarg, radius=rCrop)
