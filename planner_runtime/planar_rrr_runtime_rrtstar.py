@@ -274,7 +274,7 @@ if __name__ == "__main__":
     circle_plt(xTarg, yTarg, radius=rCrop)
     plt.show()
 
-    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=1000)
+    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=5000)
     planner.planning()
     path = planner.search_path()
 
@@ -289,6 +289,7 @@ if __name__ == "__main__":
     for obs in obsList:
         obs.plot()
     circle_plt(xTarg, yTarg, radius=rCrop)
+    robot.plot_arm(thetaApp)
     for i in range(len(path)):
         robot.plot_arm(np.array([pathx[i], pathy[i], pathz[i]]).reshape(3, 1))
         plt.pause(1)

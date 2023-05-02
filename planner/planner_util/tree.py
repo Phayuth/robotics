@@ -16,7 +16,7 @@ def plot_tree_3d(treeVertex, path):
     ax = plt.axes(projection='3d')
 
     for vertex in treeVertex:
-        ax.scatter(vertex.x, vertex.y, vertex.z, color="sandybrown")
+        # ax.scatter(vertex.x, vertex.y, vertex.z, color="sandybrown")
         if vertex.parent == None:
             pass
         else:
