@@ -330,7 +330,7 @@ if __name__ == "__main__":
     circle_plt(xTarg, yTarg, radius=rCrop)
     plt.show()
 
-    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=2000)
+    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=5000)
     planner.planning()
     path = planner.search_path()
 
