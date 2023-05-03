@@ -12,7 +12,13 @@ lunch = ["mcdonald",
          "chicken spicy + rice",
          "korean pork belly and bean",
          "tobokki",
+         "taco",
+         "pork culet",
+         "japanese curry",
          ]
+
+buy = ["buy",
+       "not buy"]
 
 r = []
 for i in range(len(lunch)):
