@@ -15,10 +15,13 @@ from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v
 
 class Node:
 
-    def __init__(self, x, y, z, parent=None, cost=0.0) -> None:
+    def __init__(self, x, y, z, p, q, r, parent=None, cost=0.0) -> None:
         self.x = x
         self.y = y
         self.z = z
+        self.p = p
+        self.q = q
+        self.r = r
         self.parent = parent
         self.cost = cost
 
@@ -29,15 +32,23 @@ class RuntimeRRTStar():
         # robot and workspace
         self.robot = robot
         self.taskMapObs = taskMapObs
+
         self.xMinRange = -np.pi
         self.xMaxRange = np.pi
         self.yMinRange = -np.pi
         self.yMaxRange = np.pi
         self.zMinRange = -np.pi
         self.zMaxRange = np.pi
+        self.pMinRange = -np.pi
+        self.pMaxRange = np.pi
+        self.qMinRange = -np.pi
+        self.qMaxRange = np.pi
+        self.rMinRange = -np.pi
+        self.rMaxRange = np.pi
+
         self.probabilityGoalBias = 0.2
-        self.xStart = Node(xStart[0, 0], xStart[1, 0], xStart[2, 0])
-        self.xGoal = Node(xGoal[0, 0], xGoal[1, 0], xGoal[2, 0])
+        self.xStart = Node(xStart[0, 0], xStart[1, 0], xStart[2, 0], xStart[3, 0], xStart[4, 0], xStart[5, 0])
+        self.xGoal = Node(xGoal[0, 0], xGoal[1, 0], xGoal[2, 0], xGoal[3, 0], xGoal[4, 0], xGoal[5, 0])
 
         # properties of planner
         self.maxIteration = maxIteration
@@ -119,14 +130,17 @@ class RuntimeRRTStar():
             xCenter = np.array([(xStart.x + xGoal.x) / 2,
                                 (xStart.y + xGoal.y) / 2,
                                 (xStart.z + xGoal.z) / 2,
-                                                     0.0]).reshape(4, 1)
-            
+                                (xStart.p + xGoal.p) / 2,
+                                (xStart.q + xGoal.q) / 2,
+                                (xStart.r + xGoal.r) / 2,
+                                                     0.0]).reshape(7, 1)
+
             L, C = self.rotation_to_world(xStart, xGoal, cMax, cMin)
 
             while True:
                 xBall = self.unit_ball_sampling()
                 xRand = (C@L@xBall) + xCenter
-                xRand = Node(xRand[0, 0], xRand[1, 0], xRand[2, 0])
+                xRand = Node(xRand[0, 0], xRand[1, 0], xRand[2, 0], xRand[3, 0], xRand[4, 0], xRand[5, 0])
                 if (self.xMinRange < xRand.x < self.xMaxRange) and (self.yMinRange < xRand.y < self.yMaxRange):  # check if outside configspace
                     break
         else:

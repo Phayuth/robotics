@@ -315,7 +315,8 @@ if __name__ == "__main__":
     yBotStart = (rCrop) * np.sin(alphaTarg + np.pi / 2) + yTarg
     recTop = ObjRec(xTopStart, yTopStart, hD, wD, angle=alphaTarg)
     recBot = ObjRec(xBotStart, yBotStart, hD, wD, angle=alphaTarg)
-    obsList = [recTop, recBot]
+    # obsList = [recTop, recBot]
+    obsList = []
     thetaGoal = robot.inverse_kinematic_geometry(target, elbow_option=0)
     initPose = np.array([[2.5], [0], [0]])
     thetaInit = robot.inverse_kinematic_geometry(initPose, elbow_option=0)
@@ -330,7 +331,7 @@ if __name__ == "__main__":
     circle_plt(xTarg, yTarg, radius=rCrop)
     plt.show()
 
-    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=2000)
+    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=1000)
     planner.planning()
     path = planner.search_path()
 
