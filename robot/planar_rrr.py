@@ -54,7 +54,7 @@ class PlanarRRR:
             return link_end_pose
 
         else:
-            return np.array([[H04[0, 3], H04[1, 3], phi]])
+            return np.array([[H04[0, 3]], [H04[1, 3]], [phi]])
 
     def jacobian(self, theta):
         theta1 = theta[0, 0]

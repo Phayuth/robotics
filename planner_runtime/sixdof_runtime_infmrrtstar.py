@@ -33,18 +33,18 @@ class RuntimeRRTStar():
         self.robot = robot
         self.taskMapObs = taskMapObs
 
-        self.xMinRange = -np.pi
-        self.xMaxRange = np.pi
-        self.yMinRange = -np.pi
-        self.yMaxRange = np.pi
-        self.zMinRange = -np.pi
-        self.zMaxRange = np.pi
-        self.pMinRange = -np.pi
-        self.pMaxRange = np.pi
-        self.qMinRange = -np.pi
-        self.qMaxRange = np.pi
-        self.rMinRange = -np.pi
-        self.rMaxRange = np.pi
+        self.xMinRange = -np.pi/2
+        self.xMaxRange = np.pi/2
+        self.yMinRange = -np.pi/2
+        self.yMaxRange = np.pi/2
+        self.zMinRange = -np.pi/2
+        self.zMaxRange = np.pi/2
+        self.pMinRange = -np.pi/2
+        self.pMaxRange = np.pi/2
+        self.qMinRange = -np.pi/2
+        self.qMaxRange = np.pi/2
+        self.rMinRange = -np.pi/2
+        self.rMaxRange = np.pi/2
 
         self.probabilityGoalBias = 0.2
         self.xStart = Node(xStart[0, 0], xStart[1, 0], xStart[2, 0], xStart[3, 0], xStart[4, 0], xStart[5, 0])
@@ -102,6 +102,7 @@ class RuntimeRRTStar():
 
                 # in goal region
                 if self.ingoal_region(xNew):
+                    print("In Goal Config")
                     self.XSoln.append(xNew)
 
     def search_path(self):
@@ -141,10 +142,18 @@ class RuntimeRRTStar():
                 xBall = self.unit_ball_sampling()
                 xRand = (C@L@xBall) + xCenter
                 xRand = Node(xRand[0, 0], xRand[1, 0], xRand[2, 0], xRand[3, 0], xRand[4, 0], xRand[5, 0])
-                if (self.xMinRange < xRand.x < self.xMaxRange) and (self.yMinRange < xRand.y < self.yMaxRange):  # check if outside configspace
+                
+                in_range = [(self.xMinRange < xRand.x < self.xMaxRange),
+                            (self.yMinRange < xRand.y < self.yMaxRange),
+                            (self.zMinRange < xRand.z < self.zMaxRange), 
+                            (self.pMinRange < xRand.p < self.pMaxRange),
+                            (self.qMinRange < xRand.q < self.qMaxRange),
+                            (self.rMinRange < xRand.r < self.rMaxRange)]
+                if all(in_range):
                     break
         else:
-            xRand = self.uni_sampling()
+            # xRand = self.uni_sampling()
+            xRand = self.bias_sampling()
         return xRand
 
     def unit_ball_sampling(self):
@@ -152,31 +161,36 @@ class RuntimeRRTStar():
         theta = np.random.uniform(low=0, high=2 * np.pi)
         x = r * np.cos(theta)
         y = r * np.sin(theta)
-        return np.array([x, y, 0.0, 0.0]).reshape(4, 1)
+        return np.array([x, y, 0.0, 0.0, 0.0, 0.0, 0.0]).reshape(7, 1)
     
     def uni_sampling(self):
         x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
         y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
         z = np.random.uniform(low=self.zMinRange, high=self.zMaxRange)
-        xRand = Node(x, y, z)
+        p = np.random.uniform(low=self.pMinRange, high=self.pMaxRange)
+        q = np.random.uniform(low=self.qMinRange, high=self.qMaxRange)
+        r = np.random.uniform(low=self.rMinRange, high=self.rMaxRange)
+        xRand = Node(x, y, z, p, q, r)
         return xRand
     
     def bias_sampling(self):
         if np.random.uniform(low=0, high=1.0) < self.probabilityGoalBias:
-            xRand = Node(self.xGoal.x, self.xGoal.y, self.xGoal.z)
+            xRand = Node(self.xGoal.x, self.xGoal.y, self.xGoal.z, self.xGoal.p, self.xGoal.q, self.xGoal.r)
         else:
-            x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
-            y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
-            z = np.random.uniform(low=self.zMinRange, high=self.zMaxRange)
-            xRand = Node(x, y, z)
+            xRand = self.uni_sampling()
         return xRand
 
     def ingoal_region(self, xNew):
-        if np.linalg.norm([self.xGoal.x - xNew.x, self.xGoal.y - xNew.y, self.xGoal.z - xNew.z]) <= self.eta + 0.5:
+        if np.linalg.norm([self.xGoal.x - xNew.x,
+                           self.xGoal.y - xNew.y,
+                           self.xGoal.z - xNew.z,
+                           self.xGoal.p - xNew.p,
+                           self.xGoal.q - xNew.q,
+                           self.xGoal.r - xNew.r]) <= self.eta:
             return True
         else:
             return False
-        
+
     def nearest_node(self, xRand):
         vertexList = []
 
@@ -184,7 +198,10 @@ class RuntimeRRTStar():
             distX = xRand.x - eachVertex.x
             distY = xRand.y - eachVertex.y
             distZ = xRand.z - eachVertex.z
-            dist = np.linalg.norm([distX, distY, distZ])
+            distP = xRand.p - eachVertex.p
+            distQ = xRand.q - eachVertex.q
+            distR = xRand.r - eachVertex.r
+            dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
             vertexList.append(dist)
 
         minIndex = np.argmin(vertexList)
@@ -196,7 +213,10 @@ class RuntimeRRTStar():
         distX = xRand.x - xNearest.x
         distY = xRand.y - xNearest.y
         distZ = xRand.z - xNearest.z
-        dist = np.linalg.norm([distX, distY, distZ])
+        distP = xRand.p - xNearest.p
+        distQ = xRand.q - xNearest.q
+        distR = xRand.r - xNearest.r
+        dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
 
         if dist <= self.eta:
             xNew = xRand
@@ -204,166 +224,105 @@ class RuntimeRRTStar():
             newX = self.eta * distX + xNearest.x
             newY = self.eta * distY + xNearest.y
             newZ = self.eta * distZ + xNearest.z
-            xNew = Node(newX, newY, newZ)
+            newP = self.eta * distP + xNearest.p
+            newQ = self.eta * distQ + xNearest.q
+            newR = self.eta * distR + xNearest.r
+            xNew = Node(newX, newY, newZ, newP, newQ, newR)
         return xNew
 
     def near(self, xNew, minStep):
         neighbor = []
         for index, vertex in enumerate(self.treeVertex):
-            dist = np.linalg.norm([(xNew.x - vertex.x), (xNew.y - vertex.y), (xNew.z - vertex.z)])
+            dist = np.linalg.norm([(xNew.x - vertex.x),
+                                   (xNew.y - vertex.y),
+                                   (xNew.z - vertex.z),
+                                   (xNew.p - vertex.p),
+                                   (xNew.q - vertex.q),
+                                   (xNew.r - vertex.r)])
             if dist <= minStep:
                 neighbor.append(index)
         return [self.treeVertex[i] for i in neighbor]
     
     def cost_line(self, xStart, xEnd):
-        return np.linalg.norm([(xStart.x - xEnd.x), (xStart.y - xEnd.y), (xStart.z - xEnd.z)])
+        return np.linalg.norm([(xStart.x - xEnd.x),
+                               (xStart.y - xEnd.y),
+                               (xStart.z - xEnd.z),
+                               (xStart.p - xEnd.p),
+                               (xStart.q - xEnd.q),
+                               (xStart.r - xEnd.r)])
 
     def rotation_to_world(self, xStart, xGoal, cMax, cMin):
         r1 = cMax / 2
-        r2 = np.sqrt(cMax**2 - cMin**2) / 2
-        r3 = np.sqrt(cMax**2 - cMin**2) / 2
-        r4 = np.sqrt(cMax**2 - cMin**2) / 2
-        L = np.diag([r1, r2, r3, r4])
+        r2to7 = np.sqrt(cMax**2 - cMin**2) / 2
+        L = np.diag([r1, r2to7, r2to7, r2to7, r2to7, r2to7, r2to7])
         a1 = np.array([[(xGoal.x - xStart.x) / cMin],
                        [(xGoal.y - xStart.y) / cMin],
                        [(xGoal.z - xStart.z) / cMin],
+                       [(xGoal.p - xStart.p) / cMin],
+                       [(xGoal.q - xStart.q) / cMin],
+                       [(xGoal.r - xStart.r) / cMin],
                        [                        0.0]])
-        I1 = np.array([[1.0], [0.0], [0.0], [0.0]])
+        I1 = np.array([[1.0], [0.0], [0.0], [0.0], [0.0], [0.0], [0.0]])
         M = a1 @ I1.T
         U, _, V_T = np.linalg.svd(M, True, True)
-        C = U @ np.diag([1.0, 1.0, 1.0, np.linalg.det(U) * np.linalg.det(V_T.T)]) @ V_T
+        C = U @ np.diag([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, np.linalg.det(U) * np.linalg.det(V_T.T)]) @ V_T
         return L,C
     
     def is_config_in_collision(self, xNew):
-        theta = np.array([xNew.x, xNew.y, xNew.z]).reshape(3, 1)
-        linkPose = self.robot.forward_kinematic(theta, return_link_pos=True)
-        linkPose = robot.forward_kinematic(theta, return_link_pos=True)
-        linearm1 = ObjLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
-        linearm2 = ObjLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
-        linearm3 = ObjLine2D(linkPose[2][0], linkPose[2][1], linkPose[3][0], linkPose[3][1])
+        # theta = np.array([xNew.x, xNew.y, xNew.z]).reshape(3, 1)
+        # linkPose = self.robot.forward_kinematic(theta, return_link_pos=True)
+        # linkPose = robot.forward_kinematic(theta, return_link_pos=True)
+        # linearm1 = ObjLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
+        # linearm2 = ObjLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
+        # linearm3 = ObjLine2D(linkPose[2][0], linkPose[2][1], linkPose[3][0], linkPose[3][1])
 
-        for obs in self.taskMapObs:
-            if intersect_line_v_rectangle(linearm1, obs):
-                return True
-            else:
-                if intersect_line_v_rectangle(linearm2, obs):
-                    return True
-                else:
-                    if intersect_line_v_rectangle(linearm3, obs):
-                        return True
+        # for obs in self.taskMapObs:
+        #     if intersect_line_v_rectangle(linearm1, obs):
+        #         return True
+        #     else:
+        #         if intersect_line_v_rectangle(linearm2, obs):
+        #             return True
+        #         else:
+        #             if intersect_line_v_rectangle(linearm3, obs):
+        #                 return True
         return False
 
     def is_connect_config_possible(self, xNearest, xNew):  # check if connection between 2 node is possible
-        distX = xNew.x - xNearest.x
-        distY = xNew.y - xNearest.y
-        distZ = xNew.z - xNearest.z
-        desiredStep = 10
-        rateX = distX / desiredStep
-        rateY = distY / desiredStep
-        rateZ = distZ / desiredStep
-        for i in range(1, desiredStep - 1):
-            newX = xNearest.x + (rateX * i)
-            newY = xNearest.y + (rateY * i)
-            newZ = xNearest.z + (rateZ * i)
-            xNew = Node(newX, newY, newZ)
-            if self.is_config_in_collision(xNew):
-                return True
+        # distX = xNew.x - xNearest.x
+        # distY = xNew.y - xNearest.y
+        # distZ = xNew.z - xNearest.z
+        # desiredStep = 10
+        # rateX = distX / desiredStep
+        # rateY = distY / desiredStep
+        # rateZ = distZ / desiredStep
+        # for i in range(1, desiredStep - 1):
+        #     newX = xNearest.x + (rateX * i)
+        #     newY = xNearest.y + (rateY * i)
+        #     newZ = xNearest.z + (rateZ * i)
+        #     xNew = Node(newX, newY, newZ)
+        #     if self.is_config_in_collision(xNew):
+        #         return True
         return False
 
 
 if __name__ == "__main__":
     np.random.seed(9)
-    from collision_check_geometry.collision_class import ObjRec
-    from map.taskmap_geo_format import task_rectangle_obs_6
     from robot.planar_rrr import PlanarRRR
-    from util.coord_transform import circle_plt
-    from util.extract_path_class import extract_path_class_3d
-    from planner.planner_util.tree import plot_tree_3d
+    from util.extract_path_class import extract_path_class_6d
 
     robot = PlanarRRR()
 
-    # EXPERIMENT 1 - BASIC PLANNING
-    # taskMapObs = task_rectangle_obs_6()
+    thetaGoal = np.array([1,0,0,0,0,0]).reshape(6,1)
+    thetaInit = np.array([0,0,0,0,0,0]).reshape(6,1)
+    obsList = []
 
-    # xStart = np.array([0, 0, 0]).reshape(3, 1)
-    # xGoal = np.array([np.pi / 2, 0, 0]).reshape(3, 1)
-
-    # robot.plot_arm(xStart, plt_basis=True)
-    # robot.plot_arm(xGoal)
-    # for obs in taskMapObs:
-    #     obs.plot()
-    # plt.show()
-
-    # planner = RuntimeRRTStar(robot, taskMapObs, xStart, xGoal, eta=0.3, maxIteration=1000)
-    # planner.planning()
-    # path = planner.search_path()
-
-    # pathx, pathy, pathz = extract_path_class_3d(path)
-    # print("==>> pathx: ", pathx)
-    # print("==>> pathy: ", pathy)
-    # print("==>> pathz: ", pathz)
-
-    # plt.axes().set_aspect('equal')
-    # plt.axvline(x=0, c="green")
-    # plt.axhline(y=0, c="green")
-    # for obs in taskMapObs:
-    #     obs.plot()
-    # for i in range(len(path)):
-    #     robot.plot_arm(np.array([pathx[i], pathy[i], pathz[i]]).reshape(3, 1))
-    #     plt.pause(0.5)
-    # plt.show()
-
-    # EXPERIMENT 2 - Approach Point
-    xTarg = 1.8
-    yTarg = 0.2
-    alphaTarg = 2  # given from grapse pose candidate
-    hD = 0.25
-    wD = 0.25
-    rCrop = 0.1
-    phiTarg = alphaTarg - np.pi
-    target = np.array([xTarg, yTarg, phiTarg]).reshape(3, 1)
-
-    xTopStart = (rCrop + hD) * np.cos(alphaTarg - np.pi / 2) + xTarg
-    yTopStart = (rCrop + hD) * np.sin(alphaTarg - np.pi / 2) + yTarg
-    xBotStart = (rCrop) * np.cos(alphaTarg + np.pi / 2) + xTarg
-    yBotStart = (rCrop) * np.sin(alphaTarg + np.pi / 2) + yTarg
-    recTop = ObjRec(xTopStart, yTopStart, hD, wD, angle=alphaTarg)
-    recBot = ObjRec(xBotStart, yBotStart, hD, wD, angle=alphaTarg)
-    obsList = [recTop, recBot]
-    thetaGoal = robot.inverse_kinematic_geometry(target, elbow_option=0)
-    initPose = np.array([[2.5], [0], [0]])
-    thetaInit = robot.inverse_kinematic_geometry(initPose, elbow_option=0)
-
-    approachPose = np.array([[rCrop * np.cos(target[2, 0] + np.pi) + target[0, 0]], [rCrop * np.sin(target[2, 0] + np.pi) + target[1, 0]], [target[2, 0]]])
-    thetaApp = robot.inverse_kinematic_geometry(approachPose, elbow_option=0)
-
-    robot.plot_arm(thetaGoal, plt_basis=True)
-    robot.plot_arm(thetaApp)
-    recTop.plot()
-    recBot.plot()
-    circle_plt(xTarg, yTarg, radius=rCrop)
-    plt.show()
-
-    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=5000)
+    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=1000)
     planner.planning()
     path = planner.search_path()
-
-    pathx, pathy, pathz = extract_path_class_3d(path)
-    print("==>> pathx: ", pathx)
-    print("==>> pathy: ", pathy)
-    print("==>> pathz: ", pathz)
-
-    plt.axes().set_aspect('equal')
-    plt.axvline(x=0, c="green")
-    plt.axhline(y=0, c="green")
-    for obs in obsList:
-        obs.plot()
-    circle_plt(xTarg, yTarg, radius=rCrop)
-    robot.plot_arm(thetaApp)
-    for i in range(len(path)):
-        robot.plot_arm(np.array([pathx[i], pathy[i], pathz[i]]).reshape(3, 1))
-        plt.pause(1)
-    plt.show()
-
-    plot_tree_3d(planner.treeVertex, path)
-    plt.show()
+    path_x, path_y, path_z, path_p, path_q, path_r = extract_path_class_6d(path)
+    print(f"==>> path_x: \n{path_x}")
+    print(f"==>> path_y: \n{path_y}")
+    print(f"==>> path_z: \n{path_z}")
+    print(f"==>> path_p: \n{path_p}")
+    print(f"==>> path_q: \n{path_q}")
+    print(f"==>> path_r: \n{path_r}")
