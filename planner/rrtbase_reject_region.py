@@ -1,4 +1,4 @@
-""" Path Planning for Planar RR with Bi-directional RRT
+""" Path Planning for Planar RR with RRT based with reject region near the goal
 - Map : Continuous configuration space 2D create from image to geometry with MapLoader and MapClass
 - Collsion : Geometry based
 - Path Searcher : Naive Seach.
@@ -49,49 +49,33 @@ class RRTBase():
         # properties of planner
         self.maxIteration = maxIteration
         self.eta = eta
-        self.treeVertexStart = [self.xStart]
-        self.treeVertexGoal = [self.xGoal]
-        self.nearStart = None
-        self.nearGoal = None
+        self.treeVertex = [self.xStart]
 
     def planning(self):
         for itera in range(self.maxIteration):
             print(itera)
             xRand = self.sampling()
-            xNearestStart = self.nearest_node_tree_start(xRand)
-            xNearestGoal = self.nearest_node_tree_goal(xRand)
-            xNewStart = self.steer(xNearestStart, xRand)
-            xNewGoal = self.steer(xNearestGoal, xRand)
-            xNewStart.parent = xNearestStart
-            xNewGoal.parent = xNearestGoal
-            if self.collision_check_node(xNewStart) or self.collision_check_line(xNearestStart, xNewStart):
+            xNearest = self.nearest_node(xRand)
+            xNew = self.steer(xNearest, xRand)
+            if self.node_in_goal_region(xNew) or self.connect_in_goal_region(xNearest, xNew):
+                continue
+            xNew.parent = xNearest
+            if self.collision_check_node(xNew) or self.collision_check_line(xNearest, xNew):
                 continue
             else:
-                self.treeVertexStart.append(xNewStart)
-
-            if self.collision_check_node(xNewGoal) or self.collision_check_line(xNearestGoal, xNewGoal):
-                continue
-            else:
-                self.treeVertexGoal.append(xNewGoal)
-
-            if self.if_both_tree_node_near():
-                break
+                self.treeVertex.append(xNew)
 
     def search_path(self):
-        pathStart = [self.nearStart]
-        currentNodeStart = self.nearStart
-        while currentNodeStart != self.xStart:
-            currentNodeStart = currentNodeStart.parent
-            pathStart.append(currentNodeStart)
+        xNearToGoal = self.nearest_node(self.xGoal)
+        self.xGoal.parent = xNearToGoal
+        path = [self.xGoal]
+        currentNode = self.xGoal
 
-        pathGoal = [self.nearGoal]
-        currentNodeGoal = self.nearGoal
-        while currentNodeGoal != self.xGoal:
-            currentNodeGoal = currentNodeGoal.parent
-            pathGoal.append(currentNodeGoal)
+        while currentNode != self.xStart:
+            currentNode = currentNode.parent
+            path.append(currentNode)
 
-        pathStart.reverse()
-        path = pathStart + pathGoal
+        path.reverse()
 
         return path
 
@@ -102,44 +86,19 @@ class RRTBase():
 
         return xRand
 
-    def nearest_node_tree_start(self, xRand):
+    def nearest_node(self, xRand):
         vertexList = []
 
-        for eachVertex in self.treeVertexStart:
+        for eachVertex in self.treeVertex:
             distX = xRand.x - eachVertex.x
             distY = xRand.y - eachVertex.y
             dist = np.linalg.norm([distX, distY])
             vertexList.append(dist)
 
         minIndex = np.argmin(vertexList)
-        xNear = self.treeVertexStart[minIndex]
+        xNear = self.treeVertex[minIndex]
 
         return xNear
-    
-    def nearest_node_tree_goal(self, xRand):
-        vertexList = []
-
-        for eachVertex in self.treeVertexGoal:
-            distX = xRand.x - eachVertex.x
-            distY = xRand.y - eachVertex.y
-            dist = np.linalg.norm([distX, distY])
-            vertexList.append(dist)
-
-        minIndex = np.argmin(vertexList)
-        xNear = self.treeVertexGoal[minIndex]
-
-        return xNear
-
-    def if_both_tree_node_near(self):
-        for eachVertexStart in self.treeVertexStart:
-            for eachVertexGoal in self.treeVertexGoal:
-                distX = eachVertexStart.x - eachVertexGoal.x
-                distY = eachVertexStart.y - eachVertexGoal.y
-                if np.linalg.norm([distX, distY]) < self.eta:
-                    self.nearStart = eachVertexStart
-                    self.nearGoal = eachVertexGoal
-                    return True
-        return False
 
     def steer(self, xNearest, xRand):
         distX = xRand.x - xNearest.x
@@ -154,6 +113,31 @@ class RRTBase():
             newY = self.eta * np.sin(direction) + xNearest.y
             xNew = Node(newX, newY)
         return xNew
+    
+    def node_in_goal_region(self, xNew):
+        distX = self.xGoal.x - xNew.x
+        distY = self.xGoal.y - xNew.y
+        dist = np.linalg.norm([distX, distY])
+
+        if dist <= 0.5:
+            return True
+        else:
+            return False
+        
+    def connect_in_goal_region(self, xNearest, xNew):
+        distX = xNew.x - xNearest.x
+        distY = xNew.y - xNearest.y
+        desiredStep = 10
+        rateX = distX / desiredStep
+        rateY = distY / desiredStep
+
+        for i in range(1, desiredStep - 1):
+            newX = xNearest.x + (rateX * i)
+            newY = xNearest.y + (rateY * i)
+            xNew = Node(newX, newY)
+            if self.node_in_goal_region(xNew):
+                return True
+        return False
 
     def collision_check_node(self, xNew):
         nodepoint = ObjPoint2D(xNew.x, xNew.y)
@@ -182,21 +166,16 @@ class RRTBase():
             return False
 
     def plot_env(self, after_plan=False):
+        # plot obstacle
         for obs in self.obs:
             obs.plot()
 
         if after_plan:
-            for j in self.treeVertexStart:
+            # plot tree vertex and branches
+            for j in self.treeVertex:
                 plt.scatter(j.x, j.y, color="red")
                 if j is not self.xStart:
-                    plt.plot([j.x, j.parent.x], [j.y, j.parent.y], color="lightblue")
-
-            for j in self.treeVertexGoal:
-                plt.scatter(j.x, j.y, color="pink")
-                if j is not self.xGoal:
-                    plt.plot([j.x, j.parent.x], [j.y, j.parent.y], color="khaki")
-        
-            plt.scatter([self.nearStart.x, self.nearGoal.x], [self.nearStart.y, self.nearGoal.y], color='orange')
+                    plt.plot([j.x, j.parent.x], [j.y, j.parent.y], color="green")
 
         # plot start and goal Node
         plt.scatter([self.xStart.x, self.xGoal.x], [self.xStart.y, self.xGoal.y], color='cyan')
@@ -219,7 +198,7 @@ if __name__ == "__main__":
     # SECTION - Experiment 2
     mapClass = GeoMapClass(geomap=task_rectangle_obs_3(), maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
     start = np.array([0, 0]).reshape(2, 1)
-    goal = np.array([3, 3]).reshape(2, 1)
+    goal = np.array([-2, -0.5]).reshape(2, 1)
 
 
     # SECTION - Experiment 3
@@ -230,14 +209,14 @@ if __name__ == "__main__":
 
 
     # SECTION - Planning Section
-    planner = RRTBase(mapClass, start, goal, eta=0.1, maxIteration=1000)
+    planner = RRTBase(mapClass, start, goal, eta=0.1, maxIteration=3000)
     planner.plot_env()
     plt.show()
     planner.planning()
-    paths = planner.search_path()
+    path = planner.search_path()
 
 
     # SECTION - plot planning result
     planner.plot_env(after_plan=True)
-    plt.plot([node.x for node in paths], [node.y for node in paths], color='navy')
+    plt.plot([node.x for node in path], [node.y for node in path], color='blue')
     plt.show()

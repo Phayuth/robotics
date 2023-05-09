@@ -9,7 +9,8 @@ def plot_tree(treeVertex, path):
         else:
             plt.plot([vertex.x, vertex.parent.x], [vertex.y, vertex.parent.y], color="green")
 
-    plt.plot([node.x for node in path], [node.y for node in path], color='blue')
+    if path:
+        plt.plot([node.x for node in path], [node.y for node in path], color='blue')
 
 
 def plot_tree_3d(treeVertex, path):
@@ -21,5 +22,6 @@ def plot_tree_3d(treeVertex, path):
             pass
         else:
             ax.plot3D([vertex.x, vertex.parent.x], [vertex.y, vertex.parent.y], [vertex.z, vertex.parent.z], "green")
-
-    ax.plot3D([node.x for node in path], [node.y for node in path], [node.x for node in path], color='blue')
+   
+    if path:
+        ax.plot3D([node.x for node in path], [node.y for node in path], [node.x for node in path], color='blue')
