@@ -315,8 +315,8 @@ if __name__ == "__main__":
     yBotStart = (rCrop) * np.sin(alphaTarg + np.pi / 2) + yTarg
     recTop = ObjRec(xTopStart, yTopStart, hD, wD, angle=alphaTarg)
     recBot = ObjRec(xBotStart, yBotStart, hD, wD, angle=alphaTarg)
-    # obsList = [recTop, recBot]
-    obsList = []
+    obsList = [recTop, recBot]
+    # obsList = []
     thetaGoal = robot.inverse_kinematic_geometry(target, elbow_option=0)
     initPose = np.array([[2.5], [0], [0]])
     thetaInit = robot.inverse_kinematic_geometry(initPose, elbow_option=0)

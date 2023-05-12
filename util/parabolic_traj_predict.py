@@ -27,3 +27,19 @@ plt.legend()
 plt.xlabel('x')
 plt.ylabel('y')
 plt.show()
+
+# generate data
+a = -0.3321428571457645
+b = 3.6035714285771197
+c = -0.42500000000313154
+
+x = np.linspace(0, 10, 100)
+y = parabolic(x,a,b,c)
+
+# Plot the original data and the fitted curve
+plt.plot(x, y, 'bo', label='Original Data')
+plt.plot(x, parabolic(x, *popt), 'r-', label='Fitted Curve')
+plt.legend()
+plt.xlabel('x')
+plt.ylabel('y')
+plt.show()

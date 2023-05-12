@@ -25,7 +25,7 @@ class Node:
 
 class RuntimeRRTStar():
 
-    def __init__(self, robot, taskMapObs, xStart, xGoal, xApp, eta=0.3, maxIteration=1000) -> None:
+    def __init__(self, robot, taskMapObs, xStart, xGoal, xApp, eta=0.1, maxIteration=1000) -> None:
         # robot and workspace
         self.robot = robot
         self.taskMapObs = taskMapObs
@@ -173,7 +173,7 @@ class RuntimeRRTStar():
         distZ = self.xGoal.z - xNew.z
         dist = np.linalg.norm([distX, distY, distZ])
 
-        if dist <= 0.5:
+        if dist <= 0.2:
             return True
         else:
             return False
