@@ -184,9 +184,9 @@ class RRTStar:
         if after_plan:
             # plot tree vertex and branches
             for j in self.treeVertex:
-                plt.scatter(j.x, j.y, color="red")  # vertex
+                plt.scatter(j.x, j.y, color="lightyellow")  # vertex
                 if j is not self.xStart:
-                    plt.plot([j.x, j.parent.x], [j.y, j.parent.y], color="green")  # branch
+                    plt.plot([j.x, j.parent.x], [j.y, j.parent.y], color="skyblue")  # branch
 
         # plot start and goal Node
         plt.scatter([self.xStart.x, self.xGoal.x], [self.xStart.y, self.xGoal.y], color='cyan')
@@ -222,5 +222,5 @@ if __name__ == "__main__":
 
     # SECTION - plot result
     planner.plot_env(after_plan=True)
-    plt.plot([node.x for node in path], [node.y for node in path], color='blue')
+    plt.plot([node.x for node in path], [node.y for node in path], color='red')
     plt.show()

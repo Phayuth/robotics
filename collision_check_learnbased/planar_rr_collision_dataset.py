@@ -16,7 +16,7 @@ from collision_check_geometry import collision_class
 
 def collision_dataset(robot, obs_list):
     # start sample
-    sample_size = 180
+    sample_size = 360
     theta_candidate = np.linspace(-np.pi, np.pi, sample_size)
 
     sample_theta = []  # X

@@ -16,8 +16,8 @@ if __name__ == "__main__":
     P = np.array([[1, 1], [2, 2]])
     PT = np.transpose(P)
 
-    G = VT @ V
-    GG = PT @ P
+    G = V @ VT
+    GG = P @ PT
 
     print(G)
     is_linear_independent(G)

@@ -249,5 +249,5 @@ if __name__ == "__main__":
 
     # SECTION - plot result
     planner.plot_env(after_plan=True)
-    plt.plot([node.x for node in path], [node.y for node in path], color='blue')
+    plt.plot([node.x for node in path], [node.y for node in path], color='red')
     plt.show()
