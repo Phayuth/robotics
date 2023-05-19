@@ -103,7 +103,7 @@ grid, dataset = get_occupancy_grid(arm, obstacles)
 # dataset
 dataset = np.array(dataset)
 data = dataset[:,0:2]
-y = dataset[:,2]
+y = dataset[:,[2]] # preserve shape info
 
 def fx(queryPoint):
     term = []
@@ -119,11 +119,11 @@ N = data.shape[0]        # number of datapoint = number of row the dataset has
 d = data.shape[1]        # number of dimensionality = number of columns the dataset has (x1, x2, ..., xn)
 g = 10                   # kernel width
 beta = 100               # conditional bias
-maxUpdate = 100        # max update iteration
+maxUpdate = 1000         # max update iteration
 maxSupportPoints = 1500  # max support points
-G = data @ data.T                                 # gram matrix of dataset
-alpha = np.zeros(N)                               # weight, init at zero
-F = np.array([fx(data[i]) for i in range(N)])     # hypothesis
+G = np.zeros((N,N))                               # kernel gram matrix guassian kernel of dataset
+alpha = np.zeros((N,1))                           # weight, init at zero
+F = np.zeros((N,1))      # hypothesis
 
 # active learning parameters
 allowance = 800          # number of new samples
@@ -133,39 +133,48 @@ exploitP = 0.5           # proportion of exploitation samples
 
 
 
-def original_kernel_update():
-    """Brute force update, unneccessary calculation"""
-    for iter in range(maxUpdate):
-        print(iter)
-        for i in range(N):
-            margin = y[i] * fx(data[i])
-            if margin <= 0:
-                alpha[i] += y[i]
-
-
-
-
-# def fastron_model_update():
+# def original_kernel_update(alpha, F, data, y, G, N, maxUpdate):
+#     """Brute force update, => unneccessary calculation"""
 #     for iter in range(maxUpdate):
+#         print(iter)
 #         for i in range(N):
-#             print(f"at i = {i}")
-#             print(f"yi = {y[i]} , Fi = {F[i]} , alphai = {alpha[i]}")
-#             if margin:=y[i]*fx(data[i] - alpha[i]) > 0 and alpha != 0.0:
-#                 j = np.argmax(margin)
-#                 print(j)
+#             margin = y[i] * fx(data[i])
+#             if margin <= 0:
+#                 alpha[i] += y[i]
+#                 F += y[i]*G[:,[i]]
+
+#     return alpha, F
+
+# alpha, F = original_kernel_update(alpha, F, data, y, G, N, maxUpdate)
 
 
 
+# def original_kernel_update_batch(alpha, F, data, y, G, N, maxUpdate):
+#     for iter in range(maxUpdate):
+#         print(iter)
+#         for i in range(N):
+#             margin = y * F
+#             marginIndexNeg = [i for i, num in enumerate(margin) if num <= 0]
+#             print(f"==>> marginIndexNeg: \n{marginIndexNeg}")
+#             for i in marginIndexNeg:
+#                 alpha[i] += y[i]
+#                 F += y[i]*G[:,[i]]
 
-queryPoint = np.array([1,1]) # queryPoint[0] = q1, queryPoint[1] = q2
-qP = fx(queryPoint)
-print(f"==>> qP: \n{qP}")
+#     return alpha, F
 
-original_kernel_update()
-print(alpha)
+# alpha, F = original_kernel_update_batch(alpha, F, data, y, G, N, maxUpdate)
 
-qP = fx(queryPoint)
-print(f"==>> qP: \n{qP}")
 
-# fastron_model_update()
-print("end")
+def gaussian_kernel(x, y, gamma):
+    distance = np.linalg.norm(x - y)  # Euclidean distance
+    return np.exp(-gamma * distance ** 2)
+
+def compute_kernel_gram_matrix(G, data, gamma):
+    for i in range(N):
+        for j in range(N):
+            G[i, j] = gaussian_kernel(data[i], data[j], gamma)
+
+    return G
+
+gram_matrix = compute_kernel_gram_matrix(G, data, g)
+print(gram_matrix)

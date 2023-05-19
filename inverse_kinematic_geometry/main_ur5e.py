@@ -22,8 +22,8 @@ print("==>> TOriginal: \n", TOriginal)
 # SECTION - inverse kinematic
 thetaIk = robot.inverse_kinematic_geometry(TOriginal)
 print("==>> thetaIk: \n", thetaIk.T)
-# for i in range(8):
-#     possibleTheta = thetaIk[:,i].reshape(6,1)
-#     print(f"==>> possibleTheta {i+1}possibleTheta: \n", possibleTheta.T)
-#     TAfterIk = robot.forward_kinematic(possibleTheta, return_full_H=True)
-#     print("==>> TAfterIk: \n", TAfterIk)
+for i in range(8):
+    possibleTheta = thetaIk[:,i].reshape(6,1)
+    print(f"==>> possibleTheta {i+1}possibleTheta: \n", possibleTheta.T)
+    TAfterIk = robot.forward_kinematic(possibleTheta, return_full_H=True)
+    print("==>> TAfterIk: \n", TAfterIk)
