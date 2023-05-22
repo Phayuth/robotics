@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 # GENERATING DATA -------------------------------------------------------------------------------------------------------------
 class NLinkArm(object):
@@ -84,6 +85,8 @@ obstacles = [[1.75, 0.75, 0.6], [0.55, 1.5, 0.5], [0, -1, 0.25], [-1.5, -1.5, 0.
 arm = NLinkArm([1, 1], [0, 0])
 grid, dataset = get_occupancy_grid(arm, obstacles)
 
+plt.imshow(grid)
+plt.show()
 
 
 
@@ -105,21 +108,12 @@ dataset = np.array(dataset)
 data = dataset[:,0:2]
 y = dataset[:,[2]] # preserve shape info
 
-def fx(queryPoint):
-    term = []
-    for ind, xi in enumerate(data):
-        norm = np.linalg.norm([(xi[0] - queryPoint[0]),(xi[1] - queryPoint[1])])
-        K = np.exp(-g*(norm**2))
-        term.append(alpha[ind] * K)
-    ypred = np.sign(sum(term))
-    return ypred
-
 # Fastron
 N = data.shape[0]        # number of datapoint = number of row the dataset has
 d = data.shape[1]        # number of dimensionality = number of columns the dataset has (x1, x2, ..., xn)
 g = 10                   # kernel width
 beta = 100               # conditional bias
-maxUpdate = 1000         # max update iteration
+maxUpdate = 10           # max update iteration
 maxSupportPoints = 1500  # max support points
 G = np.zeros((N,N))                               # kernel gram matrix guassian kernel of dataset
 alpha = np.zeros((N,1))                           # weight, init at zero
@@ -130,24 +124,59 @@ allowance = 800          # number of new samples
 kNS = 4                  # number of points near supports
 sigma = 0.5              # Gaussian sampling std
 exploitP = 0.5           # proportion of exploitation samples
+gramComputed = np.zeros((N,1))
 
+def fx(queryPoint):
+    term = []
+    for ind, xi in enumerate(data):
+        norm = np.linalg.norm([(xi[0] - queryPoint[0]),(xi[1] - queryPoint[1])])
+        K = np.exp(-g*(norm**2))
+        term.append(alpha[ind] * K)
+    ypred = np.sign(sum(term))
+    return ypred
 
+def eval(queryPoint, data, alpha, g):
+    term = []
+    for i, alphai in enumerate(alpha):
+        if alphai != 0.0:
+            norm = np.linalg.norm([(data[i][0] - queryPoint[0]),(data[i][1] - queryPoint[1])])
+            K = np.exp(-g*(norm**2))
+            term.append(alphai * K)
+    ypred = np.sign(sum(term))
+    return ypred
 
-# def original_kernel_update(alpha, F, data, y, G, N, maxUpdate):
-#     """Brute force update, => unneccessary calculation"""
-#     for iter in range(maxUpdate):
-#         print(iter)
-#         for i in range(N):
-#             margin = y[i] * fx(data[i])
-#             if margin <= 0:
-#                 alpha[i] += y[i]
-#                 F += y[i]*G[:,[i]]
+def gaussian_kernel(x, y, gamma):
+    distance = np.linalg.norm(x - y)  # Euclidean distance
+    return np.exp(-gamma * distance ** 2)
 
-#     return alpha, F
+def compute_kernel_gram_matrix(G, data, gamma):
+    for i in range(N):
+        for j in range(N):
+            G[i, j] = gaussian_kernel(data[i], data[j], gamma)
 
-# alpha, F = original_kernel_update(alpha, F, data, y, G, N, maxUpdate)
+    return G
 
+G = compute_kernel_gram_matrix(G, data, g)
 
+def original_kernel_update(alpha, F, data, y, G, N, maxUpdate):
+    """Brute force update, => unneccessary calculation"""
+    for iter in range(maxUpdate):
+        print(iter)
+        for i in range(N):
+            margin = y[i] * fx(data[i])
+            if margin <= 0:
+                alpha[i] += y[i]
+                F += y[i]*G[:,[i]]
+
+    return alpha, F
+
+alpha, F = original_kernel_update(alpha, F, data, y, G, N, maxUpdate)
+print(f"==>> alpha: \n{alpha}")
+print(f"==>> F: \n{F}")
+
+queryP = np.array([1,1])
+collision = eval(queryP, data, alpha, g)
+print(f"==>> collision: \n{collision}")
 
 # def original_kernel_update_batch(alpha, F, data, y, G, N, maxUpdate):
 #     for iter in range(maxUpdate):
@@ -165,16 +194,24 @@ exploitP = 0.5           # proportion of exploitation samples
 # alpha, F = original_kernel_update_batch(alpha, F, data, y, G, N, maxUpdate)
 
 
-def gaussian_kernel(x, y, gamma):
-    distance = np.linalg.norm(x - y)  # Euclidean distance
-    return np.exp(-gamma * distance ** 2)
 
-def compute_kernel_gram_matrix(G, data, gamma):
-    for i in range(N):
-        for j in range(N):
-            G[i, j] = gaussian_kernel(data[i], data[j], gamma)
 
-    return G
 
-gram_matrix = compute_kernel_gram_matrix(G, data, g)
-print(gram_matrix)
+
+def get_occupancy_grid_train():
+    MM = 100
+    grid = [[0 for _ in range(MM)] for _ in range(MM)]
+    theta_list = [2 * i * np.pi / MM for i in range(-MM // 2, MM // 2 + 1)]
+
+    for i in range(MM):
+        for j in range(MM):
+            col = eval(np.array([theta_list[i], theta_list[j]]), data, alpha, g)
+            grid[i][j] = int(col)
+
+    return np.array(grid)
+
+grid = get_occupancy_grid_train()
+print(f"==>> grid: \n{grid}")
+
+plt.imshow(grid)
+plt.show()
