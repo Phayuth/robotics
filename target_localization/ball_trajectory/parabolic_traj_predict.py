@@ -6,60 +6,28 @@ from scipy.optimize import curve_fit
 def parabolic(x, a, b, c):
     return a*x**2 + b*x + c
 
-# # Generate some sample data
+# Generate some sample data
 # x = np.array([0, 1, 2, 3, 4, 5, 6, 7])
-# # y = np.array([1.2, 2.4, 4.2, 6.6, 9.6, 13.2])
+# y = np.array([1.2, 2.4, 4.2, 6.6, 9.6, 13.2])
 # y = np.array([1.2, 2.4, 3.6, 4.8, 9.6, 13.2, 9.6, 6.6])
 
-
-# # Fit the parabolic equation to the data
-# popt, pcov = curve_fit(parabolic, x, y)
-
-# # Print the values of a, b, and c
-# print("a = ", popt[0])
-# print("b = ", popt[1])
-# print("c = ", popt[2])
-
-# # Plot the original data and the fitted curve
-# plt.plot(x, y, 'bo', label='Original Data')
-# plt.plot(x, parabolic(x, *popt), 'r-', label='Fitted Curve')
-# plt.legend()
-# plt.xlabel('x')
-# plt.ylabel('y')
-# plt.show()
+# Generate some sample data
+x = np.array([8, 7, 6, 5, 4, 3, 2, 1, 0.5])
+y = np.array([1, 4, 8, 9, 9, 6, 4, 2, 0.5])
 
 # # generate data
 # a = -0.3321428571457645
 # b = 3.6035714285771197
 # c = -0.42500000000313154
 
-# x = np.linspace(0, 10, 100)
-# y = parabolic(x,a,b,c)
-
-# # Plot the original data and the fitted curve
-# plt.plot(x, y, 'bo', label='Original Data')
-# plt.plot(x, parabolic(x, *popt), 'r-', label='Fitted Curve')
-# plt.legend()
-# plt.xlabel('x')
-# plt.ylabel('y')
-# plt.show()
-
-
-
-
-# Generate some sample data
-x = np.array([8, 7, 6, 5, 4, 3, 2, 1, 0.5])
-y = np.array([1, 4, 8, 9, 9, 6, 4, 2, 0.5])
-
 
 # Fit the parabolic equation to the data
 popt, pcov = curve_fit(parabolic, x, y)
-
-# Print the values of a, b, and c
 print("a = ", popt[0])
 print("b = ", popt[1])
 print("c = ", popt[2])
 
+# Request, Predict
 xreq = 0
 ypred = parabolic(xreq, *popt)
 
