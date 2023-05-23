@@ -11,6 +11,7 @@ from rigid_body_transformation.rotation_matrix import rotx, roty, rotz
 from util.read_txt import read_txt_to_numpy
 from parabolic_equation import parabolic
 
+# Real Dataset
 parray = read_txt_to_numpy(txtFileString='target_localization/ball_trajectory/newposition.txt')
 parray = parray[30:650, :]  # manual Trim
 ppp = parray.T
@@ -18,21 +19,12 @@ hx = rotx(-np.pi / 2)
 hz = rotz(np.pi / 2)
 pnew = hz @ hx @ ppp
 pnew = pnew.T
-x = pnew[:, 0]
-y = pnew[:, 1]
-z = pnew[:, 2]
+xPose = pnew[:, 0]
+yPose = pnew[:, 1]
+zPose = pnew[:, 2]
+t = np.linspace(0,1,xPose.shape[0])
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(x, y, z, c='b', label='Actual Data')
-ax.plot3D([0, 200], [0, 0], [0, 0], 'red', linewidth=4)
-ax.plot3D([0, 0], [0, 200], [0, 0], 'purple', linewidth=4)
-ax.plot3D([0, 0], [0, 0], [0, 200], 'green', linewidth=4)
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_zlabel('z')
-plt.show()
-
+# Generate Dataset
 # fit param
 xParam = [-2706, 6003, 329.6]
 yParam = [368.4, 45.34, 258.9]
@@ -46,11 +38,11 @@ testParam = [-0.5644395478938202, 4.9956333931451, -2.617093465831485]
 # zPose = parabolic(t,zParam[0],zParam[1],zParam[2])
 
 # func of r
-t = np.linspace(0, 5, 100)
-xPose = np.linspace(-2, 0, 100)
-yPose = np.linspace(-1, 0, 100)
-rPose = np.sqrt(xPose**2 + yPose**2)
-zPose = parabolic(rPose, testParam[0], testParam[1], testParam[2])
+# t = np.linspace(0, 5, 100)
+# xPose = np.linspace(-2, 0, 100)
+# yPose = np.linspace(-1, 0, 100)
+# rPose = np.sqrt(xPose**2 + yPose**2)
+# zPose = parabolic(rPose, testParam[0], testParam[1], testParam[2])
 
 # Pose Trajectory in Time
 fig, axs = plt.subplots(3, 1)
@@ -63,6 +55,9 @@ plt.show()
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 ax.plot(xPose, yPose, zPose)
+ax.plot3D([0, 200], [0, 0], [0, 0], 'red', linewidth=4)
+ax.plot3D([0, 0], [0, 200], [0, 0], 'purple', linewidth=4)
+ax.plot3D([0, 0], [0, 0], [0, 200], 'green', linewidth=4)
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')

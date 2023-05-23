@@ -1,9 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# GENERATING DATA -------------------------------------------------------------------------------------------------------------
+
+# Dataset Generate
 class NLinkArm(object):
- 
+
     def __init__(self, link_lengths, joint_angles):
         self.n_links = len(link_lengths)
         if self.n_links != len(joint_angles):
@@ -42,7 +43,7 @@ def detect_collision(line_seg, circle):
     elif proj >= line_mag:
         closest_point = b_vec
     else:
-        closest_point = a_vec + line_vec * proj / line_mag
+        closest_point = a_vec + line_vec*proj/line_mag
     if np.linalg.norm(closest_point - c_vec) > radius:
         return False
 
@@ -52,8 +53,8 @@ def detect_collision(line_seg, circle):
 def get_occupancy_grid(arm, obstacles):
 
     grid = [[0 for _ in range(M)] for _ in range(M)]
-    theta_list = [2 * i * np.pi / M for i in range(-M // 2, M // 2 + 1)]
-   
+    theta_list = [2 * i * np.pi / M for i in range(-M // 2, M//2 + 1)]
+
     dataset = []
 
     for i in range(M):
@@ -75,79 +76,65 @@ def get_occupancy_grid(arm, obstacles):
                 collision_stat = 1
             elif int(collision_detected) == 0:
                 collision_stat = -1
-            dataset.append([theta_list[i],theta_list[j],collision_stat])
+            dataset.append([theta_list[i], theta_list[j], collision_stat])
 
     return np.array(grid), dataset
 
+
 # Simulation parameters
-M = 10 # number of sample to divide into and number of grid cell
-obstacles = [[1.75, 0.75, 0.6], [0.55, 1.5, 0.5], [0, -1, 0.25], [-1.5, -1.5, 0.25]] # x y radius
+M = 10  # number of sample to divide into and number of grid cell
+obstacles = [[1.75, 0.75, 0.6], [0.55, 1.5, 0.5], [0, -1, 0.25], [-1.5, -1.5, 0.25]]  # x y radius
 arm = NLinkArm([1, 1], [0, 0])
 grid, dataset = get_occupancy_grid(arm, obstacles)
-
-plt.imshow(grid)
-plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# dataset
-dataset = np.array(dataset)
-data = dataset[:,0:2]
-y = dataset[:,[2]] # preserve shape info
+fig1 = plt.figure()
+ax1 = fig1.add_subplot(111)
+ax1.imshow(grid)
 
 # Fastron
-N = data.shape[0]        # number of datapoint = number of row the dataset has
-d = data.shape[1]        # number of dimensionality = number of columns the dataset has (x1, x2, ..., xn)
-g = 10                   # kernel width
-beta = 100               # conditional bias
-maxUpdate = 10           # max update iteration
+dataset = np.array(dataset)
+data = dataset[:, 0:2]
+y = dataset[:, [2]]  # preserve shape info
+
+N = data.shape[0]  # number of datapoint = number of row the dataset has
+d = data.shape[1]  # number of dimensionality = number of columns the dataset has (x1, x2, ..., xn)
+g = 10  # kernel width
+beta = 100  # conditional bias
+maxUpdate = 10  # max update iteration
 maxSupportPoints = 1500  # max support points
-G = np.zeros((N,N))                               # kernel gram matrix guassian kernel of dataset
-alpha = np.zeros((N,1))                           # weight, init at zero
-F = np.zeros((N,1))      # hypothesis
+G = np.zeros((N, N))  # kernel gram matrix guassian kernel of dataset
+alpha = np.zeros((N, 1))  # weight, init at zero
+F = np.zeros((N, 1))  # hypothesis
 
 # active learning parameters
-allowance = 800          # number of new samples
-kNS = 4                  # number of points near supports
-sigma = 0.5              # Gaussian sampling std
-exploitP = 0.5           # proportion of exploitation samples
-gramComputed = np.zeros((N,1))
+allowance = 800  # number of new samples
+kNS = 4  # number of points near supports
+sigma = 0.5  # Gaussian sampling std
+exploitP = 0.5  # proportion of exploitation samples
+gramComputed = np.zeros((N, 1))
 
-def fx(queryPoint):
+
+def gaussian_kernel(x, y, gamma):
+    """Gaussian Kernel measuring similarity between 2 vectors"""
+    distance = np.linalg.norm(x - y)
+    return np.exp(-gamma * distance**2)
+
+
+def hypothesis(queryPoint, data, alpha, g):
     term = []
-    for ind, xi in enumerate(data):
-        norm = np.linalg.norm([(xi[0] - queryPoint[0]),(xi[1] - queryPoint[1])])
-        K = np.exp(-g*(norm**2))
-        term.append(alpha[ind] * K)
+    for i, xi in enumerate(data):
+        term.append(alpha[i] * gaussian_kernel(xi, queryPoint, g))
     ypred = np.sign(sum(term))
     return ypred
+
 
 def eval(queryPoint, data, alpha, g):
     term = []
     for i, alphai in enumerate(alpha):
         if alphai != 0.0:
-            norm = np.linalg.norm([(data[i][0] - queryPoint[0]),(data[i][1] - queryPoint[1])])
-            K = np.exp(-g*(norm**2))
-            term.append(alphai * K)
+            term.append(alphai * gaussian_kernel(data[i], queryPoint, g))
     ypred = np.sign(sum(term))
     return ypred
 
-def gaussian_kernel(x, y, gamma):
-    distance = np.linalg.norm(x - y)  # Euclidean distance
-    return np.exp(-gamma * distance ** 2)
 
 def compute_kernel_gram_matrix(G, data, gamma):
     for i in range(N):
@@ -156,27 +143,22 @@ def compute_kernel_gram_matrix(G, data, gamma):
 
     return G
 
-G = compute_kernel_gram_matrix(G, data, g)
 
-def original_kernel_update(alpha, F, data, y, G, N, maxUpdate):
+def original_kernel_update(alpha, F, data, y, G, N, g, maxUpdate):
     """Brute force update, => unneccessary calculation"""
     for iter in range(maxUpdate):
         print(iter)
         for i in range(N):
-            margin = y[i] * fx(data[i])
+            margin = y[i] * hypothesis(data[i], data, alpha, g)
             if margin <= 0:
                 alpha[i] += y[i]
-                F += y[i]*G[:,[i]]
+                F += y[i] * G[:, [i]]
 
     return alpha, F
 
-alpha, F = original_kernel_update(alpha, F, data, y, G, N, maxUpdate)
-print(f"==>> alpha: \n{alpha}")
-print(f"==>> F: \n{F}")
 
-queryP = np.array([1,1])
-collision = eval(queryP, data, alpha, g)
-print(f"==>> collision: \n{collision}")
+G = compute_kernel_gram_matrix(G, data, g)
+alpha, F = original_kernel_update(alpha, F, data, y, G, N, g, maxUpdate)
 
 # def original_kernel_update_batch(alpha, F, data, y, G, N, maxUpdate):
 #     for iter in range(maxUpdate):
@@ -193,15 +175,16 @@ print(f"==>> collision: \n{collision}")
 
 # alpha, F = original_kernel_update_batch(alpha, F, data, y, G, N, maxUpdate)
 
-
-
-
+# Test Result
+queryP = np.array([1, 1])
+collision = eval(queryP, data, alpha, g)
+print(f"==>> collision: \n{collision}")
 
 
 def get_occupancy_grid_train():
     MM = 100
     grid = [[0 for _ in range(MM)] for _ in range(MM)]
-    theta_list = [2 * i * np.pi / MM for i in range(-MM // 2, MM // 2 + 1)]
+    theta_list = [2 * i * np.pi / MM for i in range(-MM // 2, MM//2 + 1)]
 
     for i in range(MM):
         for j in range(MM):
@@ -210,8 +193,9 @@ def get_occupancy_grid_train():
 
     return np.array(grid)
 
-grid = get_occupancy_grid_train()
-print(f"==>> grid: \n{grid}")
 
-plt.imshow(grid)
+grid = get_occupancy_grid_train()
+fig2 = plt.figure()
+ax2 = fig2.add_subplot(111)
+ax2.imshow(grid)
 plt.show()
