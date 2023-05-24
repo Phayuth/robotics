@@ -280,7 +280,7 @@ class RrtstarCostmapConfigspace():
 if __name__ == "__main__":
     from map.mapclass import CostMapLoader, CostMapClass
     np.random.seed(1)
-    from util.extract_path_class import extract_path_class_2d
+    from planner_util.extract_path_class import extract_path_class_2d
 
     # SECTION - Experiment 1
     maploader = CostMapLoader.loadsave(maptype="task", mapindex=2)

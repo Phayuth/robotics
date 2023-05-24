@@ -12,7 +12,7 @@ from map.mapclass import CostMapClass, CostMapLoader, GeoMapClass
 from map.taskmap_geo_format import task_rectangle_obs_1
 from planner.rrtstar import RRTStar
 from robot.planar_rr import PlanarRR
-from util.extract_path_class import extract_path_class_2d
+from planner_util.extract_path_class import extract_path_class_2d
 
 robot = PlanarRR()
 

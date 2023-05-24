@@ -262,9 +262,9 @@ if __name__ == "__main__":
     from collision_check_geometry.collision_class import ObjRec
     from map.taskmap_geo_format import task_rectangle_obs_6
     from robot.planar_rrr import PlanarRRR
-    from util.coord_transform import circle_plt
-    from util.extract_path_class import extract_path_class_3d
-    from planner.planner_util.tree import plot_tree_3d
+    from planner_util.coord_transform import circle_plt
+    from planner_util.extract_path_class import extract_path_class_3d
+    from planner_util.plot_util import plot_tree_3d
 
     robot = PlanarRRR()
 
@@ -336,10 +336,6 @@ if __name__ == "__main__":
     path = planner.search_path()
 
     pathx, pathy, pathz = extract_path_class_3d(path)
-    print("==>> pathx: ", pathx)
-    print("==>> pathy: ", pathy)
-    print("==>> pathz: ", pathz)
-
     plt.axes().set_aspect('equal')
     plt.axvline(x=0, c="green")
     plt.axhline(y=0, c="green")

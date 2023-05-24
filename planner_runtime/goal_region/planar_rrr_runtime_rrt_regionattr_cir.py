@@ -171,8 +171,8 @@ if __name__ == "__main__":
     from collision_check_geometry.collision_class import ObjRec
     from map.taskmap_geo_format import task_rectangle_obs_6
     from robot.planar_rrr import PlanarRRR
-    from util.coord_transform import circle_plt
-    from util.extract_path_class import extract_path_class_3d
+    from planner_util.coord_transform import circle_plt
+    from planner_util.extract_path_class import extract_path_class_3d
 
     robot = PlanarRRR()
 

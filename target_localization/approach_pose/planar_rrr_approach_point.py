@@ -6,7 +6,7 @@ sys.path.append(str(wd))
 
 import matplotlib.pyplot as plt
 import numpy as np
-from util.coord_transform import polar2cats, circle_plt
+from planner_util.coord_transform import polar2cats, circle_plt
 from robot.planar_rrr import PlanarRRR
 
 # create robot instance

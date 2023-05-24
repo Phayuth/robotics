@@ -12,7 +12,7 @@ from map.mapclass import CostMapClass, CostMapLoader, GeoMapClass
 from map.taskmap_geo_format import task_rectangle_obs_1
 from planner.rrtbase import RRTBase
 from robot.planar_rr import PlanarRR
-from util.extract_path_class import extract_path_class_2d
+from planner_util.extract_path_class import extract_path_class_2d
 
 robot = PlanarRR()
 
@@ -33,7 +33,7 @@ maparray = configuration_generate_plannar_rr(robot, obs_list)
 maploader = CostMapLoader.loadarray(maparray)
 mapclass = CostMapClass(maploader=maploader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
 
-planner = RRTBase(mapclass, start_theta, goal_theta, eta=0.1, maxiteration=2000)
+planner = RRTBase(mapclass, start_theta, goal_theta, eta=0.1, maxIteration=2000)
 planner.plot_env()
 plt.show()
 planner.planning()

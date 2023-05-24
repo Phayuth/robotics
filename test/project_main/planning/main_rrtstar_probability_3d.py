@@ -7,7 +7,7 @@ from planner.research_rrtstar_3d.rrtstar_costmap_biassampling import node, rrt_s
 from map.taskmap_img_format import map_3d_empty
 import math
 import numpy as np
-from util.extract_path_class import extract_path_class_3d
+from planner_util.extract_path_class import extract_path_class_3d
 import matplotlib.pyplot as plt
 
 # Creat map

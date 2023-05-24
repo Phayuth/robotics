@@ -6,7 +6,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from util.coord_transform import sph2cat
+from planner_util.coord_transform import sph2cat
 
 
 # SECTION - target define pose

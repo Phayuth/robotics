@@ -308,7 +308,7 @@ class RuntimeRRTStar():
 if __name__ == "__main__":
     np.random.seed(9)
     from robot.planar_rrr import PlanarRRR
-    from util.extract_path_class import extract_path_class_6d
+    from planner_util.extract_path_class import extract_path_class_6d
 
     robot = PlanarRRR()
 

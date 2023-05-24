@@ -231,8 +231,8 @@ if __name__ == "__main__":
     np.random.seed(9)
     from robot.planar_rr import PlanarRR
     from map.taskmap_geo_format import task_rectangle_obs_1
-    from util.extract_path_class import extract_path_class_2d
-    from planner.planner_util.tree import plot_tree
+    from planner_util.extract_path_class import extract_path_class_2d
+    from planner_util.plot_util import plot_tree
 
     robot = PlanarRR()
     taskMapObs = task_rectangle_obs_1()

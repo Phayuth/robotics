@@ -7,7 +7,6 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle
@@ -140,10 +139,12 @@ class RuntimeRRTBase():
 
 if __name__ == "__main__":
     np.random.seed(9)
+    import matplotlib.pyplot as plt
+    plt.style.use("seaborn")
     from robot.planar_rr import PlanarRR
     from map.taskmap_geo_format import task_rectangle_obs_1
-    from util.extract_path_class import extract_path_class_2d
-    from planner.planner_util.tree import plot_tree
+    from planner_util.extract_path_class import extract_path_class_2d
+    from planner_util.plot_util import plot_tree
 
     robot = PlanarRR()
     taskMapObs = task_rectangle_obs_1()
@@ -162,8 +163,6 @@ if __name__ == "__main__":
     path = planner.search_path()
 
     pathx, pathy = extract_path_class_2d(path)
-    print("==>> pathx: \n", pathx)
-    print("==>> pathy: \n", pathy)
 
     plt.axes().set_aspect('equal')
     plt.axvline(x=0, c="green")
@@ -177,4 +176,48 @@ if __name__ == "__main__":
     plt.show()
 
     plot_tree(planner.treeVertex, path)
+    plt.show()
+
+    # plot joint 
+    t = np.linspace(0,5,len(pathx))
+    fig1 = plt.figure("Joint 1")
+    ax1 = fig1.add_subplot(111)
+    ax1.plot(t,pathx, "ro")
+    fig2 = plt.figure("Joint 2")
+    ax2 = fig2.add_subplot(111)
+    ax2.plot(t,pathy,"ro")
+    plt.show()
+
+    # fit joint
+    from scipy.optimize import curve_fit
+
+    def quintic5deg(x, a, b, c, d, e, f):
+        return a*x**5 + b*x**4 + c*x**3 + d*x**2 + e*x * f
+
+    # Fit the quintic5deg equation to the data
+    popt_x, pcov_x = curve_fit(quintic5deg, t, pathx)
+    popt_y, pcov_y = curve_fit(quintic5deg, t, pathy)
+
+    fig1 = plt.figure("Joint 1")
+    ax1 = fig1.add_subplot(111)
+    ax1.plot(t,pathx, "ro")
+    ax1.plot(t, quintic5deg(t, *popt_x))
+
+    fig2 = plt.figure("Joint 2")
+    ax2 = fig2.add_subplot(111)
+    ax2.plot(t,pathy,"ro")
+    ax2.plot(t, quintic5deg(t, *popt_y))
+    plt.show()
+
+    # plot follow fit traj
+    tnew = np.linspace(0,5,100)
+    plt.axes().set_aspect('equal')
+    plt.axvline(x=0, c="green")
+    plt.axhline(y=0, c="green")
+    obs_list = task_rectangle_obs_1()
+    for obs in obs_list:
+        obs.plot()
+    for ti in tnew:
+        robot.plot_arm(np.array([[quintic5deg(ti, *popt_x)], [quintic5deg(ti, *popt_y)]]))
+        plt.pause(0.1)
     plt.show()

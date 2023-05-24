@@ -17,7 +17,7 @@ from map.mapclass import map_val, map_vec
 from map.taskmap_geo_format import task_rectangle_obs_6
 from planner.ready.rrt_2D.rrtstar_costmap_biassampling3d import rrt_star
 from robot.planar_rrr import PlanarRRR
-from util.extract_path_class import extract_path_class_3d
+from planner_util.extract_path_class import extract_path_class_3d
 
 # robot, inverse kinematic and plot
 robot = PlanarRRR()

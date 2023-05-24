@@ -202,12 +202,13 @@ class RuntimeRRTStar():
 
 if __name__ == "__main__":
     np.random.seed(9)
+    from scipy.optimize import curve_fit
     from collision_check_geometry.collision_class import ObjRec
     from map.taskmap_geo_format import task_rectangle_obs_6
     from robot.planar_rrr import PlanarRRR
-    from util.coord_transform import circle_plt
-    from util.extract_path_class import extract_path_class_3d
-    from planner.planner_util.tree import plot_tree_3d
+    from planner_util.coord_transform import circle_plt
+    from planner_util.extract_path_class import extract_path_class_3d
+    from planner_util.plot_util import plot_tree_3d
 
     robot = PlanarRRR()
 
@@ -266,7 +267,6 @@ if __name__ == "__main__":
     approachPose = np.array([[rCrop * np.cos(target[2, 0] + np.pi) + target[0, 0]], [rCrop * np.sin(target[2, 0] + np.pi) + target[1, 0]], [target[2, 0]]])
     thetaApp = robot.inverse_kinematic_geometry(approachPose, elbow_option=0)
 
-
     robot.plot_arm(thetaGoal, plt_basis=True)
     robot.plot_arm(thetaApp)
     recTop.plot()
@@ -274,15 +274,11 @@ if __name__ == "__main__":
     circle_plt(xTarg, yTarg, radius=rCrop)
     plt.show()
 
-    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=5000)
+    planner = RuntimeRRTStar(robot, obsList, thetaInit, thetaGoal, eta=0.3, maxIteration=1000)
     planner.planning()
     path = planner.search_path()
 
     pathx, pathy, pathz = extract_path_class_3d(path)
-    print("==>> pathx: ", pathx)
-    print("==>> pathy: ", pathy)
-    print("==>> pathz: ", pathz)
-
     plt.axes().set_aspect('equal')
     plt.axvline(x=0, c="green")
     plt.axhline(y=0, c="green")
@@ -296,4 +292,44 @@ if __name__ == "__main__":
     plt.show()
 
     plot_tree_3d(planner.treeVertex, path)
+    plt.show()
+
+    # plot joint 
+    t = np.linspace(0,5,len(pathx))
+    fig, axs = plt.subplots(3)
+    axs[0].plot(t,pathx, "ro")
+    axs[1].plot(t,pathy, "ro")
+    axs[2].plot(t,pathz, "ro")
+    plt.show()
+
+    # fit joint
+    from scipy.optimize import curve_fit
+
+    def quintic5deg(x, a, b, c, d, e, f):
+        return a*x**5 + b*x**4 + c*x**3 + d*x**2 + e*x * f
+
+    # Fit the quintic5deg equation to the data
+    poptX, pcovX = curve_fit(quintic5deg, t, pathx)
+    poptY, pcovY = curve_fit(quintic5deg, t, pathy)
+    poptZ, pcovZ = curve_fit(quintic5deg, t, pathz)
+
+    fig2, axs2 = plt.subplots(3)
+    axs2[0].plot(t,pathx, "ro")
+    axs2[0].plot(t, quintic5deg(t, *poptX))
+    axs2[1].plot(t,pathy, "ro")
+    axs2[1].plot(t, quintic5deg(t, *poptY))
+    axs2[2].plot(t,pathz, "ro")
+    axs2[2].plot(t, quintic5deg(t, *poptZ))
+    plt.show()
+    
+    # plot follow fit traj
+    tnew = np.linspace(0,5,100)
+    plt.axes().set_aspect('equal')
+    plt.axvline(x=0, c="green")
+    plt.axhline(y=0, c="green")
+    for obs in obsList:
+        obs.plot()
+    for ti in tnew:
+        robot.plot_arm(np.array([[quintic5deg(ti, *poptX)], [quintic5deg(ti, *poptY)], [quintic5deg(ti, *poptZ)]]))
+        plt.pause(0.1)
     plt.show()

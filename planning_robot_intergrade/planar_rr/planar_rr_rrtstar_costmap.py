@@ -13,7 +13,7 @@ from map.taskmap_geo_format import task_rectangle_obs_1
 from map.mapclass import CostMapLoader, CostMapClass
 from planner.rrtstar_costmap import RrtstarCostmap
 from robot.planar_rr import PlanarRR
-from util.extract_path_class import extract_path_class_2d
+from planner_util.extract_path_class import extract_path_class_2d
 
 # robot, inverse kinematic and plot
 robot = PlanarRR()
