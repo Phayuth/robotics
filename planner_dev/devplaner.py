@@ -3,6 +3,11 @@
 - Variant: Bi Directional |   Added
 - Goal Rejection          |   Currently Adding
 - Sampling : Bias         |   Added
+- Pruning                 |   Currently Adding
+- Point Informed Resampling Optimization | Currently Adding (More or Less like STOMP optimazation, currently investigate)
+- Vector database collision store | Currently Adding
+- Multiple Waypoint ?
+
 """
 
 import os
@@ -35,20 +40,20 @@ class DevPlanner():
         self.robot = robot
         self.taskMapObs = taskMapObs
 
-        self.xMinRange = -np.pi/2
-        self.xMaxRange = np.pi/2
-        self.yMinRange = -np.pi/2
-        self.yMaxRange = np.pi/2
-        self.zMinRange = -np.pi/2
-        self.zMaxRange = np.pi/2
-        self.pMinRange = -np.pi/2
-        self.pMaxRange = np.pi/2
-        self.qMinRange = -np.pi/2
-        self.qMaxRange = np.pi/2
-        self.rMinRange = -np.pi/2
-        self.rMaxRange = np.pi/2
+        self.xMinRange = 0
+        self.xMaxRange = np.pi
+        self.yMinRange = -np.pi
+        self.yMaxRange = np.pi
+        self.zMinRange = -np.pi
+        self.zMaxRange = np.pi
+        self.pMinRange = -np.pi
+        self.pMaxRange = np.pi
+        self.qMinRange = -np.pi
+        self.qMaxRange = np.pi
+        self.rMinRange = -np.pi
+        self.rMaxRange = np.pi
 
-        self.probabilityGoalBias = 0.2
+        self.probabilityGoalBias = 0.4
         self.xStart = Node(xStart[0, 0], xStart[1, 0], xStart[2, 0], xStart[3, 0], xStart[4, 0], xStart[5, 0])
         self.xGoal = Node(xGoal[0, 0], xGoal[1, 0], xGoal[2, 0], xGoal[3, 0], xGoal[4, 0], xGoal[5, 0])
         self.xApp = Node(xApp[0, 0], xApp[1, 0], xApp[2, 0], xApp[3, 0], xApp[4, 0], xApp[5, 0])
@@ -61,6 +66,9 @@ class DevPlanner():
         self.nearStart = None
         self.nearGoal = None
 
+        # collision database
+        self.configSearched = []
+        self.collisionState = []
 
     def planning(self):
         for itera in range(self.maxIteration):
@@ -83,7 +91,8 @@ class DevPlanner():
                 self.treeVertexGoal.append(xNewGoal)
 
             if self.if_both_tree_node_near():
-                break
+                if self.is_connect_config_possible(self.nearStart, self.nearGoal):
+                    break
 
     def search_path(self):
         pathStart = [self.nearStart]
@@ -164,7 +173,12 @@ class DevPlanner():
             for eachVertexGoal in self.treeVertexGoal:
                 distX = eachVertexStart.x - eachVertexGoal.x
                 distY = eachVertexStart.y - eachVertexGoal.y
-                if np.linalg.norm([distX, distY]) < self.eta:
+                distZ = eachVertexStart.z - eachVertexGoal.z
+                distP = eachVertexStart.p - eachVertexGoal.p
+                distQ = eachVertexStart.q - eachVertexGoal.q
+                distR = eachVertexStart.r - eachVertexGoal.r
+                dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
+                if dist < self.eta:
                     self.nearStart = eachVertexStart
                     self.nearGoal = eachVertexGoal
                     return True
@@ -172,8 +186,7 @@ class DevPlanner():
     
     def is_config_in_collision(self, xNew):
         theta = np.array([xNew.x, xNew.y, xNew.z, xNew.p, xNew.q, xNew.r]).reshape(6, 1)
-        linkPose = robot.forward_kinematic(theta, return_link_pos=True)
-        print(f"==>> linkPose: \n{linkPose}")
+        linkPose = self.robot.forward_kinematic(theta, return_link_pos=True)
         linearm1 = ObjLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
         linearm2 = ObjLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
         linearm3 = ObjLine2D(linkPose[2][0], linkPose[2][1], linkPose[3][0], linkPose[3][1])
@@ -181,19 +194,31 @@ class DevPlanner():
         linearm5 = ObjLine2D(linkPose[4][0], linkPose[4][1], linkPose[5][0], linkPose[5][1])
         linearm6 = ObjLine2D(linkPose[5][0], linkPose[5][1], linkPose[6][0], linkPose[6][1])
 
+        # add collsion state to database
+        self.configSearched.append(xNew)
+
         for obs in self.taskMapObs:
             if intersect_line_v_rectangle(linearm1, obs):
+                self.collisionState.append(True)
                 return True
             if intersect_line_v_rectangle(linearm2, obs):
+                self.collisionState.append(True)
                 return True
             if intersect_line_v_rectangle(linearm3, obs):
+                self.collisionState.append(True)
                 return True
             if intersect_line_v_rectangle(linearm4, obs):
+                self.collisionState.append(True)
                 return True
             if intersect_line_v_rectangle(linearm5, obs):
+                self.collisionState.append(True)
                 return True
             if intersect_line_v_rectangle(linearm6, obs):
+                self.collisionState.append(True)
                 return True
+
+        self.collisionState.append(False)
+
         return False
 
     def is_connect_config_possible(self, xNearest, xNew):
@@ -229,6 +254,8 @@ if __name__ == "__main__":
     from planner_util.extract_path_class import extract_path_class_6d
     import matplotlib.pyplot as plt
     from taskmap_obs import two_near_ee
+    from planner_util.plot_util import plot_joint_6d
+    from scipy.optimize import curve_fit
 
     robot = PlanarSixDof()
 
@@ -246,36 +273,52 @@ if __name__ == "__main__":
         obs.plot()
     plt.show()
 
-    planner = DevPlanner(robot, obsList, thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=3000)
-    t1 = np.linspace(0,np.pi/2,100)
-    print(f"==>> t1: \n{t1}")
+    planner = DevPlanner(robot, obsList, thetaInit, thetaApp, thetaGoal, eta=0.5, maxIteration=1000)
+    planner.planning()
+    print(planner.configSearched)
+    print(planner.collisionState)
+    path = planner.search_path()
+    pathX, pathY, pathZ, pathP, pathQ, pathR = extract_path_class_6d(path)
+
+    # plot after planning
     fig2, ax2 = plt.subplots()
     ax2.set_aspect("equal")
     ax2.set_title("After Planning Plot")
     for obs in obsList:
         obs.plot()
-    for i in range(t1.shape[0]):
-        xnew = Node(i,0,0,0,0,0)
-        status = planner.is_config_in_collision(xnew)
-        print(f"==>> status: \n{status}")
-        robot.plot_arm(np.array([t1[i],0,0,0,0,0]).reshape(6, 1), plt_axis=ax2)
+    robot.plot_arm(thetaInit, plt_axis=ax2)
+    for i in range(len(path)):
+        robot.plot_arm(np.array([pathX[i], pathY[i], pathZ[i], pathP[i], pathQ[i], pathR[i]]).reshape(6, 1), plt_axis=ax2)
         plt.pause(1)
     plt.show()
 
 
+    time = np.linspace(0, 1, len(pathX))
 
-    # planner.planning()
-    # path = planner.search_path()
-    # pathX, pathY, pathZ, pathP, pathQ, pathR = extract_path_class_6d(path)
+    def quintic5deg(x, a, b, c, d, e, f):
+        return a*x**5 + b*x**4 + c*x**3 + d*x**2 + e*x * f
 
+    # Fit the line equation
+    poptX, pcovX = curve_fit(quintic5deg, time, pathX)
+    poptY, pcovY = curve_fit(quintic5deg, time, pathY)
+    poptZ, pcovZ = curve_fit(quintic5deg, time, pathZ)
+    poptP, pcovP = curve_fit(quintic5deg, time, pathP)
+    poptQ, pcovQ = curve_fit(quintic5deg, time, pathQ)
+    poptR, pcovR = curve_fit(quintic5deg, time, pathR)
+
+    timeSmooth = np.linspace(0,1,100)
     # plot after planning
-    # fig2, ax2 = plt.subplots()
-    # ax2.set_aspect("equal")
-    # ax2.set_title("After Planning Plot")
-    # for obs in obsList:
-    #     obs.plot()
-    # robot.plot_arm(thetaInit, plt_axis=ax2)
-    # for i in range(len(path)):
-    #     robot.plot_arm(np.array([pathX[i], pathY[i], pathZ[i], pathP[i], pathQ[i], pathR[i]]).reshape(6, 1), plt_axis=ax2)
-    #     plt.pause(1)
-    # plt.show()
+    fig3, ax3 = plt.subplots()
+    ax3.set_aspect("equal")
+    ax3.set_title("After Planning Plot")
+    for obs in obsList:
+        obs.plot()
+    for i in range(timeSmooth.shape[0]):
+        robot.plot_arm(np.array([quintic5deg(timeSmooth[i], *poptX),
+                                 quintic5deg(timeSmooth[i], *poptY),
+                                 quintic5deg(timeSmooth[i], *poptZ),
+                                 quintic5deg(timeSmooth[i], *poptP),
+                                 quintic5deg(timeSmooth[i], *poptQ),
+                                 quintic5deg(timeSmooth[i], *poptR)]).reshape(6, 1), plt_axis=ax3)
+        plt.pause(1)
+    plt.show()

@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-# Create a figure and axis
 fig, ax = plt.subplots()
 
 # Create a line plot with initial data

@@ -12,7 +12,7 @@ from config_space_2d.generate_config_planar_rrr import configuration_generate_pl
 from robot.planar_rrr import PlanarRRR
 from planner_util.coord_transform import circle_plt, polar2cats
 from map.mapclass import map_val, map_vec
-from planner.ready.rrt_2D.rrtstar_costmap_biassampling3d import rrt_star
+from planner.ready.rrtstar_costmap_biassampling3d import rrt_star
 from planner_util.extract_path_class import extract_path_class_3d
 
 # create robot instance

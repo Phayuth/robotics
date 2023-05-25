@@ -15,7 +15,8 @@ from collision_check_geometry import collision_class
 def two_near_ee():
     rec1 = collision_class.ObjRec(x=1.5, y=1.25, h=0.2, w=1, p=1)
     rec2 = collision_class.ObjRec(x=1.5, y=0.5, h=0.2, w=1, p=1)
-    list_obs = [rec1, rec2]
+    rec3 = collision_class.ObjRec(x=-1, y=0, h=1, w=0.5, p=1)
+    list_obs = [rec1, rec2, rec3]
     return list_obs
 
 

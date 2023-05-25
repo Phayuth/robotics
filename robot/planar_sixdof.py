@@ -20,43 +20,35 @@ class PlanarSixDof:
         theta6 = theta[5, 0]
 
         if return_link_pos:
-            link_end_pose = []
 
             x0 = 0
             y0 = 0
-            link_end_pose.append([x0, y0])
 
             # link 1 pose
             x1 = x0 + self.a1 * np.cos(theta1)
             y1 = y0 + self.a1 * np.sin(theta1)
-            link_end_pose.append([x1, y1])
 
             # link 2 pose
             x2 = x1 + self.a2 * np.cos(theta1 + theta2)
             y2 = y1 + self.a2 * np.sin(theta1 + theta2)
-            link_end_pose.append([x2, y2])
 
             # link 3 pose
             x3 = x2 + self.a3 * np.cos(theta1 + theta2 + theta3)
             y3 = y2 + self.a3 * np.sin(theta1 + theta2 + theta3)
-            link_end_pose.append([x3, y3])
 
             # link 4 pose
             x4 = x3 + self.a4 * np.cos(theta1 + theta2 + theta3 + theta4)
             y4 = y3 + self.a4 * np.sin(theta1 + theta2 + theta3 + theta4)
-            link_end_pose.append([x4, y4])
 
             # link 5 pose
             x5 = x4 + self.a5 * np.cos(theta1 + theta2 + theta3 + theta4 + theta5)
             y5 = y4 + self.a5 * np.sin(theta1 + theta2 + theta3 + theta4 + theta5)
-            link_end_pose.append([x5, y5])
 
             # link 6 pose
             x6 = x5 + self.a6 * np.cos(theta1 + theta2 + theta3 + theta4 + theta5 + theta6)
             y6 = y5 + self.a6 * np.sin(theta1 + theta2 + theta3 + theta4 + theta5 + theta6)
-            link_end_pose.append([x6, y6])
 
-            return link_end_pose
+            return [[x0,y0],[x1,y1],[x2,y2],[x3,y3],[x4,y4],[x5,y5],[x6,y6]]
 
         else:
 

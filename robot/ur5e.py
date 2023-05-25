@@ -265,7 +265,7 @@ class UR5e:
 
         return theta
 
-    def plot_arm(self, theta, plt_basis=False, plt_show=False, ax=None):
+    def plot_arm(self, theta, plt_basis=False, ax=None):
         A1 = self.dh_transformation(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
         A2 = self.dh_transformation(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
         A3 = self.dh_transformation(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
@@ -296,6 +296,3 @@ class UR5e:
         ax.set_xlabel('X')
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
-
-        if plt_show:
-            plt.show()
