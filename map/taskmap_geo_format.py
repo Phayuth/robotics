@@ -78,14 +78,9 @@ if __name__ == "__main__":
     plt.axvline(x=0, c="green")
     plt.axhline(y=0, c="green")
 
-    listTask = [task_rectangle_obs_1(),
-                task_rectangle_obs_2(),
-                task_rectangle_obs_3(),
-                task_rectangle_obs_4(),
-                task_rectangle_obs_5(),
+    listTask = [
                 task_rectangle_obs_6(),
-                task_rectangle_obs_7(),
-                task_rectangle_obs_8()]
+]
     
     for task in listTask:
         for obs in task:
