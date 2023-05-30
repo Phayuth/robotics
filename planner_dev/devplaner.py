@@ -17,7 +17,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle
+from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle, intersect_line_v_line
 
 
 class Node:
@@ -53,6 +53,9 @@ class DevPlanner():
         self.rMinRange = -np.pi
         self.rMaxRange = np.pi
 
+        # new concept by descritize all
+        self.range = np.linspace(-np.pi, np.pi, 360)
+
         self.probabilityGoalBias = 0.4
         self.xStart = Node(xStart[0, 0], xStart[1, 0], xStart[2, 0], xStart[3, 0], xStart[4, 0], xStart[5, 0])
         self.xGoal = Node(xGoal[0, 0], xGoal[1, 0], xGoal[2, 0], xGoal[3, 0], xGoal[4, 0], xGoal[5, 0])
@@ -73,11 +76,12 @@ class DevPlanner():
     def planning(self):
         for itera in range(self.maxIteration):
             print(itera)
-            xRand = self.bias_sampling()
-            xNearestStart = self.nearest_node(self.treeVertexStart, xRand)
-            xNearestGoal = self.nearest_node(self.treeVertexGoal, xRand)
-            xNewStart = self.steer(xNearestStart, xRand)
-            xNewGoal = self.steer(xNearestGoal, xRand)
+            xRandStart = self.bias_sampling(self.xGoal)
+            xRandGoal = self.bias_sampling(self.xStart)
+            xNearestStart = self.nearest_node(self.treeVertexStart, xRandStart)
+            xNearestGoal = self.nearest_node(self.treeVertexGoal, xRandGoal)
+            xNewStart = self.steer(xNearestStart, xRandStart)
+            xNewGoal = self.steer(xNearestGoal, xRandGoal)
             xNewStart.parent = xNearestStart
             xNewGoal.parent = xNearestGoal
             if self.is_config_in_collision(xNewStart) or self.is_connect_config_possible(xNearestStart, xNewStart):
@@ -90,11 +94,25 @@ class DevPlanner():
             else:
                 self.treeVertexGoal.append(xNewGoal)
 
-            if self.if_both_tree_node_near():
-                if self.is_connect_config_possible(self.nearStart, self.nearGoal):
-                    break
+            # if self.if_both_tree_node_near():
+            #     if self.is_connect_config_possible(self.nearStart, self.nearGoal):
+            #         break
 
     def search_path(self):
+        # Search for the 2 nearest node of the 2 trees
+        for eachVertexStart in self.treeVertexStart:
+            for eachVertexGoal in self.treeVertexGoal:
+                distX = eachVertexStart.x - eachVertexGoal.x
+                distY = eachVertexStart.y - eachVertexGoal.y
+                distZ = eachVertexStart.z - eachVertexGoal.z
+                distP = eachVertexStart.p - eachVertexGoal.p
+                distQ = eachVertexStart.q - eachVertexGoal.q
+                distR = eachVertexStart.r - eachVertexGoal.r
+                distMinCandidate = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
+                if np.linalg.norm([distX, distY, distZ, distP, distQ, distR]) <= distMinCandidate:
+                    self.nearStart = eachVertexStart
+                    self.nearGoal = eachVertexGoal
+
         pathStart = [self.nearStart]
         currentNodeStart = self.nearStart
         while currentNodeStart != self.xStart:
@@ -113,18 +131,26 @@ class DevPlanner():
         return path
     
     def uni_sampling(self):
-        x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
-        y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
-        z = np.random.uniform(low=self.zMinRange, high=self.zMaxRange)
-        p = np.random.uniform(low=self.pMinRange, high=self.pMaxRange)
-        q = np.random.uniform(low=self.qMinRange, high=self.qMaxRange)
-        r = np.random.uniform(low=self.rMinRange, high=self.rMaxRange)
+        # x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
+        # y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
+        # z = np.random.uniform(low=self.zMinRange, high=self.zMaxRange)
+        # p = np.random.uniform(low=self.pMinRange, high=self.pMaxRange)
+        # q = np.random.uniform(low=self.qMinRange, high=self.qMaxRange)
+        # r = np.random.uniform(low=self.rMinRange, high=self.rMaxRange)
+
+        x = self.range[np.random.randint(low=0, high=360)]
+        y = self.range[np.random.randint(low=0, high=360)]
+        z = self.range[np.random.randint(low=0, high=360)]
+        p = self.range[np.random.randint(low=0, high=360)]
+        q = self.range[np.random.randint(low=0, high=360)]
+        r = self.range[np.random.randint(low=0, high=360)]
+
         xRand = Node(x, y, z, p, q, r)
         return xRand
     
-    def bias_sampling(self):
+    def bias_sampling(self, biasTowardNode):
         if np.random.uniform(low=0, high=1.0) < self.probabilityGoalBias:
-            xRand = Node(self.xGoal.x, self.xGoal.y, self.xGoal.z, self.xGoal.p, self.xGoal.q, self.xGoal.r)
+            xRand = biasTowardNode
         else:
             xRand = self.uni_sampling()
         return xRand
@@ -194,28 +220,17 @@ class DevPlanner():
         linearm5 = ObjLine2D(linkPose[4][0], linkPose[4][1], linkPose[5][0], linkPose[5][1])
         linearm6 = ObjLine2D(linkPose[5][0], linkPose[5][1], linkPose[6][0], linkPose[6][1])
 
+        link = [linearm1, linearm2, linearm3, linearm4, linearm5, linearm6]
+
         # add collsion state to database
         self.configSearched.append(xNew)
 
+        # obstacle collision
         for obs in self.taskMapObs:
-            if intersect_line_v_rectangle(linearm1, obs):
-                self.collisionState.append(True)
-                return True
-            if intersect_line_v_rectangle(linearm2, obs):
-                self.collisionState.append(True)
-                return True
-            if intersect_line_v_rectangle(linearm3, obs):
-                self.collisionState.append(True)
-                return True
-            if intersect_line_v_rectangle(linearm4, obs):
-                self.collisionState.append(True)
-                return True
-            if intersect_line_v_rectangle(linearm5, obs):
-                self.collisionState.append(True)
-                return True
-            if intersect_line_v_rectangle(linearm6, obs):
-                self.collisionState.append(True)
-                return True
+            for i in range(len(link)):
+                if intersect_line_v_rectangle(link[i], obs):
+                    self.collisionState.append(True)
+                    return True
 
         self.collisionState.append(False)
 
@@ -273,10 +288,8 @@ if __name__ == "__main__":
         obs.plot()
     plt.show()
 
-    planner = DevPlanner(robot, obsList, thetaInit, thetaApp, thetaGoal, eta=0.5, maxIteration=1000)
+    planner = DevPlanner(robot, obsList, thetaInit, thetaApp, thetaGoal, eta=0.3, maxIteration=1000)
     planner.planning()
-    print(planner.configSearched)
-    print(planner.collisionState)
     path = planner.search_path()
     pathX, pathY, pathZ, pathP, pathQ, pathR = extract_path_class_6d(path)
 
