@@ -44,7 +44,7 @@ with Client() as client:
             currentStep=client.stepCounter
             sim.simxSynchronousTrigger(client.id);
             while client.stepCounter==currentStep:
-                retCode,s=sim.simxGetIntegerSignal(client.id,client.intSignalName,sim.simx_opmode_buffer)
+                retCode,s=sim.simxGetInt32Signal(client.id,client.intSignalName,sim.simx_opmode_buffer)
                 if retCode==sim.simx_return_ok:
                     client.stepCounter=s
 
@@ -84,7 +84,7 @@ with Client() as client:
             return velocity
         
          # Start streaming client.intSignalName integer signal, that signals when a step is finished:
-        sim.simxGetIntegerSignal(client.id,client.intSignalName,sim.simx_opmode_streaming)
+        sim.simxGetInt32Signal(client.id,client.intSignalName,sim.simx_opmode_streaming)
         
         res,client.jointHandle=sim.simxGetObjectHandle(client.id,'/Cuboid[0]/joint',sim.simx_opmode_blocking)
         res,client.jointAngle=sim.simxGetJointPosition(client.id,client.jointHandle,sim.simx_opmode_blocking)

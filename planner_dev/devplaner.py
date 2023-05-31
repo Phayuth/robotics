@@ -1,8 +1,9 @@
 """ Path Planning Development for 6 dof robot
 - Main:    RRT            |   Added
 - Variant: Bi Directional |   Added
-- Goal Rejection          |   Currently Adding
+- Goal Rejection          |   Added (Must Improve)
 - Sampling : Bias         |   Added
+- Sampling : Smart        |   Currently Adding
 - Pruning                 |   Currently Adding
 - Point Informed Resampling Optimization | Currently Adding (More or Less like STOMP optimazation, currently investigate)
 - Vector database collision store | Currently Adding
@@ -16,8 +17,9 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
+import time
 import numpy as np
-from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle, intersect_line_v_line
+from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle
 
 
 class Node:
@@ -32,6 +34,8 @@ class Node:
         self.parent = parent
         self.cost = cost
 
+    def __repr__(self) -> str:
+        return f'[config = [{self.x}, {self.y}, {self.z}, {self.p}, {self.q}, {self.r}]]\n'
 
 class DevPlanner():
 
@@ -65,7 +69,8 @@ class DevPlanner():
         self.maxIteration = maxIteration
         self.eta = eta
         self.treeVertexStart = [self.xStart]
-        self.treeVertexGoal = [self.xGoal]
+        # self.treeVertexGoal = [self.xGoal]
+        self.treeVertexGoal = [self.xApp]
         self.nearStart = None
         self.nearGoal = None
 
@@ -73,10 +78,25 @@ class DevPlanner():
         self.configSearched = []
         self.collisionState = []
 
+        # performance matrix
+        self.perfMatrix = {
+            "totalPlanningTime": 0.0,  # include KCD
+            "KCDTimeSpend": 0.0,
+            "planningTimeOnly":0.0,
+            "numberOfKCD": 0,
+            "avgKCDTime": 0.0,
+            "numberOfNodeTreeStart": 0,
+            "numberOfNoneTreeGoal" : 0, 
+            "numberOfNode": 0,
+            "numberOfIteration": 0,
+            "searchPathTime": 0.0,
+        }
+
     def planning(self):
+        timePlanningStart = time.perf_counter_ns()
         for itera in range(self.maxIteration):
             print(itera)
-            xRandStart = self.bias_sampling(self.xGoal)
+            xRandStart = self.bias_sampling(self.xApp)
             xRandGoal = self.bias_sampling(self.xStart)
             xNearestStart = self.nearest_node(self.treeVertexStart, xRandStart)
             xNearestGoal = self.nearest_node(self.treeVertexGoal, xRandGoal)
@@ -84,6 +104,11 @@ class DevPlanner():
             xNewGoal = self.steer(xNearestGoal, xRandGoal)
             xNewStart.parent = xNearestStart
             xNewGoal.parent = xNearestGoal
+
+            if self.if_config_in_region_of_config(xNewGoal, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestStart, xNewStart, self.xGoal, radius=0.4):
+                if self.if_config_in_region_of_config(xNewStart, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestGoal, xNewGoal, self.xGoal, radius=0.4):
+                    continue
+
             if self.is_config_in_collision(xNewStart) or self.is_connect_config_possible(xNearestStart, xNewStart):
                 continue
             else:
@@ -98,8 +123,29 @@ class DevPlanner():
             #     if self.is_connect_config_possible(self.nearStart, self.nearGoal):
             #         break
 
+        timePlanningEnd = time.perf_counter_ns()
+
+        timeSearchStart = time.perf_counter_ns()
+        path = self.search_path()
+        timeSearchEnd = time.perf_counter_ns()
+
+        # record performance
+        self.perfMatrix["totalPlanningTime"] = (timePlanningEnd-timePlanningStart) * 1e-9
+        self.perfMatrix["KCDTimeSpend"] = self.perfMatrix["KCDTimeSpend"] * 1e-9
+        self.perfMatrix["planningTimeOnly"] = self.perfMatrix["totalPlanningTime"] - self.perfMatrix["KCDTimeSpend"]
+        self.perfMatrix["numberOfKCD"] = len(self.configSearched)
+        self.perfMatrix["avgKCDTime"] = self.perfMatrix["KCDTimeSpend"] * 1e-9 / self.perfMatrix["numberOfKCD"]
+        self.perfMatrix["numberOfNodeTreeStart"] = len(self.treeVertexStart)
+        self.perfMatrix["numberOfNodeTreeGoal"] = len(self.treeVertexGoal)
+        self.perfMatrix["numberOfNode"] = len(self.treeVertexGoal) + len(self.treeVertexStart)
+        self.perfMatrix["numberOfIteration"] = self.maxIteration
+        self.perfMatrix["searchPathTime"] = (timeSearchEnd-timeSearchStart) * 1e-9
+
+        return path
+
     def search_path(self):
         # Search for the 2 nearest node of the 2 trees
+        distMinCandidate = float('inf')
         for eachVertexStart in self.treeVertexStart:
             for eachVertexGoal in self.treeVertexGoal:
                 distX = eachVertexStart.x - eachVertexGoal.x
@@ -108,8 +154,9 @@ class DevPlanner():
                 distP = eachVertexStart.p - eachVertexGoal.p
                 distQ = eachVertexStart.q - eachVertexGoal.q
                 distR = eachVertexStart.r - eachVertexGoal.r
-                distMinCandidate = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
-                if np.linalg.norm([distX, distY, distZ, distP, distQ, distR]) <= distMinCandidate:
+                dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
+                if dist <= distMinCandidate:
+                    distMinCandidate = dist
                     self.nearStart = eachVertexStart
                     self.nearGoal = eachVertexGoal
 
@@ -121,15 +168,15 @@ class DevPlanner():
 
         pathGoal = [self.nearGoal]
         currentNodeGoal = self.nearGoal
-        while currentNodeGoal != self.xGoal:
+        while currentNodeGoal != self.xApp:
             currentNodeGoal = currentNodeGoal.parent
             pathGoal.append(currentNodeGoal)
 
         pathStart.reverse()
-        path = pathStart + pathGoal
+        path = pathStart + pathGoal + [self.xGoal]
 
         return path
-    
+
     def uni_sampling(self):
         # x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
         # y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
@@ -147,7 +194,7 @@ class DevPlanner():
 
         xRand = Node(x, y, z, p, q, r)
         return xRand
-    
+
     def bias_sampling(self, biasTowardNode):
         if np.random.uniform(low=0, high=1.0) < self.probabilityGoalBias:
             xRand = biasTowardNode
@@ -209,8 +256,50 @@ class DevPlanner():
                     self.nearGoal = eachVertexGoal
                     return True
         return False
-    
+
+    def if_config_in_region_of_config(self, xToCheck, xCenter, radius=None):
+        if radius is None:
+            radius = self.eta
+        distX = xToCheck.x - xCenter.x
+        distY = xToCheck.y - xCenter.y
+        distZ = xToCheck.z - xCenter.z
+        distP = xToCheck.p - xCenter.p
+        distQ = xToCheck.q - xCenter.q
+        distR = xToCheck.r - xCenter.r
+        dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
+        if dist < radius:
+            return True
+        return False
+
+    def is_connect_config_in_region_of_config(self, xToCheckStart, xToCheckEnd, xCenter, radius=None, NumSeg=10):
+        if radius is None:
+            radius = self.eta
+        distX = xToCheckStart.x - xToCheckEnd.x
+        distY = xToCheckStart.y - xToCheckEnd.y
+        distZ = xToCheckStart.z - xToCheckEnd.z
+        distP = xToCheckStart.p - xToCheckEnd.p
+        distQ = xToCheckStart.q - xToCheckEnd.q
+        distR = xToCheckStart.r - xToCheckEnd.r
+        rateX = distX / NumSeg
+        rateY = distY / NumSeg
+        rateZ = distZ / NumSeg
+        rateP = distP / NumSeg
+        rateQ = distQ / NumSeg
+        rateR = distR / NumSeg
+        for i in range(1, NumSeg - 1):
+            newX = xToCheckStart.x + (rateX*i)
+            newY = xToCheckStart.y + (rateY*i)
+            newZ = xToCheckStart.z + (rateZ*i)
+            newP = xToCheckStart.p + (rateP*i)
+            newQ = xToCheckStart.q + (rateQ*i)
+            newR = xToCheckStart.r + (rateR*i)
+            xNew = Node(newX, newY, newZ, newP, newQ, newR)
+            if self.if_config_in_region_of_config(xNew, xCenter, radius):
+                return True
+        return False
+
     def is_config_in_collision(self, xNew):
+        timeStartKCD = time.perf_counter_ns()
         theta = np.array([xNew.x, xNew.y, xNew.z, xNew.p, xNew.q, xNew.r]).reshape(6, 1)
         linkPose = self.robot.forward_kinematic(theta, return_link_pos=True)
         linearm1 = ObjLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
@@ -232,31 +321,33 @@ class DevPlanner():
                     self.collisionState.append(True)
                     return True
 
+        timeEndKCD = time.perf_counter_ns()
+        self.perfMatrix["KCDTimeSpend"] += timeEndKCD - timeStartKCD
+
         self.collisionState.append(False)
 
         return False
 
-    def is_connect_config_possible(self, xNearest, xNew):
+    def is_connect_config_possible(self, xNearest, xNew, NumSeg=10):
         distX = xNew.x - xNearest.x
         distY = xNew.y - xNearest.y
         distZ = xNew.z - xNearest.z
         distP = xNew.p - xNearest.p
         distQ = xNew.q - xNearest.q
         distR = xNew.r - xNearest.r
-        desiredStep = 10
-        rateX = distX / desiredStep
-        rateY = distY / desiredStep
-        rateZ = distZ / desiredStep
-        rateP = distP / desiredStep
-        rateQ = distQ / desiredStep
-        rateR = distR / desiredStep
-        for i in range(1, desiredStep - 1):
-            newX = xNearest.x + (rateX * i)
-            newY = xNearest.y + (rateY * i)
-            newZ = xNearest.z + (rateZ * i)
-            newP = xNearest.p + (rateP * i)
-            newQ = xNearest.q + (rateQ * i)
-            newR = xNearest.r + (rateR * i)
+        rateX = distX / NumSeg
+        rateY = distY / NumSeg
+        rateZ = distZ / NumSeg
+        rateP = distP / NumSeg
+        rateQ = distQ / NumSeg
+        rateR = distR / NumSeg
+        for i in range(1, NumSeg - 1):
+            newX = xNearest.x + (rateX*i)
+            newY = xNearest.y + (rateY*i)
+            newZ = xNearest.z + (rateZ*i)
+            newP = xNearest.p + (rateP*i)
+            newQ = xNearest.q + (rateQ*i)
+            newR = xNearest.r + (rateR*i)
             xNew = Node(newX, newY, newZ, newP, newQ, newR)
             if self.is_config_in_collision(xNew):
                 return True
@@ -274,9 +365,9 @@ if __name__ == "__main__":
 
     robot = PlanarSixDof()
 
-    thetaInit = np.array([0,0,0,0,0,0]).reshape(6,1)
-    thetaGoal = np.array([1,0,0,0,0,0]).reshape(6,1)
-    thetaApp = np.array([0,0,0,0,0,0]).reshape(6,1)
+    thetaInit = np.array([0, 0, 0, 0, 0, 0]).reshape(6, 1)
+    thetaGoal = np.array([1, 0, 0, 0, 0, 0]).reshape(6, 1)
+    thetaApp = np.array([1, 0, 0, 0, 0, 0]).reshape(6, 1)
     obsList = two_near_ee()
 
     # plot pre planning
@@ -289,8 +380,8 @@ if __name__ == "__main__":
     plt.show()
 
     planner = DevPlanner(robot, obsList, thetaInit, thetaApp, thetaGoal, eta=0.3, maxIteration=1000)
-    planner.planning()
-    path = planner.search_path()
+    path = planner.planning()
+    print(planner.perfMatrix)
     pathX, pathY, pathZ, pathP, pathQ, pathR = extract_path_class_6d(path)
 
     # plot after planning
@@ -305,11 +396,11 @@ if __name__ == "__main__":
         plt.pause(1)
     plt.show()
 
-
+    # Optimization stage, I want to fit the current theta to time and use that information to inform sampling
     time = np.linspace(0, 1, len(pathX))
 
     def quintic5deg(x, a, b, c, d, e, f):
-        return a*x**5 + b*x**4 + c*x**3 + d*x**2 + e*x * f
+        return a * x**5 + b * x**4 + c * x**3 + d * x**2 + e*x*f
 
     # Fit the line equation
     poptX, pcovX = curve_fit(quintic5deg, time, pathX)
@@ -319,7 +410,7 @@ if __name__ == "__main__":
     poptQ, pcovQ = curve_fit(quintic5deg, time, pathQ)
     poptR, pcovR = curve_fit(quintic5deg, time, pathR)
 
-    timeSmooth = np.linspace(0,1,100)
+    timeSmooth = np.linspace(0, 1, 100)
     # plot after planning
     fig3, ax3 = plt.subplots()
     ax3.set_aspect("equal")
@@ -333,5 +424,5 @@ if __name__ == "__main__":
                                  quintic5deg(timeSmooth[i], *poptP),
                                  quintic5deg(timeSmooth[i], *poptQ),
                                  quintic5deg(timeSmooth[i], *poptR)]).reshape(6, 1), plt_axis=ax3)
-        plt.pause(1)
+        plt.pause(0.1)
     plt.show()
