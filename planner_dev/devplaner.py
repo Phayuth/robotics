@@ -1,7 +1,8 @@
 """ Path Planning Development for 6 dof robot
 - Main:    RRT            |   Added
 - Variant: Bi Directional |   Added
-- Goal Rejection          |   Added (Must Improve)
+- Variant: RRT Connect    |   Added https://github.com/zhm-real/PathPlanning/blob/master/Sampling_based_Planning/rrt_2D/rrt_connect.py
+- Goal Rejection          |   Added (Must Improve) to BIdirection not to RRT Connect yet
 - Sampling : Bias         |   Added
 - Sampling : Smart        |   Currently Adding
 - Pruning                 |   Currently Adding
@@ -91,40 +92,13 @@ class DevPlanner():
             "numberOfIteration": 0,
             "searchPathTime": 0.0,
             "numberOfPath" : 0,
-            "numberOfPathPruned":0
+            "numberOfPathPruned": 0
         }
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
-        for itera in range(self.maxIteration):
-            print(itera)
-            xRandStart = self.bias_sampling(self.xApp)
-            xRandGoal = self.bias_sampling(self.xStart)
-            xNearestStart = self.nearest_node(self.treeVertexStart, xRandStart)
-            xNearestGoal = self.nearest_node(self.treeVertexGoal, xRandGoal)
-            xNewStart = self.steer(xNearestStart, xRandStart)
-            xNewGoal = self.steer(xNearestGoal, xRandGoal)
-            xNewStart.parent = xNearestStart
-            xNewGoal.parent = xNearestGoal
-
-            if self.if_config_in_region_of_config(xNewGoal, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestStart, xNewStart, self.xGoal, radius=0.4):
-                if self.if_config_in_region_of_config(xNewStart, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestGoal, xNewGoal, self.xGoal, radius=0.4):
-                    continue
-
-            if self.is_config_in_collision(xNewStart) or self.is_connect_config_in_collision(xNearestStart, xNewStart):
-                continue
-            else:
-                self.treeVertexStart.append(xNewStart)
-
-            if self.is_config_in_collision(xNewGoal) or self.is_connect_config_in_collision(xNearestGoal, xNewGoal):
-                continue
-            else:
-                self.treeVertexGoal.append(xNewGoal)
-
-            # if self.if_both_tree_node_near():
-            #     if self.is_connect_config_in_collision(self.nearStart, self.nearGoal):
-            #         break
-
+        # self.generic_bidirectional()
+        self.rrt_connect()
         timePlanningEnd = time.perf_counter_ns()
 
         timeSearchStart = time.perf_counter_ns()
@@ -147,6 +121,68 @@ class DevPlanner():
         self.perfMatrix["numberOfPathPruned"] = len(pathPruned)
 
         return pathPruned
+
+    def generic_bidirectional(self):  # Method of Expanding toward Random Node (Generic Bidirectional)
+        for itera in range(self.maxIteration):
+            print(itera)
+            xRandStart = self.bias_sampling(self.xApp)
+            xRandGoal = self.bias_sampling(self.xStart)
+            xNearestStart = self.nearest_node(self.treeVertexStart, xRandStart)
+            xNearestGoal = self.nearest_node(self.treeVertexGoal, xRandGoal)
+            xNewStart = self.steer(xNearestStart, xRandStart)
+            xNewGoal = self.steer(xNearestGoal, xRandGoal)
+            xNewStart.parent = xNearestStart
+            xNewGoal.parent = xNearestGoal
+
+            # ingoal region rejection
+            if self.if_config_in_region_of_config(xNewGoal, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestStart, xNewStart, self.xGoal, radius=0.4):
+                if self.if_config_in_region_of_config(xNewStart, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestGoal, xNewGoal, self.xGoal, radius=0.4):
+                    continue
+
+            if self.is_config_in_collision(xNewStart) or self.is_connect_config_in_collision(xNearestStart, xNewStart):
+                continue
+            else:
+                self.treeVertexStart.append(xNewStart)
+
+            if self.is_config_in_collision(xNewGoal) or self.is_connect_config_in_collision(xNearestGoal, xNewGoal):
+                continue
+            else:
+                self.treeVertexGoal.append(xNewGoal)
+
+    def rrt_connect(self):  # Method of Expanding toward Each Other (RRT Connect)
+        for itera in range(self.maxIteration):
+            print(itera)
+            xRand = self.bias_sampling(self.xApp)
+            xNearest = self.nearest_node(self.treeVertexStart, xRand)
+            xNew = self.steer(xNearest, xRand)
+
+            if not self.is_config_in_collision(xNew) and not self.is_connect_config_in_collision(xNearest, xNew):
+                xNew.parent = xNearest
+                self.treeVertexStart.append(xNew)
+                xNearestPrime = self.nearest_node(self.treeVertexGoal, xNew)
+                xNewPrime = self.steer(xNearestPrime, xNew)
+
+                if not self.is_config_in_collision(xNewPrime) and not self.is_connect_config_in_collision(xNearestPrime, xNewPrime):
+                    xNewPrime.parent = xNearestPrime
+                    self.treeVertexGoal.append(xNewPrime)
+
+                    while True:
+                        xNewPPrime = self.steer(xNewPrime, xNew)
+
+                        if not self.is_config_in_collision(xNewPPrime) and not self.is_connect_config_in_collision(xNewPPrime, xNewPrime):
+                            xNewPPrime.parent = xNewPrime
+                            self.treeVertexGoal.append(xNewPPrime)
+                            xNewPrime = self.change_node(xNewPrime, xNewPPrime)
+                        else : break
+
+                        if self.distance_between_config(xNewPrime, xNew) <= self.eta : break
+
+                if self.distance_between_config(xNewPrime, xNew) <= self.eta : break
+
+            # Swap tree
+            tempHolder = self.treeVertexStart
+            self.treeVertexStart = self.treeVertexGoal
+            self.treeVertexGoal = tempHolder
 
     def search_path(self):
         # Search for the 2 nearest node of the 2 trees
@@ -191,20 +227,25 @@ class DevPlanner():
 
         return prunedPath
 
-    def uni_sampling(self):
-        # x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
-        # y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
-        # z = np.random.uniform(low=self.zMinRange, high=self.zMaxRange)
-        # p = np.random.uniform(low=self.pMinRange, high=self.pMaxRange)
-        # q = np.random.uniform(low=self.qMinRange, high=self.qMaxRange)
-        # r = np.random.uniform(low=self.rMinRange, high=self.rMaxRange)
+    def change_node(self, xNewPrime, xNewPPrime):
+        xNew = xNewPPrime
+        xNew.parent = xNewPrime
+        return xNew
 
-        x = self.range[np.random.randint(low=0, high=360)]
-        y = self.range[np.random.randint(low=0, high=360)]
-        z = self.range[np.random.randint(low=0, high=360)]
-        p = self.range[np.random.randint(low=0, high=360)]
-        q = self.range[np.random.randint(low=0, high=360)]
-        r = self.range[np.random.randint(low=0, high=360)]
+    def uni_sampling(self):
+        x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
+        y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
+        z = np.random.uniform(low=self.zMinRange, high=self.zMaxRange)
+        p = np.random.uniform(low=self.pMinRange, high=self.pMaxRange)
+        q = np.random.uniform(low=self.qMinRange, high=self.qMaxRange)
+        r = np.random.uniform(low=self.rMinRange, high=self.rMaxRange)
+
+        # x = self.range[np.random.randint(low=0, high=360)]
+        # y = self.range[np.random.randint(low=0, high=360)]
+        # z = self.range[np.random.randint(low=0, high=360)]
+        # p = self.range[np.random.randint(low=0, high=360)]
+        # q = self.range[np.random.randint(low=0, high=360)]
+        # r = self.range[np.random.randint(low=0, high=360)]
 
         xRand = Node(x, y, z, p, q, r)
         return xRand
