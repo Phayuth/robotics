@@ -5,9 +5,9 @@
 - Sampling : Bias         |   Added
 - Sampling : Smart        |   Currently Adding
 - Pruning                 |   Currently Adding
+- Multiple Waypoint       |   ?
 - Point Informed Resampling Optimization | Currently Adding (More or Less like STOMP optimazation, currently investigate)
-- Vector database collision store | Currently Adding
-- Multiple Waypoint ?
+- Vector database collision store        | Added but it is not good and slow
 
 """
 
@@ -82,14 +82,16 @@ class DevPlanner():
         self.perfMatrix = {
             "totalPlanningTime": 0.0,  # include KCD
             "KCDTimeSpend": 0.0,
-            "planningTimeOnly":0.0,
+            "planningTimeOnly": 0.0,
             "numberOfKCD": 0,
             "avgKCDTime": 0.0,
             "numberOfNodeTreeStart": 0,
-            "numberOfNoneTreeGoal" : 0, 
+            "numberOfNoneTreeGoal" : 0,
             "numberOfNode": 0,
             "numberOfIteration": 0,
             "searchPathTime": 0.0,
+            "numberOfPath" : 0,
+            "numberOfPathPruned":0
         }
 
     def planning(self):
@@ -109,24 +111,25 @@ class DevPlanner():
                 if self.if_config_in_region_of_config(xNewStart, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestGoal, xNewGoal, self.xGoal, radius=0.4):
                     continue
 
-            if self.is_config_in_collision(xNewStart) or self.is_connect_config_possible(xNearestStart, xNewStart):
+            if self.is_config_in_collision(xNewStart) or self.is_connect_config_in_collision(xNearestStart, xNewStart):
                 continue
             else:
                 self.treeVertexStart.append(xNewStart)
 
-            if self.is_config_in_collision(xNewGoal) or self.is_connect_config_possible(xNearestGoal, xNewGoal):
+            if self.is_config_in_collision(xNewGoal) or self.is_connect_config_in_collision(xNearestGoal, xNewGoal):
                 continue
             else:
                 self.treeVertexGoal.append(xNewGoal)
 
             # if self.if_both_tree_node_near():
-            #     if self.is_connect_config_possible(self.nearStart, self.nearGoal):
+            #     if self.is_connect_config_in_collision(self.nearStart, self.nearGoal):
             #         break
 
         timePlanningEnd = time.perf_counter_ns()
 
         timeSearchStart = time.perf_counter_ns()
         path = self.search_path()
+        pathPruned = self.prune_path(path)
         timeSearchEnd = time.perf_counter_ns()
 
         # record performance
@@ -140,22 +143,17 @@ class DevPlanner():
         self.perfMatrix["numberOfNode"] = len(self.treeVertexGoal) + len(self.treeVertexStart)
         self.perfMatrix["numberOfIteration"] = self.maxIteration
         self.perfMatrix["searchPathTime"] = (timeSearchEnd-timeSearchStart) * 1e-9
+        self.perfMatrix["numberOfPath"] = len(path)
+        self.perfMatrix["numberOfPathPruned"] = len(pathPruned)
 
-        return path
+        return pathPruned
 
     def search_path(self):
         # Search for the 2 nearest node of the 2 trees
         distMinCandidate = float('inf')
         for eachVertexStart in self.treeVertexStart:
             for eachVertexGoal in self.treeVertexGoal:
-                distX = eachVertexStart.x - eachVertexGoal.x
-                distY = eachVertexStart.y - eachVertexGoal.y
-                distZ = eachVertexStart.z - eachVertexGoal.z
-                distP = eachVertexStart.p - eachVertexGoal.p
-                distQ = eachVertexStart.q - eachVertexGoal.q
-                distR = eachVertexStart.r - eachVertexGoal.r
-                dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
-                if dist <= distMinCandidate:
+                if dist := self.distance_between_config(eachVertexStart, eachVertexGoal) <= distMinCandidate:
                     distMinCandidate = dist
                     self.nearStart = eachVertexStart
                     self.nearGoal = eachVertexGoal
@@ -176,6 +174,22 @@ class DevPlanner():
         path = pathStart + pathGoal + [self.xGoal]
 
         return path
+
+    def prune_path(self, initialPath):
+        prunedPath = [initialPath[0]]
+
+        for i in range(1, len(initialPath) - 1):
+            prevNode = prunedPath[-1]
+            nextNode = initialPath[i + 1]
+            dist = self.distance_between_config(prevNode, nextNode)
+            if self.is_connect_config_in_collision(prevNode, nextNode, NumSeg=int(dist / self.eta)):
+                continue
+            else:
+                prunedPath.append(initialPath[i])
+
+        prunedPath.append(initialPath[-1])
+
+        return prunedPath
 
     def uni_sampling(self):
         # x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
@@ -206,14 +220,7 @@ class DevPlanner():
         vertexList = []
 
         for eachVertex in treeVertex:
-            distX = xRand.x - eachVertex.x
-            distY = xRand.y - eachVertex.y
-            distZ = xRand.z - eachVertex.z
-            distP = xRand.p - eachVertex.p
-            distQ = xRand.q - eachVertex.q
-            distR = xRand.r - eachVertex.r
-            dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
-            vertexList.append(dist)
+            vertexList.append(self.distance_between_config(xRand, eachVertex))
 
         minIndex = np.argmin(vertexList)
         xNear = treeVertex[minIndex]
@@ -227,9 +234,8 @@ class DevPlanner():
         distP = xRand.p - xNearest.p
         distQ = xRand.q - xNearest.q
         distR = xRand.r - xNearest.r
-        dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
 
-        if dist <= self.eta:
+        if np.linalg.norm([distX, distY, distZ, distP, distQ, distR]) <= self.eta:
             xNew = xRand
         else:
             newX = self.eta * distX + xNearest.x
@@ -244,14 +250,7 @@ class DevPlanner():
     def if_both_tree_node_near(self):
         for eachVertexStart in self.treeVertexStart:
             for eachVertexGoal in self.treeVertexGoal:
-                distX = eachVertexStart.x - eachVertexGoal.x
-                distY = eachVertexStart.y - eachVertexGoal.y
-                distZ = eachVertexStart.z - eachVertexGoal.z
-                distP = eachVertexStart.p - eachVertexGoal.p
-                distQ = eachVertexStart.q - eachVertexGoal.q
-                distR = eachVertexStart.r - eachVertexGoal.r
-                dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
-                if dist < self.eta:
+                if self.distance_between_config(eachVertexStart, eachVertexGoal) < self.eta:
                     self.nearStart = eachVertexStart
                     self.nearGoal = eachVertexGoal
                     return True
@@ -260,14 +259,7 @@ class DevPlanner():
     def if_config_in_region_of_config(self, xToCheck, xCenter, radius=None):
         if radius is None:
             radius = self.eta
-        distX = xToCheck.x - xCenter.x
-        distY = xToCheck.y - xCenter.y
-        distZ = xToCheck.z - xCenter.z
-        distP = xToCheck.p - xCenter.p
-        distQ = xToCheck.q - xCenter.q
-        distR = xToCheck.r - xCenter.r
-        dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
-        if dist < radius:
+        if self.distance_between_config(xToCheck, xCenter) < radius:
             return True
         return False
 
@@ -299,6 +291,12 @@ class DevPlanner():
         return False
 
     def is_config_in_collision(self, xNew):
+        # check if collision status is available to use without calling the oracle
+        # for i, config in enumerate(self.configSearched):
+        #     if self.distance_between_config(xNew, config) <= self.eta:
+        #         return self.collisionState[i]
+
+        # if there are not collision information, then call the oracle to check
         timeStartKCD = time.perf_counter_ns()
         theta = np.array([xNew.x, xNew.y, xNew.z, xNew.p, xNew.q, xNew.r]).reshape(6, 1)
         linkPose = self.robot.forward_kinematic(theta, return_link_pos=True)
@@ -328,7 +326,7 @@ class DevPlanner():
 
         return False
 
-    def is_connect_config_possible(self, xNearest, xNew, NumSeg=10):
+    def is_connect_config_in_collision(self, xNearest, xNew, NumSeg=10):
         distX = xNew.x - xNearest.x
         distY = xNew.y - xNearest.y
         distZ = xNew.z - xNearest.z
@@ -352,6 +350,14 @@ class DevPlanner():
             if self.is_config_in_collision(xNew):
                 return True
         return False
+
+    def distance_between_config(self, xStart, xEnd):
+        return np.linalg.norm([xStart.x - xEnd.x,
+                               xStart.y - xEnd.y,
+                               xStart.z - xEnd.z,
+                               xStart.p - xEnd.p,
+                               xStart.q - xEnd.q,
+                               xStart.r - xEnd.r])
 
 
 if __name__ == "__main__":
