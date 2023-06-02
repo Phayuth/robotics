@@ -36,7 +36,7 @@ class Node:
         self.cost = cost
 
     def __repr__(self) -> str:
-        return f'[config = [{self.x}, {self.y}, {self.z}, {self.p}, {self.q}, {self.r}]]\n'
+        return f'config = [{self.x}, {self.y}, {self.z}, {self.p}, {self.q}, {self.r}, hasParent = {True if self.parent != None else False}]\n'
 
 class DevPlanner():
 
@@ -70,10 +70,12 @@ class DevPlanner():
         self.maxIteration = maxIteration
         self.eta = eta
         self.treeVertexStart = [self.xStart]
-        # self.treeVertexGoal = [self.xGoal]
         self.treeVertexGoal = [self.xApp]
         self.nearStart = None
         self.nearGoal = None
+
+        self.connectNodeStart = None
+        self.connectNodeGoal = None
 
         # collision database
         self.configSearched = []
@@ -87,7 +89,7 @@ class DevPlanner():
             "numberOfKCD": 0,
             "avgKCDTime": 0.0,
             "numberOfNodeTreeStart": 0,
-            "numberOfNoneTreeGoal" : 0,
+            "numberOfNodeTreeGoal" : 0,
             "numberOfNode": 0,
             "numberOfIteration": 0,
             "searchPathTime": 0.0,
@@ -100,11 +102,13 @@ class DevPlanner():
         # self.generic_bidirectional()
         self.rrt_connect()
         timePlanningEnd = time.perf_counter_ns()
+        print("Finished Tree Building")
 
         timeSearchStart = time.perf_counter_ns()
         path = self.search_path()
-        pathPruned = self.prune_path(path)
+        # pathPruned = self.prune_path(path)
         timeSearchEnd = time.perf_counter_ns()
+        print("Finshed Path Search")
 
         # record performance
         self.perfMatrix["totalPlanningTime"] = (timePlanningEnd-timePlanningStart) * 1e-9
@@ -118,9 +122,9 @@ class DevPlanner():
         self.perfMatrix["numberOfIteration"] = self.maxIteration
         self.perfMatrix["searchPathTime"] = (timeSearchEnd-timeSearchStart) * 1e-9
         self.perfMatrix["numberOfPath"] = len(path)
-        self.perfMatrix["numberOfPathPruned"] = len(pathPruned)
+        # self.perfMatrix["numberOfPathPruned"] = len(pathPruned)
 
-        return pathPruned
+        return path
 
     def generic_bidirectional(self):  # Method of Expanding toward Random Node (Generic Bidirectional)
         for itera in range(self.maxIteration):
@@ -131,8 +135,6 @@ class DevPlanner():
             xNearestGoal = self.nearest_node(self.treeVertexGoal, xRandGoal)
             xNewStart = self.steer(xNearestStart, xRandStart)
             xNewGoal = self.steer(xNearestGoal, xRandGoal)
-            xNewStart.parent = xNearestStart
-            xNewGoal.parent = xNearestGoal
 
             # ingoal region rejection
             if self.if_config_in_region_of_config(xNewGoal, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestStart, xNewStart, self.xGoal, radius=0.4):
@@ -152,59 +154,80 @@ class DevPlanner():
     def rrt_connect(self):  # Method of Expanding toward Each Other (RRT Connect)
         for itera in range(self.maxIteration):
             print(itera)
-            xRand = self.bias_sampling(self.xApp)
+            xRand = self.bias_sampling(self.treeVertexGoal[0])
             xNearest = self.nearest_node(self.treeVertexStart, xRand)
             xNew = self.steer(xNearest, xRand)
 
-            if not self.is_config_in_collision(xNew) and not self.is_connect_config_in_collision(xNearest, xNew):
-                xNew.parent = xNearest
+            if not self.is_config_in_collision(xNew) and not self.is_connect_config_in_collision(xNew.parent, xNew):
                 self.treeVertexStart.append(xNew)
                 xNearestPrime = self.nearest_node(self.treeVertexGoal, xNew)
                 xNewPrime = self.steer(xNearestPrime, xNew)
 
-                if not self.is_config_in_collision(xNewPrime) and not self.is_connect_config_in_collision(xNearestPrime, xNewPrime):
-                    xNewPrime.parent = xNearestPrime
+                if not self.is_config_in_collision(xNewPrime) and not self.is_connect_config_in_collision(xNewPrime.parent, xNewPrime):
                     self.treeVertexGoal.append(xNewPrime)
 
                     while True:
                         xNewPPrime = self.steer(xNewPrime, xNew)
+                        # if the 2 node meet, then break
+                        if self.distance_between_config(xNewPPrime, xNew) <= 1e-3: 
+                            self.connectNodeGoal = xNewPPrime
+                            self.connectNodeStart = xNew
+                            break
 
-                        if not self.is_config_in_collision(xNewPPrime) and not self.is_connect_config_in_collision(xNewPPrime, xNewPrime):
-                            xNewPPrime.parent = xNewPrime
+                        # if not collision then free to add
+                        if not self.is_config_in_collision(xNewPPrime) and not self.is_connect_config_in_collision(xNewPPrime.parent, xNewPPrime):
                             self.treeVertexGoal.append(xNewPPrime)
+                            # xNewPrime = xNewPPrime # oh--! we have to update the xNewPrime to xNewPPrime
                             xNewPrime = self.change_node(xNewPrime, xNewPPrime)
-                        else : break
 
-                        if self.distance_between_config(xNewPrime, xNew) <= self.eta : break
+                        # if there is collision then break
+                        else:
+                             break
 
-                if self.distance_between_config(xNewPrime, xNew) <= self.eta : break
+            if self.connectNodeGoal is not None and self.connectNodeStart is not None:
+                break
 
             # Swap tree
-            tempHolder = self.treeVertexStart
-            self.treeVertexStart = self.treeVertexGoal
-            self.treeVertexGoal = tempHolder
+            self.treeVertexStart, self.treeVertexGoal = self.treeVertexGoal, self.treeVertexStart
+            print("Tree Swapped")
 
     def search_path(self):
         # Search for the 2 nearest node of the 2 trees
-        distMinCandidate = float('inf')
-        for eachVertexStart in self.treeVertexStart:
-            for eachVertexGoal in self.treeVertexGoal:
-                if dist := self.distance_between_config(eachVertexStart, eachVertexGoal) <= distMinCandidate:
-                    distMinCandidate = dist
-                    self.nearStart = eachVertexStart
-                    self.nearGoal = eachVertexGoal
+        # distMinCandidate = float('inf')
+        # for eachVertexStart in self.treeVertexStart:
+        #     for eachVertexGoal in self.treeVertexGoal:
+        #         if dist := self.distance_between_config(eachVertexStart, eachVertexGoal) <= distMinCandidate:
+        #             distMinCandidate = dist
+        #             self.nearStart = eachVertexStart
+        #             self.nearGoal = eachVertexGoal
 
-        pathStart = [self.nearStart]
-        currentNodeStart = self.nearStart
-        while currentNodeStart != self.xStart:
+        # pathStart = [self.nearStart]
+        # currentNodeStart = self.nearStart
+        # while currentNodeStart != self.xStart:
+        #     if currentNodeStart is None : break
+        #     print("search start")
+        #     currentNodeStart = currentNodeStart.parent
+        #     pathStart.append(currentNodeStart)
+
+        # pathGoal = [self.nearGoal]
+        # currentNodeGoal = self.nearGoal
+        # while currentNodeGoal != self.xApp:
+        #     if currentNodeGoal is None : break
+        #     print("search goal")
+        #     currentNodeGoal = currentNodeGoal.parent
+        #     pathGoal.append(currentNodeGoal)
+
+        pathStart = [self.connectNodeStart]
+        currentNodeStart = self.connectNodeStart
+        while currentNodeStart.parent is not None:
             currentNodeStart = currentNodeStart.parent
             pathStart.append(currentNodeStart)
 
-        pathGoal = [self.nearGoal]
-        currentNodeGoal = self.nearGoal
-        while currentNodeGoal != self.xApp:
+        pathGoal = [self.connectNodeGoal]
+        currentNodeGoal = self.connectNodeGoal
+        while currentNodeGoal.parent is not None:
             currentNodeGoal = currentNodeGoal.parent
-            pathGoal.append(currentNodeGoal)
+            pathGoal.append(currentNodeGoal) 
 
         pathStart.reverse()
         path = pathStart + pathGoal + [self.xGoal]
@@ -269,13 +292,7 @@ class DevPlanner():
         return xNear
 
     def steer(self, xNearest, xRand):
-        distX = xRand.x - xNearest.x
-        distY = xRand.y - xNearest.y
-        distZ = xRand.z - xNearest.z
-        distP = xRand.p - xNearest.p
-        distQ = xRand.q - xNearest.q
-        distR = xRand.r - xNearest.r
-
+        distX, distY, distZ, distP, distQ, distR = self.distance_each_component_between_config(xNearest, xRand)
         if np.linalg.norm([distX, distY, distZ, distP, distQ, distR]) <= self.eta:
             xNew = xRand
         else:
@@ -286,6 +303,9 @@ class DevPlanner():
             newQ = self.eta * distQ + xNearest.q
             newR = self.eta * distR + xNearest.r
             xNew = Node(newX, newY, newZ, newP, newQ, newR)
+
+        xNew.parent = xNearest
+
         return xNew
 
     def if_both_tree_node_near(self):
@@ -307,12 +327,7 @@ class DevPlanner():
     def is_connect_config_in_region_of_config(self, xToCheckStart, xToCheckEnd, xCenter, radius=None, NumSeg=10):
         if radius is None:
             radius = self.eta
-        distX = xToCheckStart.x - xToCheckEnd.x
-        distY = xToCheckStart.y - xToCheckEnd.y
-        distZ = xToCheckStart.z - xToCheckEnd.z
-        distP = xToCheckStart.p - xToCheckEnd.p
-        distQ = xToCheckStart.q - xToCheckEnd.q
-        distR = xToCheckStart.r - xToCheckEnd.r
+        distX, distY, distZ, distP, distQ, distR = self.distance_each_component_between_config(xToCheckStart, xToCheckEnd)
         rateX = distX / NumSeg
         rateY = distY / NumSeg
         rateZ = distZ / NumSeg
@@ -368,12 +383,7 @@ class DevPlanner():
         return False
 
     def is_connect_config_in_collision(self, xNearest, xNew, NumSeg=10):
-        distX = xNew.x - xNearest.x
-        distY = xNew.y - xNearest.y
-        distZ = xNew.z - xNearest.z
-        distP = xNew.p - xNearest.p
-        distQ = xNew.q - xNearest.q
-        distR = xNew.r - xNearest.r
+        distX, distY, distZ, distP, distQ, distR = self.distance_each_component_between_config(xNearest, xNew)
         rateX = distX / NumSeg
         rateY = distY / NumSeg
         rateZ = distZ / NumSeg
@@ -400,6 +410,13 @@ class DevPlanner():
                                xStart.q - xEnd.q,
                                xStart.r - xEnd.r])
 
+    def distance_each_component_between_config(self, xStart, xEnd):
+        return xEnd.x - xStart.x, \
+               xEnd.y - xStart.y, \
+               xEnd.z - xStart.z, \
+               xEnd.p - xStart.p, \
+               xEnd.q - xStart.q, \
+               xEnd.r - xStart.r
 
 if __name__ == "__main__":
     np.random.seed(9)
@@ -413,8 +430,8 @@ if __name__ == "__main__":
     robot = PlanarSixDof()
 
     thetaInit = np.array([0, 0, 0, 0, 0, 0]).reshape(6, 1)
-    thetaGoal = np.array([1, 0, 0, 0, 0, 0]).reshape(6, 1)
-    thetaApp = np.array([1, 0, 0, 0, 0, 0]).reshape(6, 1)
+    thetaGoal = np.array([1.2, 0, -0.2, 0, -1.2, -0.2]).reshape(6, 1)
+    thetaApp = np.array([1.3, 0, -0.3, 0, -1.21, -0.16]).reshape(6, 1)
     obsList = two_near_ee()
 
     # plot pre planning
@@ -422,13 +439,16 @@ if __name__ == "__main__":
     ax1.set_aspect("equal")
     ax1.set_title("Pre Planning Plot")
     robot.plot_arm(thetaInit, plt_axis=ax1)
+    robot.plot_arm(thetaApp, plt_axis=ax1)
+    robot.plot_arm(thetaGoal, plt_axis=ax1)
     for obs in obsList:
         obs.plot()
     plt.show()
 
-    planner = DevPlanner(robot, obsList, thetaInit, thetaApp, thetaGoal, eta=0.3, maxIteration=1000)
+    planner = DevPlanner(robot, obsList, thetaInit, thetaApp, thetaGoal, eta=0.2, maxIteration=1000)
     path = planner.planning()
     print(planner.perfMatrix)
+    path = [p for p in path if p is not None]
     pathX, pathY, pathZ, pathP, pathQ, pathR = extract_path_class_6d(path)
 
     # plot after planning
@@ -472,4 +492,19 @@ if __name__ == "__main__":
                                  quintic5deg(timeSmooth[i], *poptQ),
                                  quintic5deg(timeSmooth[i], *poptR)]).reshape(6, 1), plt_axis=ax3)
         plt.pause(0.1)
+    plt.show()
+
+    fig4, axes = plt.subplots(6, 1, sharex='all')
+    axes[0].plot(time, pathX, 'ro')
+    axes[0].plot(time, quintic5deg(time, *poptX))
+    axes[1].plot(time, pathY, 'ro')
+    axes[1].plot(time, quintic5deg(time, *poptY))
+    axes[2].plot(time, pathZ, 'ro')
+    axes[2].plot(time, quintic5deg(time, *poptZ))
+    axes[3].plot(time, pathP, 'ro')
+    axes[3].plot(time, quintic5deg(time, *poptP))
+    axes[4].plot(time, pathQ, 'ro')
+    axes[4].plot(time, quintic5deg(time, *poptQ))
+    axes[5].plot(time, pathR, 'ro')
+    axes[5].plot(time, quintic5deg(time, *poptR))
     plt.show()
