@@ -100,9 +100,12 @@ class RuntimeRRTBase():
         if dist <= self.eta:
             xNew = xRand
         else:
-            newX = self.eta * distX + xNearest.x
-            newY = self.eta * distY + xNearest.y
-            newZ = self.eta * distZ + xNearest.z
+            dX = (distX/dist) * self.eta
+            dY = (distY/dist) * self.eta
+            dZ = (distZ/dist) * self.eta
+            newX = xNearest.x + dX
+            newY = xNearest.y + dY
+            newZ = xNearest.z + dZ
             xNew = Node(newX, newY, newZ)
         return xNew
 

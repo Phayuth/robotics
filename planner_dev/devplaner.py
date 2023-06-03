@@ -154,41 +154,49 @@ class DevPlanner():
     def rrt_connect(self):  # Method of Expanding toward Each Other (RRT Connect)
         for itera in range(self.maxIteration):
             print(itera)
-            xRand = self.bias_sampling(self.treeVertexGoal[0])
+            # xRand = self.bias_sampling(self.treeVertexGoal[0])
+            xRand = self.uni_sampling()
             xNearest = self.nearest_node(self.treeVertexStart, xRand)
             xNew = self.steer(xNearest, xRand)
+            xNew.parent = xNearest
 
             if not self.is_config_in_collision(xNew) and not self.is_connect_config_in_collision(xNew.parent, xNew):
                 self.treeVertexStart.append(xNew)
                 xNearestPrime = self.nearest_node(self.treeVertexGoal, xNew)
                 xNewPrime = self.steer(xNearestPrime, xNew)
+                xNewPrime.parent = xNearestPrime
 
                 if not self.is_config_in_collision(xNewPrime) and not self.is_connect_config_in_collision(xNewPrime.parent, xNewPrime):
                     self.treeVertexGoal.append(xNewPrime)
 
                     while True:
                         xNewPPrime = self.steer(xNewPrime, xNew)
+                        xNewPPrime.parent = xNewPrime
+
                         # if the 2 node meet, then break
-                        if self.distance_between_config(xNewPPrime, xNew) <= 1e-3: 
-                            self.connectNodeGoal = xNewPPrime
-                            self.connectNodeStart = xNew
+                        if self.distance_between_config(xNewPPrime, xNew) < 1e-3: 
+                            self.connectNodeGoal = xNew
+                            self.connectNodeStart = xNewPPrime
+                            break
+
+                        # if there is collision then break
+                        if self.is_config_in_collision(xNewPPrime) and self.is_connect_config_in_collision(xNewPPrime.parent, xNewPPrime):
                             break
 
                         # if not collision then free to add
-                        if not self.is_config_in_collision(xNewPPrime) and not self.is_connect_config_in_collision(xNewPPrime.parent, xNewPPrime):
-                            self.treeVertexGoal.append(xNewPPrime)
-                            # xNewPrime = xNewPPrime # oh--! we have to update the xNewPrime to xNewPPrime
-                            xNewPrime = self.change_node(xNewPrime, xNewPPrime)
-
-                        # if there is collision then break
                         else:
-                             break
+                            self.treeVertexGoal.append(xNewPPrime)
+                            # oh--! we have to update the xNewPrime to xNewPPrime
+                            xNewPrime = xNewPPrime
 
             if self.connectNodeGoal is not None and self.connectNodeStart is not None:
                 break
 
             # Swap tree
-            self.treeVertexStart, self.treeVertexGoal = self.treeVertexGoal, self.treeVertexStart
+            tempHolder = self.treeVertexGoal
+            self.treeVertexGoal = self.treeVertexStart
+            self.treeVertexStart = tempHolder
+            # self.treeVertexStart, self.treeVertexGoal = self.treeVertexGoal, self.treeVertexStart
             print("Tree Swapped")
 
     def search_path(self):
@@ -293,18 +301,25 @@ class DevPlanner():
 
     def steer(self, xNearest, xRand):
         distX, distY, distZ, distP, distQ, distR = self.distance_each_component_between_config(xNearest, xRand)
-        if np.linalg.norm([distX, distY, distZ, distP, distQ, distR]) <= self.eta:
+        dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
+        if dist <= self.eta:
             xNew = xRand
         else:
-            newX = self.eta * distX + xNearest.x
-            newY = self.eta * distY + xNearest.y
-            newZ = self.eta * distZ + xNearest.z
-            newP = self.eta * distP + xNearest.p
-            newQ = self.eta * distQ + xNearest.q
-            newR = self.eta * distR + xNearest.r
+            dX = (distX/dist) * self.eta
+            dY = (distY/dist) * self.eta
+            dZ = (distZ/dist) * self.eta
+            dP = (distP/dist) * self.eta
+            dQ = (distQ/dist) * self.eta
+            dR = (distR/dist) * self.eta
+            newX = xNearest.x + dX
+            newY = xNearest.y + dY
+            newZ = xNearest.z + dZ
+            newP = xNearest.p + dP
+            newQ = xNearest.q + dQ
+            newR = xNearest.r + dR
             xNew = Node(newX, newY, newZ, newP, newQ, newR)
 
-        xNew.parent = xNearest
+        # xNew.parent = xNearest
 
         return xNew
 
@@ -445,10 +460,10 @@ if __name__ == "__main__":
         obs.plot()
     plt.show()
 
-    planner = DevPlanner(robot, obsList, thetaInit, thetaApp, thetaGoal, eta=0.2, maxIteration=1000)
+    planner = DevPlanner(robot, obsList, thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=5000)
     path = planner.planning()
+    path = planner.treeVertexStart
     print(planner.perfMatrix)
-    path = [p for p in path if p is not None]
     pathX, pathY, pathZ, pathP, pathQ, pathR = extract_path_class_6d(path)
 
     # plot after planning
@@ -460,51 +475,51 @@ if __name__ == "__main__":
     robot.plot_arm(thetaInit, plt_axis=ax2)
     for i in range(len(path)):
         robot.plot_arm(np.array([pathX[i], pathY[i], pathZ[i], pathP[i], pathQ[i], pathR[i]]).reshape(6, 1), plt_axis=ax2)
-        plt.pause(1)
-    plt.show()
-
-    # Optimization stage, I want to fit the current theta to time and use that information to inform sampling
-    time = np.linspace(0, 1, len(pathX))
-
-    def quintic5deg(x, a, b, c, d, e, f):
-        return a * x**5 + b * x**4 + c * x**3 + d * x**2 + e*x*f
-
-    # Fit the line equation
-    poptX, pcovX = curve_fit(quintic5deg, time, pathX)
-    poptY, pcovY = curve_fit(quintic5deg, time, pathY)
-    poptZ, pcovZ = curve_fit(quintic5deg, time, pathZ)
-    poptP, pcovP = curve_fit(quintic5deg, time, pathP)
-    poptQ, pcovQ = curve_fit(quintic5deg, time, pathQ)
-    poptR, pcovR = curve_fit(quintic5deg, time, pathR)
-
-    timeSmooth = np.linspace(0, 1, 100)
-    # plot after planning
-    fig3, ax3 = plt.subplots()
-    ax3.set_aspect("equal")
-    ax3.set_title("After Planning Plot")
-    for obs in obsList:
-        obs.plot()
-    for i in range(timeSmooth.shape[0]):
-        robot.plot_arm(np.array([quintic5deg(timeSmooth[i], *poptX),
-                                 quintic5deg(timeSmooth[i], *poptY),
-                                 quintic5deg(timeSmooth[i], *poptZ),
-                                 quintic5deg(timeSmooth[i], *poptP),
-                                 quintic5deg(timeSmooth[i], *poptQ),
-                                 quintic5deg(timeSmooth[i], *poptR)]).reshape(6, 1), plt_axis=ax3)
         plt.pause(0.1)
     plt.show()
 
-    fig4, axes = plt.subplots(6, 1, sharex='all')
-    axes[0].plot(time, pathX, 'ro')
-    axes[0].plot(time, quintic5deg(time, *poptX))
-    axes[1].plot(time, pathY, 'ro')
-    axes[1].plot(time, quintic5deg(time, *poptY))
-    axes[2].plot(time, pathZ, 'ro')
-    axes[2].plot(time, quintic5deg(time, *poptZ))
-    axes[3].plot(time, pathP, 'ro')
-    axes[3].plot(time, quintic5deg(time, *poptP))
-    axes[4].plot(time, pathQ, 'ro')
-    axes[4].plot(time, quintic5deg(time, *poptQ))
-    axes[5].plot(time, pathR, 'ro')
-    axes[5].plot(time, quintic5deg(time, *poptR))
-    plt.show()
+    # Optimization stage, I want to fit the current theta to time and use that information to inform sampling
+    # time = np.linspace(0, 1, len(pathX))
+
+    # def quintic5deg(x, a, b, c, d, e, f):
+    #     return a * x**5 + b * x**4 + c * x**3 + d * x**2 + e*x*f
+
+    # # Fit the line equation
+    # poptX, pcovX = curve_fit(quintic5deg, time, pathX)
+    # poptY, pcovY = curve_fit(quintic5deg, time, pathY)
+    # poptZ, pcovZ = curve_fit(quintic5deg, time, pathZ)
+    # poptP, pcovP = curve_fit(quintic5deg, time, pathP)
+    # poptQ, pcovQ = curve_fit(quintic5deg, time, pathQ)
+    # poptR, pcovR = curve_fit(quintic5deg, time, pathR)
+
+    # timeSmooth = np.linspace(0, 1, 100)
+    # # plot after planning
+    # fig3, ax3 = plt.subplots()
+    # ax3.set_aspect("equal")
+    # ax3.set_title("After Planning Plot")
+    # for obs in obsList:
+    #     obs.plot()
+    # for i in range(timeSmooth.shape[0]):
+    #     robot.plot_arm(np.array([quintic5deg(timeSmooth[i], *poptX),
+    #                              quintic5deg(timeSmooth[i], *poptY),
+    #                              quintic5deg(timeSmooth[i], *poptZ),
+    #                              quintic5deg(timeSmooth[i], *poptP),
+    #                              quintic5deg(timeSmooth[i], *poptQ),
+    #                              quintic5deg(timeSmooth[i], *poptR)]).reshape(6, 1), plt_axis=ax3)
+    #     plt.pause(0.1)
+    # plt.show()
+
+    # fig4, axes = plt.subplots(6, 1, sharex='all')
+    # axes[0].plot(time, pathX, 'ro')
+    # axes[0].plot(time, quintic5deg(time, *poptX))
+    # axes[1].plot(time, pathY, 'ro')
+    # axes[1].plot(time, quintic5deg(time, *poptY))
+    # axes[2].plot(time, pathZ, 'ro')
+    # axes[2].plot(time, quintic5deg(time, *poptZ))
+    # axes[3].plot(time, pathP, 'ro')
+    # axes[3].plot(time, quintic5deg(time, *poptP))
+    # axes[4].plot(time, pathQ, 'ro')
+    # axes[4].plot(time, quintic5deg(time, *poptQ))
+    # axes[5].plot(time, pathR, 'ro')
+    # axes[5].plot(time, quintic5deg(time, *poptR))
+    # plt.show()
