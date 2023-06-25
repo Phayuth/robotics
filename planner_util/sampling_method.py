@@ -6,6 +6,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def bias_sampling(map):
@@ -100,7 +101,14 @@ class informed_sampling:
 
         return c
 
-
+def sample_point_on_hypersphere(center, radius, dimension):
+        random_numbers = np.random.normal(size=dimension)
+        norm = np.linalg.norm(random_numbers)
+        point = random_numbers / norm
+        scaled_point = point * radius
+        moved_point = scaled_point + center
+        return moved_point
+    
 def start_sampling(map, number_sampling, sampling_mode):
     plt.figure(figsize=(10, 10))
     plt.axes().set_aspect('equal')
@@ -132,13 +140,38 @@ if __name__ == "__main__":
     maploader.grid_map_probability(size=3)
     map = maploader.getcostmap()
 
-    start_sampling(map, number_sampling=1000, sampling_mode="uniform")
+    # start_sampling(map, number_sampling=1000, sampling_mode="uniform")
 
     # SECTION - Test code
-    row = map.shape[0]
-    p = np.ravel(map) / np.sum(map)
-    x_sample = np.random.choice(len(p), p=p)
-    x = x_sample // row
-    y = x_sample % row
-    x = np.random.uniform(low=x - 0.5, high=x + 0.5)
-    y = np.random.uniform(low=y - 0.5, high=y + 0.5)
+    # row = map.shape[0]
+    # p = np.ravel(map) / np.sum(map)
+    # x_sample = np.random.choice(len(p), p=p)
+    # x = x_sample // row
+    # y = x_sample % row
+    # x = np.random.uniform(low=x - 0.5, high=x + 0.5)
+    # y = np.random.uniform(low=y - 0.5, high=y + 0.5)
+
+
+    # hypersphere sample at center and radius
+    center = np.array([0,0,0])
+    radius = 2.5
+    dimension = 3
+    num_points = 1000
+
+    points = []
+    for _ in range(num_points):
+        point = sample_point_on_hypersphere(center, radius, dimension)
+        points.append(point)
+    points = np.array(points)
+    print(f"==>> points.shape: \n{points.shape}")
+
+    # Plotting
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(points[:, 0], points[:, 1], points[:, 2])
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Sampled Points on a Hypersphere')
+
+    plt.show()

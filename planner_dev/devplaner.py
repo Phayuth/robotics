@@ -2,10 +2,10 @@
 - Main:    RRT            |   Added
 - Variant: Bi Directional |   Added
 - Variant: RRT Connect    |   Added https://github.com/zhm-real/PathPlanning/blob/master/Sampling_based_Planning/rrt_2D/rrt_connect.py
-- Goal Rejection          |   Added (Must Improve) to BIdirection not to RRT Connect yet
+- Goal Rejection          |   Added
 - Sampling : Bias         |   Added
 - Sampling : Smart        |   Currently Adding
-- Pruning                 |   Currently Adding
+- Pruning                 |   Added
 - Multiple Waypoint       |   ?
 - Point Informed Resampling Optimization | Currently Adding (More or Less like STOMP optimazation, currently investigate)
 - Vector database collision store        | Added but it is not good and slow
@@ -36,7 +36,7 @@ class Node:
         self.cost = cost
 
     def __repr__(self) -> str:
-        return f'config = [{self.x}, {self.y}, {self.z}, {self.p}, {self.q}, {self.r}, hasParent = {True if self.parent != None else False}]\n'
+        return f'\nconfig = [{self.x:.7f}, {self.y:.7f}, {self.z:.7f}, {self.p:.7f}, {self.q:.7f}, {self.r:.7f}, hasParent = {True if self.parent != None else False}]'
 
 class DevPlanner():
 
@@ -58,9 +58,6 @@ class DevPlanner():
         self.rMinRange = -np.pi
         self.rMaxRange = np.pi
 
-        # new concept by descritize all
-        self.range = np.linspace(-np.pi, np.pi, 360)
-
         self.probabilityGoalBias = 0.4
         self.xStart = Node(xStart[0, 0], xStart[1, 0], xStart[2, 0], xStart[3, 0], xStart[4, 0], xStart[5, 0])
         self.xGoal = Node(xGoal[0, 0], xGoal[1, 0], xGoal[2, 0], xGoal[3, 0], xGoal[4, 0], xGoal[5, 0])
@@ -74,6 +71,8 @@ class DevPlanner():
         self.treeSwapFlag = True
         self.connectNodeStart = None
         self.connectNodeGoal = None
+        self.distGoalToApp = self.distance_between_config(self.xGoal, self.xApp)
+        self.nodeGoalSphere = []
 
         # collision database
         self.configSearched = []
@@ -92,22 +91,36 @@ class DevPlanner():
             "numberOfMaxIteration": 0,
             "numberOfIterationUsed": 0,
             "searchPathTime": 0.0,
-            "numberOfPath" : 0,
-            "numberOfPathPruned": 0
+            "numberOfOriginalPath" : 0,
+            "numberOfPathPruned": 0,
+            "optimizationTime" : 0.0,
+            "numberOfPathToApproach": 0
         }
 
     def planning(self):
+        # planning stage
         timePlanningStart = time.perf_counter_ns()
         # itera = self.generic_bidirectional()
-        itera = self.rrt_connect()
+        itera = self.rrt_connect_app()
         timePlanningEnd = time.perf_counter_ns()
         print("Finished Tree Building")
 
+        # search path stage
         timeSearchStart = time.perf_counter_ns()
         path = self.search_path()
-        pathPruned = self.prune_path(path)
         timeSearchEnd = time.perf_counter_ns()
         print("Finshed Path Search")
+
+        # optimization stage
+        timeOptStart = time.perf_counter_ns()
+        # pathPruned = None
+        pathPruned = self.greedy_prune_path(path)
+        # pathPruned = self.mid_node_prune_path((path))
+        pathToApproch = None
+        # pathToApproch = self.apply_approach_path(path)
+        pathSeg = self.segment_linear_interpolation_path(pathPruned)
+        timeOptEnd = time.perf_counter_ns()
+        print("Finshed Path Optimzation")
 
         # record performance
         self.perfMatrix["totalPlanningTime"] = (timePlanningEnd-timePlanningStart) * 1e-9
@@ -121,10 +134,17 @@ class DevPlanner():
         self.perfMatrix["numberOfMaxIteration"] = self.maxIteration
         self.perfMatrix["numberOfIterationUsed"] = itera
         self.perfMatrix["searchPathTime"] = (timeSearchEnd-timeSearchStart) * 1e-9
-        self.perfMatrix["numberOfPath"] = len(path)
-        self.perfMatrix["numberOfPathPruned"] = len(pathPruned)
+        self.perfMatrix["numberOfOriginalPath"] = len(path)
+        if pathPruned is not None:
+            self.perfMatrix["numberOfPathPruned"] = len(pathPruned)
+            self.perfMatrix["optimizationTime"] = (timeOptEnd - timeOptStart) * 1e-9
+        if pathToApproch is not None:
+            self.perfMatrix["numberOfPathToApproach"] = len(pathToApproch)
 
-        return pathPruned
+        # return path
+        # return pathPruned
+        # return pathToApproch
+        return pathSeg
 
     def generic_bidirectional(self):  # Method of Expanding toward Random Node (Generic Bidirectional)
         for itera in range(self.maxIteration):
@@ -137,8 +157,8 @@ class DevPlanner():
             xNewGoal = self.steer(xNearestGoal, xRandGoal)
 
             # ingoal region rejection
-            if self.if_config_in_region_of_config(xNewGoal, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestStart, xNewStart, self.xGoal, radius=0.4):
-                if self.if_config_in_region_of_config(xNewStart, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestGoal, xNewGoal, self.xGoal, radius=0.4):
+            if self.is_config_in_region_of_config(xNewGoal, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestStart, xNewStart, self.xGoal, radius=0.4):
+                if self.is_config_in_region_of_config(xNewStart, self.xGoal, radius=0.4) or self.is_connect_config_in_region_of_config(xNearestGoal, xNewGoal, self.xGoal, radius=0.4):
                     continue
 
             if self.is_config_in_collision(xNewStart) or self.is_connect_config_in_collision(xNearestStart, xNewStart):
@@ -156,6 +176,11 @@ class DevPlanner():
     def rrt_connect(self):  # Method of Expanding toward Each Other (RRT Connect)
         for itera in range(self.maxIteration):
             print(itera)
+            # add a sample of surface sphere center at goal and radius equal to distance from xgoal to xapp
+            # sphereNode = self.hypersphere_surface_sampling(self.xGoal, self.distance_between_config(self.xGoal, self.xApp))
+            # if self.is_config_in_collision(sphereNode):
+            #     self.nodeGoalSphere.append(sphereNode)
+
             if self.treeSwapFlag is True:
                 # xRand = self.bias_sampling(self.treeVertexGoal[0])
                 xRand = self.uni_sampling()
@@ -183,7 +208,7 @@ class DevPlanner():
                                 break
 
                             # if there is collision then break
-                            if self.is_config_in_collision(xNewPPrime) and self.is_connect_config_in_collision(xNewPPrime.parent, xNewPPrime):
+                            if self.is_config_in_collision(xNewPPrime) or self.is_connect_config_in_collision(xNewPPrime.parent, xNewPPrime):
                                 break
 
                             # if not collision then free to add
@@ -197,7 +222,6 @@ class DevPlanner():
 
                 self.tree_swap_flag() 
                 # it can be easily done by switch tree like under, but I want to express a better understanding with swapping tree like that
-                # Swap tree
                 # self.treeVertexStart, self.treeVertexGoal = self.treeVertexGoal, self.treeVertexStart
             
             elif self.treeSwapFlag is False:
@@ -227,7 +251,7 @@ class DevPlanner():
                                 break
 
                             # if there is collision then break
-                            if self.is_config_in_collision(xNewPPrime) and self.is_connect_config_in_collision(xNewPPrime.parent, xNewPPrime):
+                            if self.is_config_in_collision(xNewPPrime) or self.is_connect_config_in_collision(xNewPPrime.parent, xNewPPrime):
                                 break
 
                             # if not collision then free to add
@@ -243,10 +267,114 @@ class DevPlanner():
 
         return itera
     
-    def search_path(self):
-        # Search for the 2 nearest node of the 2 trees
-        # nearStart, nearGoal = self.if_both_tree_node_near(return_near_node=True)
-        # to search node
+    def rrt_connect_app(self):  # Method of Expanding toward Each Other (RRT Connect) + approach pose
+        for itera in range(self.maxIteration):
+            print(itera)
+            if self.treeSwapFlag is True: # Init tree side
+                xRand = self.uni_sampling()
+                xNearest = self.nearest_node(self.treeVertexStart, xRand)
+                xNew = self.steer(xNearest, xRand)
+                xNew.parent = xNearest
+                    
+                if not self.is_config_in_collision(xNew) and \
+                    not self.is_connect_config_in_collision(xNew.parent, xNew) and \
+                    not self.is_config_in_region_of_config(xNew, self.xGoal, self.distGoalToApp) and \
+                    not self.is_connect_config_in_region_of_config(xNew.parent, xNew, self.xGoal, self.distGoalToApp):
+
+                    self.treeVertexStart.append(xNew)
+                    xNearestPrime = self.nearest_node(self.treeVertexGoal, xNew)
+                    xNewPrime = self.steer(xNearestPrime, xNew)
+                    xNewPrime.parent = xNearestPrime
+
+                    if not self.is_config_in_collision(xNewPrime) and \
+                        not self.is_connect_config_in_collision(xNewPrime.parent, xNewPrime) and \
+                        not self.is_config_in_region_of_config(xNewPrime, self.xGoal, self.distGoalToApp) and \
+                        not self.is_connect_config_in_region_of_config(xNewPrime.parent, xNewPrime, self.xGoal, self.distGoalToApp):
+
+                        self.treeVertexGoal.append(xNewPrime)
+
+                        while True:
+                            xNewPPrime = self.steer(xNewPrime, xNew)
+                            xNewPPrime.parent = xNewPrime
+
+                            # if the 2 node meet, then break
+                            if self.distance_between_config(xNewPPrime, xNew) < 1e-3: 
+                                self.connectNodeGoal = xNewPPrime
+                                self.connectNodeStart = xNew
+                                break
+
+                            # if there is collision then break and if the node and connection of node to parent is inside region
+                            if self.is_config_in_collision(xNewPPrime) or \
+                                self.is_connect_config_in_collision(xNewPPrime.parent, xNewPPrime) or \
+                                self.is_config_in_region_of_config(xNewPPrime, self.xGoal, self.distGoalToApp) or \
+                                self.is_connect_config_in_region_of_config(xNewPPrime.parent, xNewPPrime, self.xGoal, self.distGoalToApp):
+                                break
+
+                            # if not collision then free to add
+                            else:
+                                self.treeVertexGoal.append(xNewPPrime)
+                                # oh--! we have to update the xNewPrime to xNewPPrime
+                                xNewPrime = xNewPPrime
+
+                if self.connectNodeGoal is not None and self.connectNodeStart is not None:
+                    break
+
+                self.tree_swap_flag() 
+            
+            elif self.treeSwapFlag is False: # App tree side
+                xRand = self.uni_sampling()
+                xNearest = self.nearest_node(self.treeVertexGoal, xRand)
+                xNew = self.steer(xNearest, xRand)
+                xNew.parent = xNearest
+
+                if not self.is_config_in_collision(xNew) and \
+                    not self.is_connect_config_in_collision(xNew.parent, xNew) and \
+                    not self.is_config_in_region_of_config(xNew, self.xGoal, self.distGoalToApp) and \
+                    not self.is_connect_config_in_region_of_config(xNew.parent, xNew, self.xGoal, self.distGoalToApp):
+                    
+                    self.treeVertexGoal.append(xNew)
+                    xNearestPrime = self.nearest_node(self.treeVertexStart, xNew)
+                    xNewPrime = self.steer(xNearestPrime, xNew)
+                    xNewPrime.parent = xNearestPrime
+
+                    if not self.is_config_in_collision(xNewPrime) and \
+                        not self.is_connect_config_in_collision(xNewPrime.parent, xNewPrime) and \
+                        not self.is_config_in_region_of_config(xNewPrime, self.xGoal, self.distGoalToApp) and \
+                        not self.is_connect_config_in_region_of_config(xNewPrime.parent, xNewPrime, self.xGoal, self.distGoalToApp):                   
+                        
+                        self.treeVertexStart.append(xNewPrime)
+                        while True:
+                            xNewPPrime = self.steer(xNewPrime, xNew)
+                            xNewPPrime.parent = xNewPrime
+
+                            # if the 2 node meet, then break
+                            if self.distance_between_config(xNewPPrime, xNew) < 1e-3: 
+                                self.connectNodeGoal = xNew
+                                self.connectNodeStart = xNewPPrime
+                                break
+
+                            # if there is collision then break and if the node and connection of node to parent is inside region
+                            if self.is_config_in_collision(xNewPPrime) or \
+                                self.is_connect_config_in_collision(xNewPPrime.parent, xNewPPrime) or \
+                                self.is_config_in_region_of_config(xNewPPrime, self.xGoal, self.distGoalToApp) or \
+                                self.is_connect_config_in_region_of_config(xNewPPrime.parent, xNewPPrime, self.xGoal, self.distGoalToApp):
+                                break
+
+                            # if not collision then free to add
+                            else:
+                                self.treeVertexStart.append(xNewPPrime)
+                                # oh--! we have to update the xNewPrime to xNewPPrime
+                                xNewPrime = xNewPPrime
+
+                if self.connectNodeGoal is not None and self.connectNodeStart is not None:
+                    break
+
+                self.tree_swap_flag()
+
+        return itera
+    
+    def search_path(self): # return path is [xinit, x1, x2, ..., xapp, xgoal]
+        # nearStart, nearGoal = self.is_both_tree_node_near(return_near_node=True)
         starterNode = self.connectNodeStart # nearStart
         goalerNode = self.connectNodeGoal   # nearGoal
 
@@ -263,25 +391,80 @@ class DevPlanner():
             pathGoal.append(currentNodeGoal) 
 
         pathStart.reverse()
-        path = pathStart + pathGoal + [self.xGoal]
+        path = pathStart + pathGoal + [self.xGoal] 
 
         return path
 
-    def prune_path(self, initialPath):
+    def greedy_prune_path(self, initialPath): # lost a lot of information about the collision when curve fit which as expected
         prunedPath = [initialPath[0]]
+        indexNext = 1
 
-        for i in range(1, len(initialPath) - 1):
-            prevNode = prunedPath[-1]
-            nextNode = initialPath[i + 1]
-            dist = self.distance_between_config(prevNode, nextNode)
-            if self.is_connect_config_in_collision(prevNode, nextNode, NumSeg=int(dist / self.eta)):
-                continue
+        while indexNext != len(initialPath):
+            if self.is_connect_config_in_collision(prunedPath[-1], initialPath[indexNext], NumSeg=int(self.distance_between_config(prunedPath[-1], initialPath[indexNext])/self.eta)):
+                prunedPath.append(initialPath[indexNext-1])
             else:
-                prunedPath.append(initialPath[i])
+                indexNext += 1
 
-        prunedPath.append(initialPath[-1])
+        prunedPath.extend([initialPath[-2], initialPath[-1]]) # add back xApp and xGoal to path from the back
 
         return prunedPath
+
+    def mid_node_prune_path(self, path): # remove an middle node (even index)
+        prunedPath = path.copy() # create copy of list, not optimized but just to save the original for later used maybe
+        for i in range(len(prunedPath) - 3, -1, -2):
+            prunedPath.pop(i)
+
+        return prunedPath
+    
+    def reject_unoptimal_prune_path(self, path):
+
+        return prunedPath
+    
+    def apply_approach_path(self, path): # assume the pass in path is [xinit, x1, x2, ..., xgoal]
+        pathToApproach = path.copy()
+        # remove the last element since we know it is the xgoal
+        pathToApproach.pop()
+        radiusToApproach = self.distance_between_config(self.xGoal, self.xApp)
+        for i in range(-1, -len(pathToApproach), -1):
+            steerToCandidate = pathToApproach[i]
+            pathToApproach.remove(steerToCandidate)
+            if self.distance_between_config(self.xGoal, steerToCandidate) >= radiusToApproach:
+                break
+
+        xToMerge = self.steer_to_exact_distance(self.xGoal, steerToCandidate, radiusToApproach)
+
+        # we need the method to move from xToMerge to xApp, we can not move directly.
+        xIntermidiary = move(xToMerge, self.xApp)
+        pathToApproach = pathToApproach + [xToMerge] + [xIntermidiary] + [self.xApp, self.xGoal]
+
+        return pathToApproach
+    
+    def segment_linear_interpolation_path(self, path, numSeg=10): # linear interpolate between each node in path for number of segment
+        segmentedPath = []
+        currentIndex = 0
+        nextIndex = 1
+        while nextIndex != len(path):
+            segmentedPath.append(path[currentIndex])
+            distX, distY, distZ, distP, distQ, distR = self.distance_each_component_between_config(path[currentIndex], path[nextIndex])
+            rateX = distX / numSeg
+            rateY = distY / numSeg
+            rateZ = distZ / numSeg
+            rateP = distP / numSeg
+            rateQ = distQ / numSeg
+            rateR = distR / numSeg
+            for i in range(1, numSeg - 1):
+                newX = path[currentIndex].x + (rateX*i)
+                newY = path[currentIndex].y + (rateY*i)
+                newZ = path[currentIndex].z + (rateZ*i)
+                newP = path[currentIndex].p + (rateP*i)
+                newQ = path[currentIndex].q + (rateQ*i)
+                newR = path[currentIndex].r + (rateR*i)
+                xNew = Node(newX, newY, newZ, newP, newQ, newR)
+                segmentedPath.append(xNew)
+            currentIndex += 1
+            nextIndex += 1
+
+        return segmentedPath
 
     def tree_swap_flag(self):
         if self.treeSwapFlag is True:
@@ -289,6 +472,13 @@ class DevPlanner():
         elif self.treeSwapFlag is False:
             self.treeSwapFlag = True
 
+    def hypersphere_surface_sampling(self, centerNode, radius):
+        randPoint = np.random.normal(size=6)
+        unitRandPoint = randPoint / np.linalg.norm(randPoint)
+        point = (unitRandPoint * radius) + np.array([centerNode.x, centerNode.y, centerNode.z, centerNode.p, centerNode.q, centerNode.r])
+        xNew = Node(point[0], point[1], point[2], point[3], point[4], point[5])
+        return xNew
+    
     def uni_sampling(self):
         x = np.random.uniform(low=self.xMinRange, high=self.xMaxRange)
         y = np.random.uniform(low=self.yMinRange, high=self.yMaxRange)
@@ -296,13 +486,6 @@ class DevPlanner():
         p = np.random.uniform(low=self.pMinRange, high=self.pMaxRange)
         q = np.random.uniform(low=self.qMinRange, high=self.qMaxRange)
         r = np.random.uniform(low=self.rMinRange, high=self.rMaxRange)
-
-        # x = self.range[np.random.randint(low=0, high=360)]
-        # y = self.range[np.random.randint(low=0, high=360)]
-        # z = self.range[np.random.randint(low=0, high=360)]
-        # p = self.range[np.random.randint(low=0, high=360)]
-        # q = self.range[np.random.randint(low=0, high=360)]
-        # r = self.range[np.random.randint(low=0, high=360)]
 
         xRand = Node(x, y, z, p, q, r)
         return xRand
@@ -347,8 +530,27 @@ class DevPlanner():
             xNew = Node(newX, newY, newZ, newP, newQ, newR)
 
         return xNew
+    
+    def steer_to_exact_distance(self, xStart, xGoal, distance):
+        distX, distY, distZ, distP, distQ, distR = self.distance_each_component_between_config(xStart, xGoal)
+        dist = np.linalg.norm([distX, distY, distZ, distP, distQ, distR])
+        dX = (distX/dist) * distance
+        dY = (distY/dist) * distance
+        dZ = (distZ/dist) * distance
+        dP = (distP/dist) * distance
+        dQ = (distQ/dist) * distance
+        dR = (distR/dist) * distance
+        newX = xStart.x + dX
+        newY = xStart.y + dY
+        newZ = xStart.z + dZ
+        newP = xStart.p + dP
+        newQ = xStart.q + dQ
+        newR = xStart.r + dR
+        xNew = Node(newX, newY, newZ, newP, newQ, newR)
 
-    def if_both_tree_node_near(self, return_near_node=False):
+        return xNew
+
+    def is_both_tree_node_near(self, return_near_node=False):
         for eachVertexStart in self.treeVertexStart:
             for eachVertexGoal in self.treeVertexGoal:
                 if self.distance_between_config(eachVertexStart, eachVertexGoal) <= self.eta:
@@ -357,7 +559,7 @@ class DevPlanner():
                     return True
         return False
 
-    def if_config_in_region_of_config(self, xToCheck, xCenter, radius=None):
+    def is_config_in_region_of_config(self, xToCheck, xCenter, radius=None):
         if radius is None:
             radius = self.eta
         if self.distance_between_config(xToCheck, xCenter) < radius:
@@ -382,7 +584,7 @@ class DevPlanner():
             newQ = xToCheckStart.q + (rateQ*i)
             newR = xToCheckStart.r + (rateR*i)
             xNew = Node(newX, newY, newZ, newP, newQ, newR)
-            if self.if_config_in_region_of_config(xNew, xCenter, radius):
+            if self.is_config_in_region_of_config(xNew, xCenter, radius):
                 return True
         return False
 
@@ -488,7 +690,9 @@ if __name__ == "__main__":
 
     planner = DevPlanner(robot, obsList, thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=5000)
     path = planner.planning()
+    print(f"==>> path: \n{path}")
     print_dict(planner.perfMatrix)
+
     pathX, pathY, pathZ, pathP, pathQ, pathR = extract_path_class_6d(path)
 
     # plot after planning
@@ -500,22 +704,29 @@ if __name__ == "__main__":
     robot.plot_arm(thetaInit, plt_axis=ax2)
     for i in range(len(path)):
         robot.plot_arm(np.array([pathX[i], pathY[i], pathZ[i], pathP[i], pathQ[i], pathR[i]]).reshape(6, 1), plt_axis=ax2)
-        plt.pause(0.1)
+        plt.pause(0.5)
     plt.show()
 
-    # Optimization stage, I want to fit the current theta to time and use that information to inform sampling
+    # Optimization stage, I want to fit the current theta to time and use that information to inform optimization
     time = np.linspace(0, 1, len(pathX))
 
     def quintic5deg(x, a, b, c, d, e, f):
         return a * x**5 + b * x**4 + c * x**3 + d * x**2 + e*x*f
+    
+    def polynomial9deg(x, a, b, c, d, e, f, g, h, i):
+        return a*x**9 + b*x**8 + c*x**7 + d*x**6 + e*x**5 + f*x**4 + g*x**3 + h*x**2 + i*x
+
+    # force start and end point to fit  https://stackoverflow.com/questions/33539287/how-to-force-specific-points-in-curve-fitting
+    sigma = np.ones(len(pathX))
+    sigma[[0, -1]] = 0.01
 
     # Fit the line equation
-    poptX, pcovX = curve_fit(quintic5deg, time, pathX)
-    poptY, pcovY = curve_fit(quintic5deg, time, pathY)
-    poptZ, pcovZ = curve_fit(quintic5deg, time, pathZ)
-    poptP, pcovP = curve_fit(quintic5deg, time, pathP)
-    poptQ, pcovQ = curve_fit(quintic5deg, time, pathQ)
-    poptR, pcovR = curve_fit(quintic5deg, time, pathR)
+    poptX, pcovX = curve_fit(quintic5deg, time, pathX, sigma=sigma)
+    poptY, pcovY = curve_fit(quintic5deg, time, pathY, sigma=sigma)
+    poptZ, pcovZ = curve_fit(quintic5deg, time, pathZ, sigma=sigma)
+    poptP, pcovP = curve_fit(quintic5deg, time, pathP, sigma=sigma)
+    poptQ, pcovQ = curve_fit(quintic5deg, time, pathQ, sigma=sigma)
+    poptR, pcovR = curve_fit(quintic5deg, time, pathR, sigma=sigma)
 
     timeSmooth = np.linspace(0, 1, 100)
     # plot after planning

@@ -48,13 +48,24 @@ class PlanarSixDof:
             x6 = x5 + self.a6 * np.cos(theta1 + theta2 + theta3 + theta4 + theta5 + theta6)
             y6 = y5 + self.a6 * np.sin(theta1 + theta2 + theta3 + theta4 + theta5 + theta6)
 
-            return [[x0,y0],[x1,y1],[x2,y2],[x3,y3],[x4,y4],[x5,y5],[x6,y6]]
+            return [[x0, y0], [x1, y1], [x2, y2], [x3, y3], [x4, y4], [x5, y5], [x6, y6]]
 
         else:
 
-            x = self.a1 * np.cos(theta1) + self.a2 * np.cos(theta1 + theta2) + self.a3 * np.cos(theta1 + theta2 + theta3) + self.a4 * np.cos(theta1 + theta2 + theta3 + theta4) + self.a5 * np.cos(theta1 + theta2 + theta3 + theta4 + theta5) + self.a6 * np.cos(theta1 + theta2 + theta3 + theta4 + theta5 + theta6)
-            y = self.a1 * np.sin(theta1) + self.a2 * np.sin(theta1 + theta2) + self.a3 * np.sin(theta1 + theta2 + theta3) + self.a4 * np.sin(theta1 + theta2 + theta3 + theta4) + self.a5 * np.sin(theta1 + theta2 + theta3 + theta4 + theta5) + self.a6 * np.sin(theta1 + theta2 + theta3 + theta4 + theta5 + theta6)
+            x = self.a1 * np.cos(theta1) + \
+                self.a2 * np.cos(theta1 + theta2) + \
+                self.a3 * np.cos(theta1 + theta2 + theta3) + \
+                self.a4 * np.cos(theta1 + theta2 + theta3 + theta4) + \
+                self.a5 * np.cos(theta1 + theta2 + theta3 + theta4 + theta5) + \
+                self.a6 * np.cos(theta1 + theta2 + theta3 + theta4 + theta5 + theta6)
             
+            y = self.a1 * np.sin(theta1) + \
+                self.a2 * np.sin(theta1 + theta2) + \
+                self.a3 * np.sin(theta1 + theta2 + theta3) + \
+                self.a4 * np.sin(theta1 + theta2 + theta3 + theta4) + \
+                self.a5 * np.sin(theta1 + theta2 + theta3 + theta4 + theta5) + \
+                self.a6 * np.sin(theta1 + theta2 + theta3 + theta4 + theta5 + theta6)
+
             return np.array([[x], [y]])
 
     def plot_arm(self, theta, plt_axis=None):
@@ -91,7 +102,7 @@ class PlanarSixDof:
         # link 6 pose
         x6 = x5 + self.a6 * np.cos(theta1 + theta2 + theta3 + theta4 + theta5 + theta6)
         y6 = y5 + self.a6 * np.sin(theta1 + theta2 + theta3 + theta4 + theta5 + theta6)
-        
+
         if plt_axis:
             plt_axis.axvline(x=0, c="green")
             plt_axis.axhline(y=0, c="green")
@@ -112,9 +123,8 @@ if __name__ == "__main__":
     robot = PlanarSixDof()
     fig, ax = plt.subplots()
     ax.set_aspect("equal")
-    t1 = np.linspace(0,np.pi/2,100)
+    t1 = np.linspace(0, np.pi / 2, 100)
     for i in range(t1.shape[0]):
-        robot.plot_arm(np.array([i,0,0,0,0,0]).reshape(6, 1), plt_axis=ax)
+        robot.plot_arm(np.array([i, 0, 0, 0, 0, 0]).reshape(6, 1), plt_axis=ax)
         plt.pause(1)
     plt.show()
-    

@@ -50,3 +50,10 @@ is_linear_independent(GG)
 
 print(np.linalg.matrix_rank(G))
 print(np.linalg.matrix_rank(GG))
+
+
+# Reverse for loop
+n = 10
+
+for i in range(-1, -n, -1):
+    print(i)

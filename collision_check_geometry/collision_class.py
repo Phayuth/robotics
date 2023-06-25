@@ -1,32 +1,35 @@
 """ Collision check class based on geometry
 
-∧ is exactly 'and' in this context. ∨ means 'or'. You can notice the similarity both in form and meaning with ∩ and ∪ from set theory.
+∧ is exactly 'and' in this context. V means 'or'. You can notice the similarity both in form and meaning with ∩ and U from set theory.
 References:
     - https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
     - http://www.jeffreythompson.org/collision-detection/table_of_contents.php
     - https://www.baeldung.com/cs/circle-line-segment-collision-detection
+    - https://yal.cc/rectangle-circle-intersection-test/
 
 """
 
 import os
 import sys
+
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
 from rigid_body_transformation.rotation_matrix import rot2d
+from planner_util.coord_transform import circle_plt
 
 
 class ObjAabb:
 
-    def __init__(self, x_min, y_min, z_min, x_max, y_max, z_max):
-        self.x_min = x_min
-        self.y_min = y_min
-        self.z_min = z_min
-        self.x_max = x_max
-        self.y_max = y_max
-        self.z_max = z_max
+    def __init__(self, xMin, yMin, zMin, xMax, yMax, zMax):
+        self.xMin = xMin
+        self.yMin = yMin
+        self.zMin = zMin
+        self.xMax = xMax
+        self.yMax = yMax
+        self.zMax = zMax
 
 
 class ObjRec:
@@ -45,20 +48,20 @@ class ObjRec:
         else:
             color = "b"
 
-        v1 = np.array([0, 0]).reshape(2,1)
-        v2 = np.array([self.w, 0]).reshape(2,1)
-        v3 = np.array([self.w, self.h]).reshape(2,1)
-        v4 = np.array([0, self.h]).reshape(2,1)
+        v1 = np.array([0, 0]).reshape(2, 1)
+        v2 = np.array([self.w, 0]).reshape(2, 1)
+        v3 = np.array([self.w, self.h]).reshape(2, 1)
+        v4 = np.array([0, self.h]).reshape(2, 1)
 
-        v1 = rot2d(self.angle) @ v1 + np.array([self.x, self.y]).reshape(2,1)
-        v2 = rot2d(self.angle) @ v2 + np.array([self.x, self.y]).reshape(2,1)
-        v3 = rot2d(self.angle) @ v3 + np.array([self.x, self.y]).reshape(2,1)
-        v4 = rot2d(self.angle) @ v4 + np.array([self.x, self.y]).reshape(2,1)
+        v1 = rot2d(self.angle) @ v1 + np.array([self.x, self.y]).reshape(2, 1)
+        v2 = rot2d(self.angle) @ v2 + np.array([self.x, self.y]).reshape(2, 1)
+        v3 = rot2d(self.angle) @ v3 + np.array([self.x, self.y]).reshape(2, 1)
+        v4 = rot2d(self.angle) @ v4 + np.array([self.x, self.y]).reshape(2, 1)
 
-        plt.plot([v1[0,0], v2[0,0]], [v1[1,0],v2[1,0]], c=color)
-        plt.plot([v2[0,0], v3[0,0]], [v2[1,0],v3[1,0]], c=color)
-        plt.plot([v3[0,0], v4[0,0]], [v3[1,0],v4[1,0]], c=color)
-        plt.plot([v4[0,0], v1[0,0]], [v4[1,0],v1[1,0]], c=color)
+        plt.plot([v1[0, 0], v2[0, 0]], [v1[1, 0], v2[1, 0]], c=color)
+        plt.plot([v2[0, 0], v3[0, 0]], [v2[1, 0], v3[1, 0]], c=color)
+        plt.plot([v3[0, 0], v4[0, 0]], [v3[1, 0], v4[1, 0]], c=color)
+        plt.plot([v4[0, 0], v1[0, 0]], [v4[1, 0], v1[1, 0]], c=color)
 
         # else:
         #     plt.plot([self.x, self.x + self.w], [self.y, self.y], c=color)
@@ -113,24 +116,27 @@ class ObjCircle:
         self.y = y
         self.r = r
 
+    def plot(self):
+        circle_plt(self.x, self.y, self.r)
+
 
 class ObjTriangle:
 
-    def __init__(self, vertix_a, vertix_b, vertix_c):
-        self.vertix_a_x = vertix_a[0]
-        self.vertix_a_y = vertix_a[1]
-        self.vertix_b_x = vertix_b[0]
-        self.vertix_b_y = vertix_b[1]
-        self.vertix_c_x = vertix_c[0]
-        self.vertix_c_y = vertix_c[1]
+    def __init__(self, vertixA, vertixB, vertixC):
+        self.vertixAX = vertixA[0]
+        self.vertixAY = vertixA[1]
+        self.vertixBX = vertixB[0]
+        self.vertixBY = vertixB[1]
+        self.vertixCX = vertixC[0]
+        self.vertixCY = vertixC[1]
 
 
 def intersect_aabb_v_aabb(a, b):
-    return (a.x_min <= b.x_max and a.x_max >= b.x_min and a.y_min <= b.y_max and a.y_max >= b.y_min and a.z_min <= b.z_max and a.z_max >= b.z_min)
+    return (a.xMin <= b.xMax and a.xMax >= b.xMin and a.yMin <= b.yMax and a.yMax >= b.yMin and a.zMin <= b.zMax and a.zMax >= b.zMin)
 
 
 def intersect_aabb_v_point(aabb, point):
-    return (point.x >= aabb.x_min and point.x <= aabb.x_max and point.y >= aabb.y_min and point.y <= aabb.y_max and point.z >= aabb.z_min and point.z <= aabb.z_max)
+    return (point.x >= aabb.xMin and point.x <= aabb.xMax and point.y >= aabb.yMin and point.y <= aabb.yMax and point.z >= aabb.zMin and point.z <= aabb.zMax)
 
 
 def intersect_sphere_v_point(point, sphere):
@@ -141,19 +147,19 @@ def intersect_sphere_v_point(point, sphere):
 
 def intersect_sphere_v_aabb(aabb, sphere):
     # get box closest point to sphere center by clamping
-    x = max(aabb.x_min, min(sphere.x, aabb.x_max))
-    y = max(aabb.y_min, min(sphere.y, aabb.y_max))
-    z = max(aabb.z_min, min(sphere.z, aabb.z_max))
+    x = max(aabb.xMin, min(sphere.x, aabb.xMax))
+    y = max(aabb.yMin, min(sphere.y, aabb.yMax))
+    z = max(aabb.zMin, min(sphere.z, aabb.zMax))
 
     # this is the same as isPointInsideSphere
     distance = np.sqrt((x - sphere.x) * (x - sphere.x) + (y - sphere.y) * (y - sphere.y) + (z - sphere.z) * (z - sphere.z))
     return distance <= sphere.r
 
 
-def intersect_point_v_point_3d(point_a, point_b):
-    x = point_a.x - point_b.x
-    y = point_a.y - point_b.y
-    z = point_a.z - point_b.z
+def intersect_point_v_point_3d(pointA, pointB):
+    x = pointA.x - pointB.x
+    y = pointA.y - pointB.y
+    z = pointA.z - pointB.z
 
     dist = np.array([x, y, z])
     d = np.linalg.norm(dist)
@@ -165,12 +171,12 @@ def intersect_point_v_point_3d(point_a, point_b):
 
 
 def intersect_triangle_v_point(trig, point):
-    x1 = trig.vertix_a_x
-    x2 = trig.vertix_b_x
-    x3 = trig.vertix_c_x
-    y1 = trig.vertix_a_y
-    y2 = trig.vertix_b_y
-    y3 = trig.vertix_c_y
+    x1 = trig.vertixAX
+    x2 = trig.vertixBX
+    x3 = trig.vertixCX
+    y1 = trig.vertixAY
+    y2 = trig.vertixBY
+    y3 = trig.vertixCY
 
     px = point.x
     py = point.y
@@ -201,16 +207,15 @@ def trig_area(A, B, C):
     AC = np.array([[Cx - Ax], [Cy - Ay]])
 
     cross_prod = np.cross(np.transpose(AB), np.transpose(AC))
-    # cross prod is scalar AB[0,0]*AC[1,0] - AB[1,0]*AC[0,0]
 
     return abs(cross_prod) / 2
 
 
 def intersect_line_v_circle(radius, O, P, Q):
     distPQ = P - Q
-    minimum_distance = 2 * trig_area(O, P, Q) / np.linalg.norm(distPQ)
+    minimumDistance = 2 * trig_area(O, P, Q) / np.linalg.norm(distPQ)
 
-    if minimum_distance <= radius:
+    if minimumDistance <= radius:
         return True
     else:
         return False
@@ -253,20 +258,20 @@ def intersect_line_v_line(line1, line2):
 
 
 def intersect_line_v_rectangle(line, rec):
-    v1 = np.array([0, 0]).reshape(2,1)
-    v2 = np.array([rec.w, 0]).reshape(2,1)
-    v3 = np.array([rec.w, rec.h]).reshape(2,1)
-    v4 = np.array([0, rec.h]).reshape(2,1)
+    v1 = np.array([0, 0]).reshape(2, 1)
+    v2 = np.array([rec.w, 0]).reshape(2, 1)
+    v3 = np.array([rec.w, rec.h]).reshape(2, 1)
+    v4 = np.array([0, rec.h]).reshape(2, 1)
 
-    v1 = rot2d(rec.angle) @ v1 + np.array([rec.x, rec.y]).reshape(2,1)
-    v2 = rot2d(rec.angle) @ v2 + np.array([rec.x, rec.y]).reshape(2,1)
-    v3 = rot2d(rec.angle) @ v3 + np.array([rec.x, rec.y]).reshape(2,1)
-    v4 = rot2d(rec.angle) @ v4 + np.array([rec.x, rec.y]).reshape(2,1)
+    v1 = rot2d(rec.angle) @ v1 + np.array([rec.x, rec.y]).reshape(2, 1)
+    v2 = rot2d(rec.angle) @ v2 + np.array([rec.x, rec.y]).reshape(2, 1)
+    v3 = rot2d(rec.angle) @ v3 + np.array([rec.x, rec.y]).reshape(2, 1)
+    v4 = rot2d(rec.angle) @ v4 + np.array([rec.x, rec.y]).reshape(2, 1)
 
-    l1 = ObjLine2D(v1[0,0], v1[1,0], v2[0,0], v2[1,0])
-    l2 = ObjLine2D(v2[0,0], v2[1,0], v3[0,0], v3[1,0])
-    l3 = ObjLine2D(v3[0,0], v3[1,0], v4[0,0], v4[1,0])
-    l4 = ObjLine2D(v4[0,0], v4[1,0], v1[0,0], v1[1,0])
+    l1 = ObjLine2D(v1[0, 0], v1[1, 0], v2[0, 0], v2[1, 0])
+    l2 = ObjLine2D(v2[0, 0], v2[1, 0], v3[0, 0], v3[1, 0])
+    l3 = ObjLine2D(v3[0, 0], v3[1, 0], v4[0, 0], v4[1, 0])
+    l4 = ObjLine2D(v4[0, 0], v4[1, 0], v1[0, 0], v1[1, 0])
 
     if (intersect_line_v_line(line, l1) or intersect_line_v_line(line, l2) or intersect_line_v_line(line, l3) or intersect_line_v_line(line, l4)):
         return True
@@ -287,3 +292,9 @@ def intersect_point_v_rectangle(point, rec):
         return True
     else:
         return False
+
+
+def intersection_circle_v_rectangle(circle, rec):
+    deltaX = circle.x - max(rec.x, min(circle.x, rec.x + rec.w))
+    deltaY = circle.y - max(rec.y, min(circle.y, rec.y + rec.h))
+    return (deltaX*deltaX + deltaY*deltaY) < (circle.r * circle.r)
