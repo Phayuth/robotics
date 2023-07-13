@@ -100,25 +100,26 @@ class DevPlanner():
     def planning(self):
         # planning stage
         timePlanningStart = time.perf_counter_ns()
-        # itera = self.generic_bidirectional()
-        itera = self.rrt_connect_app()
+        # itera = self.planner_generic_bidirectional()
+        # itera = self.planner_rrt_connect()
+        itera = self.planner_rrt_connect_app()
         timePlanningEnd = time.perf_counter_ns()
         print("Finished Tree Building")
 
         # search path stage
         timeSearchStart = time.perf_counter_ns()
-        path = self.search_path()
+        path = self.search_bidirectional_path()
         timeSearchEnd = time.perf_counter_ns()
         print("Finshed Path Search")
 
         # optimization stage
         timeOptStart = time.perf_counter_ns()
         # pathPruned = None
-        pathPruned = self.greedy_prune_path(path)
-        # pathPruned = self.mid_node_prune_path((path))
+        pathPruned = self.optimizer_greedy_prune_path(path)
+        # pathPruned = self.optimizer_mid_node_prune_path((path))
         pathToApproch = None
-        # pathToApproch = self.apply_approach_path(path)
-        pathSeg = self.segment_linear_interpolation_path(pathPruned)
+        # pathToApproch = self.optimizer_apply_approach_path(path)
+        pathSeg = self.optimizer_segment_linear_interpolation_path(pathPruned)
         timeOptEnd = time.perf_counter_ns()
         print("Finshed Path Optimzation")
 
@@ -146,7 +147,7 @@ class DevPlanner():
         # return pathToApproch
         return pathSeg
 
-    def generic_bidirectional(self):  # Method of Expanding toward Random Node (Generic Bidirectional)
+    def planner_generic_bidirectional(self):  # Method of Expanding toward Random Node (Generic Bidirectional)
         for itera in range(self.maxIteration):
             print(itera)
             xRandStart = self.bias_sampling(self.xApp)
@@ -173,7 +174,7 @@ class DevPlanner():
 
         return itera
     
-    def rrt_connect(self):  # Method of Expanding toward Each Other (RRT Connect)
+    def planner_rrt_connect(self):  # Method of Expanding toward Each Other (RRT Connect)
         for itera in range(self.maxIteration):
             print(itera)
             # add a sample of surface sphere center at goal and radius equal to distance from xgoal to xapp
@@ -267,7 +268,7 @@ class DevPlanner():
 
         return itera
     
-    def rrt_connect_app(self):  # Method of Expanding toward Each Other (RRT Connect) + approach pose
+    def planner_rrt_connect_app(self):  # Method of Expanding toward Each Other (RRT Connect) + approach pose
         for itera in range(self.maxIteration):
             print(itera)
             if self.treeSwapFlag is True: # Init tree side
@@ -373,7 +374,7 @@ class DevPlanner():
 
         return itera
     
-    def search_path(self): # return path is [xinit, x1, x2, ..., xapp, xgoal]
+    def search_bidirectional_path(self): # return path is [xinit, x1, x2, ..., xapp, xgoal]
         # nearStart, nearGoal = self.is_both_tree_node_near(return_near_node=True)
         starterNode = self.connectNodeStart # nearStart
         goalerNode = self.connectNodeGoal   # nearGoal
@@ -395,7 +396,7 @@ class DevPlanner():
 
         return path
 
-    def greedy_prune_path(self, initialPath): # lost a lot of information about the collision when curve fit which as expected
+    def optimizer_greedy_prune_path(self, initialPath): # lost a lot of information about the collision when curve fit which as expected
         prunedPath = [initialPath[0]]
         indexNext = 1
 
@@ -409,37 +410,14 @@ class DevPlanner():
 
         return prunedPath
 
-    def mid_node_prune_path(self, path): # remove an middle node (even index)
+    def optimizer_mid_node_prune_path(self, path): # remove an middle node (even index)
         prunedPath = path.copy() # create copy of list, not optimized but just to save the original for later used maybe
         for i in range(len(prunedPath) - 3, -1, -2):
             prunedPath.pop(i)
 
         return prunedPath
-    
-    def reject_unoptimal_prune_path(self, path):
 
-        return prunedPath
-    
-    def apply_approach_path(self, path): # assume the pass in path is [xinit, x1, x2, ..., xgoal]
-        pathToApproach = path.copy()
-        # remove the last element since we know it is the xgoal
-        pathToApproach.pop()
-        radiusToApproach = self.distance_between_config(self.xGoal, self.xApp)
-        for i in range(-1, -len(pathToApproach), -1):
-            steerToCandidate = pathToApproach[i]
-            pathToApproach.remove(steerToCandidate)
-            if self.distance_between_config(self.xGoal, steerToCandidate) >= radiusToApproach:
-                break
-
-        xToMerge = self.steer_to_exact_distance(self.xGoal, steerToCandidate, radiusToApproach)
-
-        # we need the method to move from xToMerge to xApp, we can not move directly.
-        xIntermidiary = move(xToMerge, self.xApp)
-        pathToApproach = pathToApproach + [xToMerge] + [xIntermidiary] + [self.xApp, self.xGoal]
-
-        return pathToApproach
-    
-    def segment_linear_interpolation_path(self, path, numSeg=10): # linear interpolate between each node in path for number of segment
+    def optimizer_segment_linear_interpolation_path(self, path, numSeg=10): # linear interpolate between each node in path for number of segment
         segmentedPath = []
         currentIndex = 0
         nextIndex = 1
@@ -466,12 +444,29 @@ class DevPlanner():
 
         return segmentedPath
 
-    def tree_swap_flag(self):
-        if self.treeSwapFlag is True:
-            self.treeSwapFlag = False
-        elif self.treeSwapFlag is False:
-            self.treeSwapFlag = True
+    # def optimizer_reject_unoptimal_prune_path(self, path):
 
+    #     return prunedPath
+    
+    # def optimizer_apply_approach_path(self, path): # assume the pass in path is [xinit, x1, x2, ..., xgoal]
+    #     pathToApproach = path.copy()
+    #     # remove the last element since we know it is the xgoal
+    #     pathToApproach.pop()
+    #     radiusToApproach = self.distance_between_config(self.xGoal, self.xApp)
+    #     for i in range(-1, -len(pathToApproach), -1):
+    #         steerToCandidate = pathToApproach[i]
+    #         pathToApproach.remove(steerToCandidate)
+    #         if self.distance_between_config(self.xGoal, steerToCandidate) >= radiusToApproach:
+    #             break
+
+    #     xToMerge = self.steer_to_exact_distance(self.xGoal, steerToCandidate, radiusToApproach)
+
+    #     # we need the method to move from xToMerge to xApp, we can not move directly.
+    #     xIntermidiary = move(xToMerge, self.xApp)
+    #     pathToApproach = pathToApproach + [xToMerge] + [xIntermidiary] + [self.xApp, self.xGoal]
+
+    #     return pathToApproach
+    
     def hypersphere_surface_sampling(self, centerNode, radius):
         randPoint = np.random.normal(size=6)
         unitRandPoint = randPoint / np.linalg.norm(randPoint)
@@ -496,6 +491,12 @@ class DevPlanner():
         else:
             xRand = self.uni_sampling()
         return xRand
+
+    def tree_swap_flag(self):
+        if self.treeSwapFlag is True:
+            self.treeSwapFlag = False
+        elif self.treeSwapFlag is False:
+            self.treeSwapFlag = True
 
     def nearest_node(self, treeVertex, xRand):
         vertexList = []

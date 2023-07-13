@@ -5,7 +5,8 @@
 #
 # Do not launch simulation, but run this script
 #
-
+import sys
+sys.path.append("/home/yuth/coppelia/programming/zmqRemoteApi/clients/python")
 import time
 
 from zmqRemoteApi import RemoteAPIClient

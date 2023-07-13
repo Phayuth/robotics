@@ -4,7 +4,8 @@
 # All CoppeliaSim commands will run in blocking mode (block
 # until a reply from CoppeliaSim is received). For a non-
 # blocking example, see simpleTest-nonBlocking.py
-
+import sys
+sys.path.append("/home/yuth/coppelia/programming/zmqRemoteApi/clients/python")
 import time
 
 from zmqRemoteApi import RemoteAPIClient

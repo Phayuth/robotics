@@ -3,7 +3,8 @@
 # scenes/messaging/ikMovementViaRemoteApi.ttt
 #
 # Do not launch simulation, then run this script
-
+import sys
+sys.path.append("/home/yuth/coppelia/programming/zmqRemoteApi/clients/python")
 from zmqRemoteApi import RemoteAPIClient
 
 print('Program started')
