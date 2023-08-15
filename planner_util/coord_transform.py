@@ -20,12 +20,12 @@ def ellipse2cats(a, b, t, x_targ=0, y_targ=0): # here t variable IS NOT theta ht
 def circle_plt(x_targ, y_targ, radius):
     theta_coord = np.linspace(0, 2*np.pi, 90)
     x_coord, y_coord = polar2cats(radius, theta_coord, x_targ, y_targ)
-    plt.plot(x_coord, y_coord, c="green")
+    plt.plot(x_coord, y_coord, "g--")
 
 def ellipse_plt(x_targ, y_targ, a, b):
     t = np.linspace(0, 2*np.pi, 90)
     x_coord, y_coord = ellipse2cats(a, b, t, x_targ, y_targ)
-    plt.plot(x_coord, y_coord, c="green")
+    plt.plot(x_coord, y_coord, "g--")
 
 
 if __name__=="__main__":

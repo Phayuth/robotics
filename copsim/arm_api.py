@@ -237,31 +237,115 @@ class UR5eDynamicArmCoppeliaSimAPI:
         self.sim.setJointTargetPosition(self.joint6Handle, r)
 
 
-if __name__ == "__main__":
-    from target_localization.pre_record_value import thetaInit, thetaGoal5, thetaApp5
-    # UR5e scene
-    thetaInit = thetaInit
-    thetaGoal = thetaGoal5
-    thetaApp =  thetaApp5
+class UR5eStateArmCoppeliaSimAPI:
 
-    armVirtual = UR5eVirtualArmCoppeliaSimAPI()
-    armVirtual.start_sim()
+    def __init__(self) -> None:
+        # coppeliasim
+        self.client = RemoteAPIClient()
+        self.sim = self.client.getObject('sim')
+        self.client.setStepping(True)
 
-    # loop in simulation
-    while (t := armVirtual.sim.getSimulationTime()) < 10:
+        # arm handle Goal
+        self.joint1GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint')
+        self.joint2GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint')
+        self.joint3GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint')
+        self.joint4GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint')
+        self.joint5GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint')
+        self.joint6GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint/wrist_2_link_resp/wrist_3_joint')
 
-        # do something
-        if 0 <= t < 4:
-            armVirtual.set_joint_value(thetaInit)
+        # arm handle Aux
+        self.joint1AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint')
+        self.joint2AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint')
+        self.joint3AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint')
+        self.joint4AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint')
+        self.joint5AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint')
+        self.joint6AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint/wrist_2_link_resp/wrist_3_joint')
 
-        elif 4 <= t < 7:
-            armVirtual.set_joint_value(thetaApp)
+        # arm handle Start
+        self.joint1StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint')
+        self.joint2StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint')
+        self.joint3StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint')
+        self.joint4StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint')
+        self.joint5StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint')
+        self.joint6StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint/wrist_2_link_resp/wrist_3_joint')
 
+    def start_sim(self):
+        self.sim.startSimulation()
+
+    def stop_sim(self):
+        self.sim.stopSimulation()
+
+    def step_sim(self):
+        self.client.step()
+
+    def set_goal_joint_value(self, jointValue):
+        if isinstance(jointValue, np.ndarray):
+            x, y, z, p, q, r = jointValue[0, 0], jointValue[1, 0], jointValue[2, 0], jointValue[3, 0], jointValue[4, 0], jointValue[5, 0]
         else:
-            armVirtual.set_joint_value(thetaGoal)
+            x, y, z, p, q, r = jointValue.x, jointValue.y, jointValue.z, jointValue.p, jointValue.q, jointValue.r
+        self.sim.setJointPosition(self.joint1GoalHandle, x)
+        self.sim.setJointPosition(self.joint2GoalHandle, y)
+        self.sim.setJointPosition(self.joint3GoalHandle, z)
+        self.sim.setJointPosition(self.joint4GoalHandle, p)
+        self.sim.setJointPosition(self.joint5GoalHandle, q)
+        self.sim.setJointPosition(self.joint6GoalHandle, r)
 
-        # triggers next simulation step
-        armVirtual.step_sim()
+    def set_aux_joint_value(self, jointValue):
+        if isinstance(jointValue, np.ndarray):
+            x, y, z, p, q, r = jointValue[0, 0], jointValue[1, 0], jointValue[2, 0], jointValue[3, 0], jointValue[4, 0], jointValue[5, 0]
+        else:
+            x, y, z, p, q, r = jointValue.x, jointValue.y, jointValue.z, jointValue.p, jointValue.q, jointValue.r
+        self.sim.setJointPosition(self.joint1AuxHandle, x)
+        self.sim.setJointPosition(self.joint2AuxHandle, y)
+        self.sim.setJointPosition(self.joint3AuxHandle, z)
+        self.sim.setJointPosition(self.joint4AuxHandle, p)
+        self.sim.setJointPosition(self.joint5AuxHandle, q)
+        self.sim.setJointPosition(self.joint6AuxHandle, r)
 
-    # stop simulation
-    armVirtual.stop_sim()
+    def set_start_joint_value(self, jointValue):
+        if isinstance(jointValue, np.ndarray):
+            x, y, z, p, q, r = jointValue[0, 0], jointValue[1, 0], jointValue[2, 0], jointValue[3, 0], jointValue[4, 0], jointValue[5, 0]
+        else:
+            x, y, z, p, q, r = jointValue.x, jointValue.y, jointValue.z, jointValue.p, jointValue.q, jointValue.r
+        self.sim.setJointPosition(self.joint1StartHandle, x)
+        self.sim.setJointPosition(self.joint2StartHandle, y)
+        self.sim.setJointPosition(self.joint3StartHandle, z)
+        self.sim.setJointPosition(self.joint4StartHandle, p)
+        self.sim.setJointPosition(self.joint5StartHandle, q)
+        self.sim.setJointPosition(self.joint6StartHandle, r)
+
+if __name__ == "__main__":
+    from target_localization.pre_record_value import thetaInit, thetaGoal5, thetaApp5, qCurrent, qAux, qGoal, wrap_to_pi
+
+    # # UR5e scene
+    # thetaInit = thetaInit
+    # thetaGoal = thetaGoal5
+    # thetaApp =  thetaApp5
+
+    # armVirtual = UR5eVirtualArmCoppeliaSimAPI()
+    # armVirtual.start_sim()
+
+    # # loop in simulation
+    # while (t := armVirtual.sim.getSimulationTime()) < 10:
+
+    #     # do something
+    #     if 0 <= t < 4:
+    #         armVirtual.set_joint_value(thetaInit)
+
+    #     elif 4 <= t < 7:
+    #         armVirtual.set_joint_value(thetaApp)
+
+    #     else:
+    #         armVirtual.set_joint_value(thetaGoal)
+
+    #     # triggers next simulation step
+    #     armVirtual.step_sim()
+
+    # # stop simulation
+    # armVirtual.stop_sim()
+
+    armState = UR5eStateArmCoppeliaSimAPI()
+    armState.start_sim()
+    armState.set_goal_joint_value(wrap_to_pi(qGoal))
+    armState.set_aux_joint_value(wrap_to_pi(qAux))
+    armState.set_start_joint_value(wrap_to_pi(thetaInit))

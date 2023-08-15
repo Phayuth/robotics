@@ -129,12 +129,12 @@ class PlanarRR:
             plt.axvline(x=0, c="green")
             plt.axhline(y=0, c="green")
 
-        plt.plot([shoulder[0], elbow[0]], [shoulder[1], elbow[1]], 'blue', linewidth=3)
-        plt.plot([elbow[0], wrist[0]], [elbow[1], wrist[1]], 'cyan', linewidth=3)
+        plt.plot([shoulder[0], elbow[0]], [shoulder[1], elbow[1]], color='indigo', linewidth=5, marker = 'o', markerfacecolor = 'r')
+        plt.plot([elbow[0], wrist[0]], [elbow[1], wrist[1]], color='indigo', linewidth=5, marker = 'o', markerfacecolor = 'r')
 
-        plt.plot(shoulder[0], shoulder[1], 'ro')
-        plt.plot(elbow[0], elbow[1], 'ro')
-        plt.plot(wrist[0], wrist[1], 'ro')
+        # plt.plot(shoulder[0], shoulder[1], 'ro')
+        # plt.plot(elbow[0], elbow[1], 'ro')
+        # plt.plot(wrist[0], wrist[1], 'ro')
 
         if plt_show:
             plt.show()

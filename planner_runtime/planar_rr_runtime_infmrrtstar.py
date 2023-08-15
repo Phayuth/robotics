@@ -38,6 +38,7 @@ class RuntimeInformedRRTStar:
         # properties of planner
         self.maxIteration = maxIteration
         self.eta = eta
+        self.rewireRadius = 1
         self.treeVertex = [self.xStart]
         self.XSoln = []
 
@@ -59,7 +60,7 @@ class RuntimeInformedRRTStar:
             if self.is_config_in_collision(xNew) or self.is_connect_config_possible(xNew.parent, xNew):
                 continue
             else:
-                XNear = self.near(xNew, self.eta)
+                XNear = self.near(xNew, self.rewireRadius)
                 xMin = xNew.parent
                 cMin = xMin.cost + self.cost_line(xMin, xNew)
                 for xNear in XNear:
@@ -167,10 +168,10 @@ class RuntimeInformedRRTStar:
 
         if dist <= self.eta:
             xNew = xRand
-
+            
         else:
-            newX = self.eta * distX + xNearest.x
-            newY = self.eta * distY + xNearest.y
+            newX = self.eta * (distX/dist) + xNearest.x
+            newY = self.eta * (distY/dist) + xNearest.y
             xNew = Node(newX, newY)
         return xNew
 
@@ -196,7 +197,7 @@ class RuntimeInformedRRTStar:
         I1 = np.array([[1.0], [0.0], [0.0]])
         M = a1 @ I1.T
         U, _, V_T = np.linalg.svd(M, True, True)
-        C = U @ np.diag([1.0, 1.0, np.linalg.det(U) * np.linalg.det(V_T.T)]) @ V_T
+        C = U @ np.diag([1.0, 1.0, np.linalg.det(U) * np.linalg.det(V_T)]) @ V_T.T
         return L,C
 
     def is_config_in_collision(self, xNew):

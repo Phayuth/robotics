@@ -1,5 +1,8 @@
 import numpy as np
 
+def wrap_to_pi(angle):
+    return (angle + np.pi) % (2 * np.pi) - np.pi
+
 # UR5 copsim
 # thetaInit = np.array([0, 0, 0, 0, 0, 0]).reshape(6, 1)
 # thetaGoal = np.array([1.2, 0, -0.2, 0, -1.2, -0.2]).reshape(6, 1)
@@ -33,4 +36,13 @@ thetaApp5 = np.array([np.deg2rad(139.86), np.deg2rad(-60.75), np.deg2rad(-137.7)
 thetaGoal6 = np.array([np.deg2rad(183.38), np.deg2rad(-90.38), np.deg2rad(-131.35), np.deg2rad(-39.44), np.deg2rad(26.22), np.deg2rad(37.62)]).reshape(6, 1)
 thetaApp6 = np.array([np.deg2rad(193.48), np.deg2rad(-81.39), np.deg2rad(-131.70), np.deg2rad(-69.87), np.deg2rad(20.59), np.deg2rad(44.59)]).reshape(6, 1)
 
-# Fail Auxilary Pose and Goal Pose
+# From ROS
+# Cand 1
+qCurrent = np.array([-0.3513484733244089, -0.8841841545935455, -1.7460461905029725, -0.3149857471639031, 0.8279524666993007, -0.023037786917641353]).reshape(6, 1)
+qGoal = np.array([5.229049405606208, 4.005793026442909, -0.12450149024625597, -0.18886354720065374, 2.103094506316899, -5.047631697794035]).reshape(6, 1)
+qAux = np.array([5.119112501615053, 4.348336564349895, -0.8201569789671345, 0.20305320620760767, -4.08750436527597, 1.306417971784997]).reshape(6, 1)
+
+
+if __name__ == "__main__":
+    wrapped_angle = wrap_to_pi(qGoal)
+    print(wrapped_angle)

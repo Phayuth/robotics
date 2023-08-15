@@ -2,7 +2,6 @@ import open3d as o3d
 import numpy as np
 
 # View PC
-print("Load a ply point cloud, print it, and render it")
 ply_point_cloud = o3d.data.PLYPointCloud()
 pcd = o3d.io.read_point_cloud(ply_point_cloud.path)
 print(pcd)
@@ -15,7 +14,6 @@ o3d.visualization.draw_geometries([pcd],
 
 
 # Crop
-# Load data
 demo_crop_data = o3d.data.DemoCropPointCloud()
 pcd = o3d.io.read_point_cloud(demo_crop_data.point_cloud_path)
 vol = o3d.visualization.read_selection_polygon_volume(demo_crop_data.cropped_json_path)

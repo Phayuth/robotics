@@ -163,7 +163,6 @@ if __name__ == "__main__":
         point = sample_point_on_hypersphere(center, radius, dimension)
         points.append(point)
     points = np.array(points)
-    print(f"==>> points.shape: \n{points.shape}")
 
     # Plotting
     fig = plt.figure()

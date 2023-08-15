@@ -65,6 +65,7 @@ while capture.isOpened():
                 appleMask = masks.masks[bi, :, :].cpu().numpy()
                 appleMask = appleMask.reshape(appleMask.shape[0], appleMask.shape[1])
                 imgMask = imgMask + appleMask
-        imgshow = np.where(imgMask[..., None], img, 0)
-        cv2.imshow("Apple mask only", imgshow)
-        cv2.waitKey(1)
+    # np.save("./mask.npy", imgMask)
+    imgshow = np.where(imgMask[..., None], img, 0)
+    cv2.imshow("Apple mask only", imgshow)
+    cv2.waitKey(0)

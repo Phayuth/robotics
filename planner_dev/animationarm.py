@@ -11,7 +11,7 @@ from matplotlib.animation import FuncAnimation
 
 np.random.seed(9)
 from scipy.optimize import curve_fit
-from taskmap_obs import two_near_ee
+from map.taskmap_geo_format import two_near_ee_for_devplanner
 
 from planner_util.extract_path_class import extract_path_class_6d
 from planner_util.plot_util import plot_joint_6d
@@ -23,7 +23,7 @@ robot = PlanarSixDof()
 thetaInit = np.array([0, 0, 0, 0, 0, 0]).reshape(6, 1)
 thetaGoal = np.array([1.2, 0, -0.2, 0, -1.2, -0.2]).reshape(6, 1)
 thetaApp = np.array([1.3, 0, -0.3, 0, -1.21, -0.16]).reshape(6, 1)
-obsList = two_near_ee()
+obsList = two_near_ee_for_devplanner()
 
 # plot pre planning
 fig1, ax1 = plt.subplots()

@@ -613,12 +613,12 @@ if __name__ == "__main__":
     from scipy.optimize import curve_fit
     from planner_util.extract_path_class import extract_path_class_6d
     from util.dictionary_pretty import print_dict
-    from target_localization.pre_record_value import thetaInit, thetaGoal4, thetaApp4
+    from target_localization.pre_record_value import thetaInit, thetaGoal1, thetaApp1
 
     # Define pose
     thetaInit = thetaInit
-    thetaGoal = thetaGoal4
-    thetaApp = thetaApp4
+    thetaGoal = thetaGoal1
+    thetaApp = thetaApp1
     
     planner = DevPlanner(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=5000)
     path = planner.planning()

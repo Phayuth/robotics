@@ -7,7 +7,7 @@ from sklearn import svm
 import numpy as np
 from map.taskmap_geo_format import task_rectangle_obs_1
 from robot.planar_rr import PlanarRR
-from collision_check_learnbased.planar_rr_collision_dataset import collision_dataset
+from collision_check_learnbased.neuralnet_collision.planar_rr_collision_dataset import collision_dataset
 import matplotlib.pyplot as plt
 
 robot = PlanarRR()
@@ -33,7 +33,7 @@ print(clf.predict([[2, 2]]))
 
 theta_candidate = np.linspace(-np.pi, np.pi, sample_size)
 
-map = np.ones((sample_size,sample_size))
+map = np.ones((sample_size, sample_size))
 
 for ind1, th1 in enumerate(theta_candidate):
     for ind2, th2 in enumerate(theta_candidate):

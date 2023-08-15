@@ -250,6 +250,7 @@ def vec_to_skew(x):
 
 if __name__ == "__main__":
     np.set_printoptions(suppress=True)
+    from scipy.spatial.transform import Rotation as R
 
     # fixed axis rotation
     gamma = np.random.uniform(-np.pi, np.pi)
@@ -304,3 +305,12 @@ if __name__ == "__main__":
                   [0]])
 
     print(vec_to_skew(x))
+
+
+    # tool0 to camera_link
+    roty_n90 = roty(-np.pi/2)
+    rotz_p90 = rotz(np.pi/2)
+    rot = rotz_p90 @ roty_n90
+    r = R.from_matrix(rot)
+    rq = r.as_quat()
+    print(f"==>> rq: \n{rq}") # xyzw

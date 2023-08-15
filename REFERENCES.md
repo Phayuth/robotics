@@ -35,6 +35,7 @@ snake_case = script/folder name
 - [An Idiot's guide to Support vector machines (SVMs)](https://web.mit.edu/6.034/wwwbob/svm.pdf)
 - [Agriculture Robot Lab](http://agrobotics.uni-bonn.de/data/)
 - [Configuration Space Visualize](https://www.cs.unc.edu/~jeffi/c-space/robot.xhtml)
+- [Rotation Matix](https://www.continuummechanics.org/rotationmatrix.html)
 
 ### Git
 ---
