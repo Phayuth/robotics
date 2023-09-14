@@ -1,12 +1,19 @@
 import numpy as np
 
+
 def wrap_to_pi(angle):
     return (angle + np.pi) % (2 * np.pi) - np.pi
+
 
 # UR5 copsim
 # thetaInit = np.array([0, 0, 0, 0, 0, 0]).reshape(6, 1)
 # thetaGoal = np.array([1.2, 0, -0.2, 0, -1.2, -0.2]).reshape(6, 1)
 # thetaApp = np.array([-1.57, -2.3, -1.4, 0.1, 1.57, 0]).reshape(6, 1)
+
+# sim
+simThetaInit = np.array([np.deg2rad(-27.68), np.deg2rad(2.95), np.deg2rad(-26.58), np.deg2rad(-15.28), np.deg2rad(87.43), np.deg2rad(0.0)]).reshape(6, 1)
+simThetaApp = np.array([np.deg2rad(-27.68), np.deg2rad(2.95), np.deg2rad(-26.58), np.deg2rad(-15.28), np.deg2rad(87.43), np.deg2rad(0.0)]).reshape(6, 1)
+simThetaGoal = np.array([np.deg2rad(-27.68), np.deg2rad(2.95), np.deg2rad(-26.58), np.deg2rad(-15.28), np.deg2rad(87.43), np.deg2rad(0.0)]).reshape(6, 1)
 
 # Init
 thetaInit = np.array([np.deg2rad(-27.68), np.deg2rad(2.95), np.deg2rad(-26.58), np.deg2rad(-15.28), np.deg2rad(87.43), np.deg2rad(0.0)]).reshape(6, 1)
@@ -20,28 +27,21 @@ thetaApp1 = np.array([np.deg2rad(124.02), np.deg2rad(-56.47), np.deg2rad(-91.21)
 thetaGoal2 = np.array([np.deg2rad(125.95), np.deg2rad(-63.79), np.deg2rad(-112.1), np.deg2rad(201.81), np.deg2rad(-99.11), np.deg2rad(0.16)]).reshape(6, 1)
 thetaApp2 = np.array([np.deg2rad(125.90), np.deg2rad(-54.71), np.deg2rad(-111.6), np.deg2rad(181.35), np.deg2rad(-98.61), np.deg2rad(0.14)]).reshape(6, 1)
 
-# cand 3
-thetaGoal3 = np.array([np.deg2rad(109.16), np.deg2rad(-72.75), np.deg2rad(-100.1), np.deg2rad(195.48), np.deg2rad(-130.7), np.deg2rad(0.16)]).reshape(6, 1)
-thetaApp3 = np.array([np.deg2rad(102.59), np.deg2rad(-67.46), np.deg2rad(-105.1), np.deg2rad(192.53), np.deg2rad(-133.9), np.deg2rad(0.16)]).reshape(6, 1)
-
-# cand 4
-thetaGoal4 = np.array([np.deg2rad(172.60), np.deg2rad(-75.28), np.deg2rad(-83.96), np.deg2rad(159.51), np.deg2rad(-6.16), np.deg2rad(-141.6)]).reshape(6, 1)
-thetaApp4 = np.array([np.deg2rad(186.18), np.deg2rad(-74.60), np.deg2rad(-83.96), np.deg2rad(153.77), np.deg2rad(12.48), np.deg2rad(-141.7)]).reshape(6, 1)
-
-# cand 5
-thetaGoal5 = np.array([np.deg2rad(147.29), np.deg2rad(-69.53), np.deg2rad(-128.8), np.deg2rad(251.83), np.deg2rad(-75.48), np.deg2rad(-183.9)]).reshape(6, 1)
-thetaApp5 = np.array([np.deg2rad(139.86), np.deg2rad(-60.75), np.deg2rad(-137.7), np.deg2rad(245.12), np.deg2rad(-77.17), np.deg2rad(-193.3)]).reshape(6, 1)
-
-# cand 6
-thetaGoal6 = np.array([np.deg2rad(183.38), np.deg2rad(-90.38), np.deg2rad(-131.35), np.deg2rad(-39.44), np.deg2rad(26.22), np.deg2rad(37.62)]).reshape(6, 1)
-thetaApp6 = np.array([np.deg2rad(193.48), np.deg2rad(-81.39), np.deg2rad(-131.70), np.deg2rad(-69.87), np.deg2rad(20.59), np.deg2rad(44.59)]).reshape(6, 1)
-
 # From ROS
 # Cand 1
 qCurrent = np.array([-0.3513484733244089, -0.8841841545935455, -1.7460461905029725, -0.3149857471639031, 0.8279524666993007, -0.023037786917641353]).reshape(6, 1)
 qGoal = np.array([5.229049405606208, 4.005793026442909, -0.12450149024625597, -0.18886354720065374, 2.103094506316899, -5.047631697794035]).reshape(6, 1)
 qAux = np.array([5.119112501615053, 4.348336564349895, -0.8201569789671345, 0.20305320620760767, -4.08750436527597, 1.306417971784997]).reshape(6, 1)
 
+# New
+newThetaInit = np.array([np.deg2rad(-0.39), np.deg2rad(-5.96), np.deg2rad(-3.43), np.deg2rad(6.08), np.deg2rad(1.68), np.deg2rad(-3.43)]).reshape(6, 1)
+newThetaApp = np.array([np.deg2rad(-107.49), np.deg2rad(-64.44), np.deg2rad(-118.96), np.deg2rad(10.21), np.deg2rad(92.49), np.deg2rad(-3.45)]).reshape(6, 1)
+newThetaGoal = np.array([np.deg2rad(-107.48), np.deg2rad(-74.36), np.deg2rad(-111.06), np.deg2rad(12.07), np.deg2rad(95.00), np.deg2rad(-3.47)]).reshape(6, 1)
+
+# 3dof only
+new3dofThetaInit = np.array([np.deg2rad(-0.39), np.deg2rad(-5.96), np.deg2rad(-3.43)]).reshape(3, 1)
+new3dofThetaApp = np.array([np.deg2rad(-107.49), np.deg2rad(-64.44), np.deg2rad(-118.96)]).reshape(3, 1)
+new3dofThetaGoal = np.array([np.deg2rad(-107.48), np.deg2rad(-74.36), np.deg2rad(-111.06)]).reshape(3, 1)
 
 if __name__ == "__main__":
     wrapped_angle = wrap_to_pi(qGoal)
