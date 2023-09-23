@@ -234,6 +234,14 @@ class RRTComponent:
         else:
             return False
 
+    def is_collision(self, xNearest, xNew):
+        if self.is_config_in_collision(xNew):
+            return True
+        elif self.is_connect_config_in_collision(xNearest, xNew):
+            return True
+        else:
+            return False
+
     def is_config_in_region_of_config(self, xToCheck, xCenter, radius):
         if self.distance_between_config(xToCheck, xCenter) < radius:
             return True
@@ -363,19 +371,18 @@ class RRTComponent:
             xTobeParent = xNow
             xNow = xParentSave
 
-    def update_child_cost_and_add_to_tree(self, node, treeToAddTo):
+    def update_child_cost_and_add_to_tree(self, node, treeToAddTo): # recursively updates the cost of the children of this node if the cost up to this node has changed and add to tree.
         for child in node.child:
             child.cost = child.parent.cost + self.cost_line(child.parent, child)
             treeToAddTo.append(child)
             self.update_child_cost_and_add_to_tree(child, treeToAddTo)
 
-    def update_child_cost(self, node):
-        # recursively updates the cost of the children of this node if the cost up to this node has changed.
+    def update_child_cost(self, node): # recursively updates the cost of the children of this node if the cost up to this node has changed.
         for child in node.child:
             child.cost = child.parent.cost + self.cost_line(child.parent, child)
             self.update_child_cost(child)
 
-    def search_backtrack_single_directional_path(self, backFromNode, attachNode):  # return path is [xinit, x1, x2, ..., xapp, xgoal]
+    def search_backtrack_single_directional_path(self, backFromNode, attachNode=None):  # return path is [xinit, x1, x2, ..., xapp, xgoal]
         pathStart = [backFromNode]
         currentNodeStart = backFromNode
         while currentNodeStart.parent is not None:
@@ -389,7 +396,7 @@ class RRTComponent:
         else:
             return pathStart
 
-    def search_backtrack_bidirectional_path(self, backFromNodeTa, backFromNodeTb, attachNode):  # return path is [xinit, x1, x2, ..., xapp, xgoal]
+    def search_backtrack_bidirectional_path(self, backFromNodeTa, backFromNodeTb, attachNode=None):  # return path is [xinit, x1, x2, ..., xapp, xgoal]
         # backFromNodeTa = self.connectNodeStart # nearStart
         # backFromNodeTb = self.connectNodeGoal  # nearGoal
 
@@ -412,7 +419,7 @@ class RRTComponent:
         else:
             return pathStart + pathGoal
 
-    def search_best_cost_singledirection_path(self, backFromNode, treeVertexList, attachNode):
+    def search_best_cost_singledirection_path(self, backFromNode, treeVertexList, attachNode=None):
         vertexListCost = [vertex.cost + self.cost_line(vertex, backFromNode) for vertex in treeVertexList]
         # costSortedIndex = sorted(range(len(vertexListCost)), key=lambda i: vertexListCost[i]) the same as argsort
         costSortedIndex = np.argsort(vertexListCost)
@@ -431,7 +438,7 @@ class RRTComponent:
                 else:
                     return path
 
-    def search_best_cost_bidirection_path(self, connectNodePairList, attachNode):
+    def search_best_cost_bidirection_path(self, connectNodePairList, attachNode=None):
         vertexPairListCost = [vertexA.cost + vertexB.cost + self.cost_line(vertexA, vertexB) for vertexA, vertexB in connectNodePairList]
         costMinIndex = np.argmin(vertexPairListCost)
 
@@ -454,7 +461,7 @@ class RRTComponent:
         else:
             return pathStart + pathGoal
 
-    def segment_interpolation_between_config(self, xStart, xEnd, NumSeg, includexStart):  # calculate line interpolation between two config
+    def segment_interpolation_between_config(self, xStart, xEnd, NumSeg, includexStart=False):  # calculate line interpolation between two config
         if includexStart:
             anchorPath = [xStart]
         else:  # only give [x1, x2,..., xEnd] - xStart is excluded
@@ -487,25 +494,21 @@ class RRTComponent:
 
         return segmentedPath
     
-    def greedy_prune_path(self, initialPath):  # lost a lot of information about the collision when curve fit which as expected
+    def postprocess_greedy_prune_path(self, initialPath):  # lost a lot of information about the collision when curve fit which as expected
         prunedPath = [initialPath[0]]
         indexNext = 1
-
         while indexNext != len(initialPath):
             if self.is_connect_config_in_collision(prunedPath[-1], initialPath[indexNext], NumSeg=int(self.distance_between_config(prunedPath[-1], initialPath[indexNext]) / self.eta)):
                 prunedPath.append(initialPath[indexNext - 1])
             else:
                 indexNext += 1
-
         prunedPath.extend([initialPath[-2], initialPath[-1]])  # add back xApp and xGoal to path from the back
-
         return prunedPath
 
-    def mid_node_prune_path(self, path):  # remove an middle node (even index)
+    def postprocess_mid_node_prune_path(self, path):  # remove an middle node (even index)
         prunedPath = path.copy()  # create copy of list, not optimized but just to save the original for later used maybe
         for i in range(len(prunedPath) - 3, -1, -2):
             prunedPath.pop(i)
-
         return prunedPath
 
     def single_tree_cbest(self, treeVertexList, nodeToward, itera): # search in treeGoalRegion for the current best cost
@@ -527,11 +530,31 @@ class RRTComponent:
             xSolnCost = [vertexA.cost + vertexB.cost + self.cost_line(vertexA, vertexB) for vertexA, vertexB in connectNodePair]
             print(f"==>> xSolnCost: \n{xSolnCost}")
             cBest = min(xSolnCost)
-            if cBest < self.cBestPrevious:  # this has nothing to do with planning itself, just for record performance data only
+            if cBest < self.cBestPrevious:
                 self.perfMatrix["Cost Graph"].append((itera, cBest))
                 self.cBestPrevious = cBest
         return cBest
     
+    def single_tree_multi_cbest(self, treeVertexListList, nodeTowardList, itera):
+        xSolnCost = [[node.cost + self.cost_line(node, nodeTowardList[ind]) for node in vertexList] for ind, vertexList in enumerate(treeVertexListList)]
+        cBest = None
+        xGoalBestIndex = None
+        for index, sublist in enumerate(xSolnCost):
+            if not sublist:
+                continue
+            sublistMin = min(sublist)
+            if cBest is None or sublistMin < cBest:
+                cBest = sublistMin
+                xGoalBestIndex = index
+
+        if xGoalBestIndex is not None:
+            if cBest < self.cBestPrevious:
+                self.perfMatrix["Cost Graph"].append((itera, cBest))
+                self.cBestPrevious = cBest
+            return cBest, xGoalBestIndex
+        else:
+            return np.inf, None
+
     def plot_2d_obstacle(self, axis):
         jointRange = np.linspace(-np.pi, np.pi, 360)
         collisionPoint = []

@@ -42,7 +42,7 @@ class RRTBase(RRTComponent):
             xNearest.child.append(xNew)
             self.treeVertex.append(xNew)
 
-            # in goal region, this have nothing to do with planning itself, just for record performance data only
+            # in goal region
             if self.is_config_in_region_of_config(xNew, self.xApp, radius=self.nearGoalRadius):
                 self.XInGoalRegion.append(xNew)
 
@@ -51,3 +51,51 @@ class RRTBase(RRTComponent):
         self.plot_2d_single_tree(self.treeVertex, ax)
         self.plot_2d_path(path, ax)
         self.plot_2d_state_configuration(self.xStart, self.xApp, self.xGoal, ax)
+
+
+class RRTBaseMulti(RRTComponent):
+
+    def __init__(self, xStart, xAppList, xGoalList, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius):
+        super().__init__(NumDoF=numDoF, EnvChoice=envChoice)
+        # start, aux, goal node
+        self.xStart = Node(xStart)
+        self.xGoalList = [Node(xGoali) for xGoali in xGoalList]
+        self.xAppList = [Node(xAppi) for xAppi in xAppList]
+        self.numGoal = len(self.xAppList)
+
+        self.eta = eta
+        self.subEta = subEta
+        self.nearGoalRadius = nearGoalRadius
+        self.maxIteration = maxIteration
+        self.treeVertex = [self.xStart]
+        self.distGoalToAppList = [self.distance_between_config(xAppi, xGoali) for xAppi, xGoali in zip(self.xAppList, self.xGoalList)]
+        self.XInGoalRegion = [[] for _ in range(self.numGoal)]
+        self.xGoalBestIndex = None
+
+    @RRTComponent.catch_key_interrupt
+    def start(self):
+        for itera in range(self.maxIteration):
+            print(itera)
+            cBest, self.xGoalBestIndex = self.single_tree_multi_cbest(self.XInGoalRegion, self.xAppList, itera)
+
+            biasIndex = np.random.randint(low=0, high=self.numGoal)
+            xRand = self.bias_uniform_sampling(self.xAppList[biasIndex], len(self.XInGoalRegion[biasIndex]))
+            xNearest = self.nearest_node(self.treeVertex, xRand)
+            xNew = self.steer(xNearest, xRand, self.eta)
+            if self.is_collision(xNearest, xNew):
+                continue
+            xNew.parent = xNearest
+            xNew.cost = xNew.parent.cost + self.cost_line(xNew, xNew.parent)
+            xNearest.child.append(xNew)
+            self.treeVertex.append(xNew)
+
+            # in goal region
+            for id, xApp in enumerate(self.xAppList):
+                if self.is_config_in_region_of_config(xNew, xApp, radius=self.nearGoalRadius):
+                    self.XInGoalRegion[id].append(xNew)
+
+    def plot_tree(self, path, ax):
+        self.plot_2d_obstacle(ax)
+        self.plot_2d_single_tree(self.treeVertex, ax)
+        self.plot_2d_path(path, ax)
+        self.plot_2d_state_configuration(self.xStart, self.xAppList, self.xGoalList, ax)

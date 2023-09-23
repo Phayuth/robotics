@@ -7,8 +7,8 @@ sys.path.append(str(wd))
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-from planner_dev.planner2d.planar_rrt_single import RRTConnectDev2D, RRTStarDev2D, RRTInformedDev2D, RRTStarConnectDev2D, RRTInformedConnectDev2D, RRTConnectAstInformedDev2D, RRTConnectLocalOpt2D, RRTStarLocalOpt2D
-from planner_dev.copsim6d.copsim_rrt_single import RRTConnectDevCopSim6D, RRTStarDevCopSim6D, RRTInformedDevCopSim6D, RRTStarConnectDevCopSim6D, RRTInformedConnectDevCopSim6D, RRTConnectAstInformedDevCopSim6D, RRTConnectLocalOptCopSim6D, RRTStarLocalOptCopSim6D
+from planner_dev.planner2d.planar_rrt_single import RRTConnect2D, RRTStar2D, RRTInformed2D, RRTStarConnect2D, RRTInformedConnect2D, RRTConnectAstInformed2D, RRTConnectLocalOpt2D, RRTStarLocalOpt2D
+from planner_dev.copsim6d.copsim_rrt_single import RRTConnectCopSim, RRTStarCopSim, RRTInformedCopSim, RRTStarConnectCopSim, RRTInformedConnectCopSim, RRTConnectAstInformedCopSim, RRTConnectLocalOptCopSim, RRTStarLocalOptCopSim
 from target_localization.pre_record_value import wrap_to_pi, newThetaInit, newThetaApp, newThetaGoal
 
 # # # multi goal
@@ -30,8 +30,8 @@ class TrialRun:
         self.eta = eta
         self.maxIteration = maxIteration
 
-        # self.plannerList = [RRTConnectDev2D, RRTStarDev2D, RRTInformedDev2D, RRTStarConnectDev2D, RRTInformedConnectDev2D, RRTConnectAstInformedDev2D, RRTConnectLocalOpt2D, RRTStarLocalOpt2D]
-        self.plannerList = [RRTConnectDevCopSim6D, RRTStarDevCopSim6D, RRTInformedDevCopSim6D, RRTStarConnectDevCopSim6D, RRTInformedConnectDevCopSim6D, RRTConnectAstInformedDevCopSim6D, RRTConnectLocalOptCopSim6D, RRTStarLocalOptCopSim6D]
+        # self.plannerList = [RRTConnect2D, RRTStar2D, RRTInformed2D, RRTStarConnect2D, RRTInformedConnect2D, RRTConnectAstInformed2D, RRTConnectLocalOpt2D, RRTStarLocalOpt2D]
+        self.plannerList = [RRTConnectCopSim, RRTStarCopSim, RRTInformedCopSim, RRTStarConnectCopSim, RRTInformedConnectCopSim, RRTConnectAstInformedCopSim, RRTConnectLocalOptCopSim, RRTStarLocalOptCopSim]
         self.columnDataName = [plannerClass.__name__ for plannerClass in self.plannerList]
         self.rowDataName = [
             '# Node', 

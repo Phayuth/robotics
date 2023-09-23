@@ -78,32 +78,59 @@ import timeit
 # print(f"==>> first2index: \n{first2index}")
 
 
-n = [[-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi]]
-df = np.diff(n)
-print(f"==>> df: \n{df}")
-print(f"==>> n: \n{n}")
+# n = [[-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi]]
+# df = np.diff(n)
+# print(f"==>> df: \n{df}")
+# print(f"==>> n: \n{n}")
 
-def find_elements_smaller_than_value(input_array, threshold):
-    # Create a Boolean mask for elements smaller than the threshold
-    mask = input_array < threshold
-    print(f"==>> mask: \n{mask}")
+# def find_elements_smaller_than_value(input_array, threshold):
+#     # Create a Boolean mask for elements smaller than the threshold
+#     mask = input_array < threshold
+#     print(f"==>> mask: \n{mask}")
 
-    # Use np.where to find the indices where the mask is True
-    indices = np.where(mask)
-    print(f"==>> indices: \n{indices}")
+#     # Use np.where to find the indices where the mask is True
+#     indices = np.where(mask)
+#     print(f"==>> indices: \n{indices}")
 
-    # Use fancy indexing to get the elements at those indices
-    elements = input_array[indices]
-    print(f"==>> elements: \n{elements}")
+#     # Use fancy indexing to get the elements at those indices
+#     elements = input_array[indices]
+#     print(f"==>> elements: \n{elements}")
 
-    # Combine indices and elements into a list of tuples
-    result = list(zip(indices[0], elements))
+#     # Combine indices and elements into a list of tuples
+#     result = list(zip(indices[0], elements))
 
-    return result
+#     return result
 
-# Example usage:
-my_array = np.array([10, 5, 8, 3, 12, 7, 2])
-threshold_value = 6
+# # Example usage:
+# my_array = np.array([10, 5, 8, 3, 12, 7, 2])
+# threshold_value = 6
 
-elements_below_threshold = find_elements_smaller_than_value(my_array, threshold_value)
-print(elements_below_threshold)
+# elements_below_threshold = find_elements_smaller_than_value(my_array, threshold_value)
+# print(elements_below_threshold)
+
+
+
+# a = [[2, 43, 68, 3], [86, 23, 67], [2, 3, 76], []]
+a = [[],[]]
+
+# Initialize variables to store the minimum value and its index
+min_value = None
+min_index = None
+
+for index, sublist in enumerate(a):
+    # Check if the sublist is empty
+    if not sublist:
+        continue  # Skip empty lists
+    
+    # Find the minimum value in the sublist
+    sublist_min = min(sublist)
+    
+    # Check if it's the first minimum found or smaller than the current minimum
+    if min_value is None or sublist_min < min_value:
+        min_value = sublist_min
+        min_index = index
+
+if min_index is not None:
+    print(f"The minimum value is {min_value} and it is found in the sublist at index {min_index}.")
+else:
+    print("No minimum value found in non-empty sublists.")

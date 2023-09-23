@@ -8,7 +8,7 @@ import numpy as np
 from planner_dev.rrt_component import Node, RRTComponent
 
 
-class RRTInformedConnectDev(RRTComponent):
+class RRTInformedConnect(RRTComponent):
 
     def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice) -> None:
         super().__init__(NumDoF=numDoF, EnvChoice=envChoice)

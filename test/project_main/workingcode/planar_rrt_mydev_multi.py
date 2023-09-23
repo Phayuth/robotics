@@ -5,7 +5,7 @@ sys.path.append(str(wd))
 
 import time
 import numpy as np
-from planner_dev.rrt_mydev_multi import RRTMyDevMultiGoal
+from test.project_main.workingcode.rrt_mydev_multi import RRTMyDevMultiGoal
 
 
 class RRTMyDevMultiGoal2D(RRTMyDevMultiGoal):

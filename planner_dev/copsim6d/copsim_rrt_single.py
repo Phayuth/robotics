@@ -7,14 +7,15 @@ sys.path.append(str(wd))
 import time
 import numpy as np
 from planner_dev.rrt_base import RRTBase
-from planner_dev.rrt_connect import RRTConnectDev
-from planner_dev.rrt_star import RRTStarDev
-from planner_dev.rrt_informed import RRTInformedDev
-from planner_dev.rrt_connect_ast_informed import RRTConnectAstInformedDev
+from planner_dev.rrt_connect import RRTConnect
+from planner_dev.rrt_star import RRTStar
+from planner_dev.rrt_informed import RRTInformed
+from planner_dev.rrt_star_connect import RRTStarConnect
+from planner_dev.rrt_informed_connect import RRTInformedConnect
+
+from planner_dev.rrt_connect_ast_informed import RRTConnectAstInformed
 from planner_dev.rrt_star_localopt import RRTStarLocalOpt
 from planner_dev.rrt_connect_localopt import RRTConnectLocalOpt
-from planner_dev.rrt_star_connect import RRTStarConnectDev
-from planner_dev.rrt_informed_connect import RRTInformedConnectDev
 
 
 class RRTBaseCopSim(RRTBase):
@@ -46,7 +47,7 @@ class RRTBaseCopSim(RRTBase):
         return path
 
 
-class RRTConnectDevCopSim(RRTConnectDev):
+class RRTConnectCopSim(RRTConnect):
 
     def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=6, envChoice="CopSim"):
         super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice)
@@ -75,7 +76,7 @@ class RRTConnectDevCopSim(RRTConnectDev):
         return path
 
 
-class RRTStarDevCopSim(RRTStarDev):
+class RRTStarCopSim(RRTStar):
 
     def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=6, envChoice="CopSim", nearGoalRadius=0.3):
         super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice, nearGoalRadius=nearGoalRadius)
@@ -104,7 +105,7 @@ class RRTStarDevCopSim(RRTStarDev):
         return path
 
 
-class RRTInformedDevCopSim(RRTInformedDev):
+class RRTInformedCopSim(RRTInformed):
 
     def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=6, envChoice="CopSim", nearGoalRadius=0.3):
         super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice, nearGoalRadius=nearGoalRadius)
@@ -133,7 +134,65 @@ class RRTInformedDevCopSim(RRTInformedDev):
         return path
 
 
-class RRTConnectAstInformedDevCopSim(RRTConnectAstInformedDev):
+class RRTStarConnectCopSim(RRTStarConnect):
+
+    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=6, envChoice="CopSim"):
+        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice)
+
+    def planning(self):
+        self.robotEnv.start_sim()
+
+        timePlanningStart = time.perf_counter_ns()
+        itera = self.start()
+        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
+        timePlanningEnd = time.perf_counter_ns()
+
+        # record performance
+        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
+        self.perfMatrix["Parameters"]["eta"] = self.eta
+        self.perfMatrix["Parameters"]["subEta"] = self.subEta
+        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
+        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
+        self.perfMatrix["Number of Node"] = len(self.treeVertexStart) + len(self.treeVertexGoal)
+        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
+        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
+        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
+        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
+
+        self.robotEnv.stop_sim()
+        return path
+
+
+class RRTInformedConnectCopSim(RRTInformedConnect):
+
+    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=6, envChoice="CopSim"):
+        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice)
+
+    def planning(self):
+        self.robotEnv.start_sim()
+
+        timePlanningStart = time.perf_counter_ns()
+        itera = self.start()
+        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
+        timePlanningEnd = time.perf_counter_ns()
+
+        # record performance
+        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
+        self.perfMatrix["Parameters"]["eta"] = self.eta
+        self.perfMatrix["Parameters"]["subEta"] = self.subEta
+        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
+        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
+        self.perfMatrix["Number of Node"] = len(self.treeVertexStart) + len(self.treeVertexGoal)
+        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
+        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
+        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
+        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
+
+        self.robotEnv.stop_sim()
+        return path
+
+
+class RRTConnectAstInformedCopSim(RRTConnectAstInformed):
 
     def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=6, envChoice="CopSim", nearGoalRadius=0.3):
         super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice, nearGoalRadius=nearGoalRadius)
@@ -220,63 +279,6 @@ class RRTConnectLocalOptCopSim(RRTConnectLocalOpt):
         return path
 
 
-class RRTStarConnectDevCopSim(RRTStarConnectDev):
-
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=6, envChoice="CopSim"):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice)
-
-    def planning(self):
-        self.robotEnv.start_sim()
-
-        timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
-        timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
-        self.perfMatrix["Number of Node"] = len(self.treeVertexStart) + len(self.treeVertexGoal)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
-        self.robotEnv.stop_sim()
-        return path
-    
-
-class RRTInformedConnectDevCopSim(RRTInformedConnectDev):
-
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=6, envChoice="CopSim"):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice)
-
-    def planning(self):
-        self.robotEnv.start_sim()
-
-        timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
-        timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
-        self.perfMatrix["Number of Node"] = len(self.treeVertexStart) + len(self.treeVertexGoal)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
-        self.robotEnv.stop_sim()
-        return path
-    
 if __name__ == "__main__":
     np.random.seed(0)
     import matplotlib.pyplot as plt
@@ -284,33 +286,29 @@ if __name__ == "__main__":
     from util.general_util import write_dict_to_file
 
     # 6DoF
+    # numDoF = 6
     # thetaInit = newThetaInit
     # thetaGoal = wrap_to_pi(newThetaGoal)
     # thetaApp = wrap_to_pi(newThetaApp)
-    # planner = RRTBaseCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=2000, numDoF=6)
-    # planner = RRTConnectDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=2000, numDoF=6)
-    # planner = RRTStarDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=2000, numDoF=6)
-    # planner = RRTInformedDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=3000, numDoF=6)
-    # planner = RRTStarConnectDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=3000, numDoF=6)
-    # planner = RRTInformedConnectDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=3000, numDoF=6)
-    # planner = RRTConnectAstInformedDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=3000, numDoF=6)
-    # planner = RRTStarLocalOptCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=2000, numDoF=6)
-    # planner = RRTConnectLocalOptCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=3000, numDoF=6)
 
     # 3DoF
+    numDoF = 3
     thetaInit = new3dofThetaInit
     thetaGoal = wrap_to_pi(new3dofThetaGoal)
     thetaApp = wrap_to_pi(new3dofThetaApp)
-    # planner = RRTBaseCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=2000, numDoF=3)
-    # planner = RRTConnectDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=2000, numDoF=3)
-    # planner = RRTStarDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=2000, numDoF=3)
-    planner = RRTInformedDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.15, maxIteration=20000, numDoF=3)
-    # planner = RRTStarConnectDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=3000, numDoF=3)
-    # planner = RRTInformedConnectDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=3000, numDoF=3)
-    # planner = RRTConnectAstInformedDevCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=2000, numDoF=3)
-    # planner = RRTStarLocalOptCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=2000, numDoF=3)
-    # planner = RRTConnectLocalOptCopSim(thetaInit, thetaApp, thetaGoal, eta=0.1, maxIteration=3000, numDoF=3)
-    
+
+    maxIteration = 3000
+    eta = 0.15
+    # planner = RRTBaseCopSim(thetaInit, thetaApp, thetaGoal, eta=eta, maxIteration=maxIteration, numDoF=numDoF)
+    # planner = RRTConnectCopSim(thetaInit, thetaApp, thetaGoal, eta=eta, maxIteration=maxIteration, numDoF=numDoF)
+    # planner = RRTStarCopSim(thetaInit, thetaApp, thetaGoal, eta=eta, maxIteration=maxIteration, numDoF=numDoF)
+    # planner = RRTInformedCopSim(thetaInit, thetaApp, thetaGoal, eta=eta, maxIteration=maxIteration, numDoF=numDoF)
+    # planner = RRTStarConnectCopSim(thetaInit, thetaApp, thetaGoal, eta=eta, maxIteration=maxIteration, numDoF=numDoF)
+    # planner = RRTInformedConnectCopSim(thetaInit, thetaApp, thetaGoal, eta=eta, maxIteration=maxIteration, numDoF=numDoF)
+    # planner = RRTConnectAstInformedCopSim(thetaInit, thetaApp, thetaGoal, eta=eta, maxIteration=maxIteration, numDoF=numDoF)
+    # planner = RRTStarLocalOptCopSim(thetaInit, thetaApp, thetaGoal, eta=eta, maxIteration=maxIteration, numDoF=numDoF)
+    planner = RRTConnectLocalOptCopSim(thetaInit, thetaApp, thetaGoal, eta=eta, maxIteration=maxIteration, numDoF=numDoF)
+
     path = planner.planning()
     print(planner.perfMatrix)
     # write_dict_to_file(planner.perfMatrix, "./planner_dev/result_6d/result_6d_rrtstar.txt")
