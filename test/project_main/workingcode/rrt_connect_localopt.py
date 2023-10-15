@@ -4,40 +4,45 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-import numpy as np
 from planner_dev.rrt_component import Node, RRTComponent
 
 
 class RRTConnectLocalOpt(RRTComponent):
 
-    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius) -> None:
-        super().__init__(NumDoF=numDoF, EnvChoice=envChoice)
+    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, terminationConditionID, print_debug) -> None:
+        super().__init__(eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug)        
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoal = Node(xGoal)
         self.xApp = Node(xApp)
 
-        self.eta = eta
-        self.subEta = subEta
-        self.nearGoalRadius = nearGoalRadius
-        self.maxIteration = maxIteration
+        # planner properties
         self.treeVertexStart = [self.xStart]
         self.treeVertexGoal = [self.xApp]
-        self.treeSwapFlag = True
-        self.connectNodeStart = None
-        self.connectNodeGoal = None
-        self.rewireRadius = None
         self.distGoalToApp = self.distance_between_config(self.xGoal, self.xApp)
-        self.XInGoalRegion = []
+        self.treeSwapFlag = True
 
+        # local sampling properties
         self.anchorPath = None
         self.localPath = None
         self.numSegSamplingNode = None
 
+        # solutions
+        self.connectNodeStart = None
+        self.connectNodeGoal = None
+        self.XInGoalRegion = []
+
     @RRTComponent.catch_key_interrupt
     def start(self):
         for itera in range(self.maxIteration):
-            print(itera)
             if self.treeSwapFlag is True:
                 Ta = self.treeVertexStart
                 Tb = self.treeVertexGoal
@@ -99,8 +104,7 @@ class RRTConnectLocalOpt(RRTComponent):
         self.anchorPath = self.segment_interpolation_between_config(self.xStart, self.xApp, self.numSegSamplingNode, includexStart=True)
 
         for remainItera in range(self.maxIteration - itera):
-            print(remainItera)
-            _ = self.single_tree_cbest(self.XInGoalRegion, self.xApp, itera+remainItera)
+            _ = self.cbest_single_tree(self.XInGoalRegion, self.xApp, itera+remainItera, self.print_debug)
 
             xRand = self.local_path_sampling(self.anchorPath, self.localPath, self.numSegSamplingNode)
             xNearest, vertexDistList = self.nearest_node(self.treeVertexStart, xRand, returnDistList=True)

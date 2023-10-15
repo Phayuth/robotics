@@ -20,29 +20,36 @@ class Node:
         self.cost = cost
 
     def __repr__(self) -> str:
-        return f'\nconfig = {self.config.T}, shape = {self.config.shape}, hasParent = {True if self.parent != None else False}, NumChild = {len(self.child)}'
+        return f'\nconfig = {self.config.T}, hasParent = {True if self.parent != None else False}, NumChild = {len(self.child)}'
 
 
 class RRTComponent:
 
-    def __init__(self, NumDoF, EnvChoice) -> None:
+    def __init__(self, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, terminationConditionID, print_debug) -> None:
         # Check DOF [min, max]
-        if NumDoF == 2:
+        if numDoF == 2:
             self.jointRange = [[-np.pi, np.pi], [-np.pi, np.pi]]
-        elif NumDoF == 3:
+        elif numDoF == 3:
             self.jointRange = [[-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi]]
-        elif NumDoF == 6:
+        elif numDoF == 6:
             self.jointRange = [[-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi]]
 
         # Check Environment CopSim or Plannar
-        if EnvChoice == "CopSim":
+        if envChoice == "CopSim":
             self.robotEnv = UR5eArmCoppeliaSimAPI()
-        elif EnvChoice == "Planar":
+        elif envChoice == "Planar":
             self.robotEnv = RobotArm2DEnvironment()
 
         # planner properties
+        self.eta = eta
+        self.subEta = subEta
+        self.maxIteration = maxIteration
+        self.nearGoalRadius = nearGoalRadius
+        self.rewireRadius = rewireRadius
         self.probabilityGoalBias = 0.05  # When close to goal select goal, with this probability? default: 0.05, must modify my code
         self.maxGoalSample = 10  #Goal samples are only sampled until maxSampleCount() goals are in the tree, to prohibit duplicate goal states.
+        self.terminationConditionID = terminationConditionID # break condition
+        self.terminateNumSolutions = 5
 
         # collision database
         self.configSearched = []
@@ -52,10 +59,10 @@ class RRTComponent:
         self.perfMatrix = {
             "Planner Name": "",
             "Parameters": {
-                "eta": 0.0,
-                "subEta": 0.0,
-                "Max Iteration": 0,
-                "Rewire Radius": 0.0
+                "eta": self.eta,
+                "subEta": self.subEta,
+                "Max Iteration": self.maxIteration,
+                "Rewire Radius": self.rewireRadius
             },
             "Number of Node": 0,
             "Total Planning Time": 0.0,  # include KCD
@@ -66,12 +73,18 @@ class RRTComponent:
             "Cost Graph": []
         }
 
+        # keep track cost
         self.cBestPrevious = np.inf
+        self.cBestNow = np.inf
+        self.costDiffConstant = None # if cost different is lower than this constant, terminate loop
 
         # misc, for improve unnessary computation
-        self.DoF = NumDoF
+        self.DoF = numDoF
         self.jointIndex = range(self.DoF)
         self.gammaFunction = {1: 1, 2: 1, 2.5:1.32934, 3: 2, 4: 6, 5: 24, 6: 120}  # given DoF, apply gamma(DoF)
+
+        # debug setting
+        self.print_debug = print_debug
 
     def uni_sampling(self):
         config = np.array([[np.random.uniform(low=j[0], high=j[1])] for j in self.jointRange])
@@ -85,6 +98,23 @@ class RRTComponent:
             xRand = self.uni_sampling()
         return xRand
 
+    def informed_sampling(self, xCenter, cMax, cMin, rotationAxisC):
+        L = self.hyperellipsoid_axis_length(cMax, cMin)
+        while True:
+            xBall = self.unit_ball_sampling()
+            xRand = (rotationAxisC@L@xBall) + xCenter
+            xRand = Node(xRand)
+            if self.is_config_in_joint_limit(xRand):
+                break
+        return xRand
+
+    def bias_informed_sampling(self, xCenter, cMax, cMin, rotationAxisC, biasTowardNode, numNodeInGoalRegion):
+        if numNodeInGoalRegion < self.maxGoalSample and np.random.uniform(low=0, high=1.0) < self.probabilityGoalBias:
+            xRand = Node(biasTowardNode.config)
+        else:
+            xRand = self.informed_sampling(xCenter, cMax, cMin, rotationAxisC)
+        return xRand
+    
     def unit_ball_sampling(self):
         u = np.random.normal(0.0, 1.0, (self.DoF + 2, 1))
         norm = np.linalg.norm(u)
@@ -105,23 +135,6 @@ class RRTComponent:
         ri = np.sqrt(cMax**2 - cMin**2) / 2
         diagTerm = [r1] + [ri] * (self.DoF - 1)
         return np.diag(diagTerm)
-    
-    def informed_sampling(self, xCenter, cMax, cMin, rotationAxisC):
-        L = self.hyperellipsoid_axis_length(cMax, cMin)
-        while True:
-            xBall = self.unit_ball_sampling()
-            xRand = (rotationAxisC@L@xBall) + xCenter
-            xRand = Node(xRand)
-            if self.is_config_in_joint_limit(xRand):
-                break
-        return xRand
-
-    def bias_informed_sampling(self, xCenter, cMax, cMin, rotationAxisC, biasTowardNode, numNodeInGoalRegion):
-        if numNodeInGoalRegion < self.maxGoalSample and np.random.uniform(low=0, high=1.0) < self.probabilityGoalBias:
-            xRand = Node(biasTowardNode.config)
-        else:
-            xRand = self.informed_sampling(xCenter, cMax, cMin, rotationAxisC)
-        return xRand
 
     def local_path_sampling(self, anchorPath, localPath, NumSeg):  #expected given path [xinit, x1, x2, ..., xcandidateToxApp, xApp]
         gRand = np.random.randint(low=0, high=NumSeg)
@@ -156,10 +169,31 @@ class RRTComponent:
         gammaRRG = rewireFactor * 2.0 * ((1.0+inverseDoF) * (self.lebesgue_obstacle_free_measure() / self.unit_nball_volume_measure()))**(inverseDoF)
         return np.min([self.eta, gammaRRG * (np.log(numVertex) / numVertex)**(inverseDoF)])
 
+    def termination_check(self, solutionList):
+        if self.terminationConditionID == 1: # maxIteration exceeded
+            return self.termination_on_max_iteration()
+        elif self.terminationConditionID == 2: # first solution found
+            return self.termination_on_first_solution(solutionList)
+        elif self.terminationConditionID == 3: #cost drop different is low
+            return self.termination_on_cost_drop_different()
+
+    def termination_on_max_iteration(self): # already in for loop, no break is needed
+        return False 
+    
+    def termination_on_first_solution(self, solutionList):
+        if len(solutionList) == self.terminateNumSolutions:
+            return True
+        else:
+            return False
+
+    def termination_on_cost_drop_different(self):
+        if self.cBestPrevious - self.cBestNow < self.costDiffConstant:
+            return True
+        else:
+            return False
+
     def nearest_node(self, treeVertex, xRand, returnDistList=False):
-        vertexDistListToxRand = []
-        for eachVertex in treeVertex:
-            vertexDistListToxRand.append(self.distance_between_config(xRand, eachVertex))
+        vertexDistListToxRand = [self.distance_between_config(xRand, eachVertex) for eachVertex in treeVertex]
         minIndex = np.argmin(vertexDistListToxRand)
         xNearest = treeVertex[minIndex]
         if returnDistList:
@@ -511,31 +545,35 @@ class RRTComponent:
             prunedPath.pop(i)
         return prunedPath
 
-    def single_tree_cbest(self, treeVertexList, nodeToward, itera): # search in treeGoalRegion for the current best cost
+    def cbest_single_tree(self, treeVertexList, nodeToward, itera, print_debug=False): # search in treeGoalRegion for the current best cost
         if len(treeVertexList) == 0:
             cBest = np.inf
+            xSolnCost = []
         else:
             xSolnCost = [xSoln.cost + self.cost_line(xSoln, nodeToward) for xSoln in treeVertexList]
-            print(f"==>> xSolnCost: \n{xSolnCost}")
             cBest = min(xSolnCost)
             if cBest < self.cBestPrevious : # this has nothing to do with planning itself, just for record performance data only
                 self.perfMatrix["Cost Graph"].append((itera, cBest))
                 self.cBestPrevious = cBest
+        if print_debug:
+            print(f"Iteration : [{itera}] - Best Cost : [{cBest}] - xSolnCost : {xSolnCost}", end='\r', flush=True)
         return cBest
 
-    def dual_tree_cbest(self, connectNodePair, itera): # search in connectNodePairList for the current best cost
+    def cbest_dual_tree(self, connectNodePair, itera, print_debug=False): # search in connectNodePairList for the current best cost
         if len(connectNodePair) == 0:
             cBest = np.inf
+            xSolnCost = []
         else:
             xSolnCost = [vertexA.cost + vertexB.cost + self.cost_line(vertexA, vertexB) for vertexA, vertexB in connectNodePair]
-            print(f"==>> xSolnCost: \n{xSolnCost}")
             cBest = min(xSolnCost)
             if cBest < self.cBestPrevious:
                 self.perfMatrix["Cost Graph"].append((itera, cBest))
                 self.cBestPrevious = cBest
+        if print_debug:
+            print(f"Iteration : [{itera}] - Best Cost : [{cBest}] - xSolnCost : {xSolnCost}", end='\r', flush=True)
         return cBest
     
-    def single_tree_multi_cbest(self, treeVertexListList, nodeTowardList, itera):
+    def cbest_single_tree_multi(self, treeVertexListList, nodeTowardList, itera, print_debug=False):
         xSolnCost = [[node.cost + self.cost_line(node, nodeTowardList[ind]) for node in vertexList] for ind, vertexList in enumerate(treeVertexListList)]
         cBest = None
         xGoalBestIndex = None
@@ -551,6 +589,8 @@ class RRTComponent:
             if cBest < self.cBestPrevious:
                 self.perfMatrix["Cost Graph"].append((itera, cBest))
                 self.cBestPrevious = cBest
+            if print_debug:
+                print(f"Iteration : [{itera}] - Best Cost : [{cBest}] - xSolnCost : {xSolnCost}", end='\r', flush=True)
             return cBest, xGoalBestIndex
         else:
             return np.inf, None
@@ -637,6 +677,17 @@ class RRTComponent:
         axis.set_ylabel('Cost')
         axis.set_title(f'Performance Plot of [{self.perfMatrix["Planner Name"]}], Environment [{self.robotEnv.__class__.__name__}], DoF [{self.DoF}]')
 
+    def perf_matrix_update(self, tree1=None, tree2=None, timePlanningStart=0, timePlanningEnd=0): # time arg is in nanosec
+        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
+        if tree2 is None:
+            self.perfMatrix["Number of Node"] = len(tree1)
+        elif tree2 is not None:
+            self.perfMatrix["Number of Node"] = len(tree1) + len(tree2)
+        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
+        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
+        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
+        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
+    
     @classmethod
     def catch_key_interrupt(self, mainFunction):
         def wrapper(*args):

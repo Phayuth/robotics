@@ -1,21 +1,16 @@
 import ultralytics
 import cv2
 import numpy as np
-import time
 
-# Camera
-capture = cv2.VideoCapture(4)
-h = 480
-w = 640
-capture.set(3, h)
-capture.set(4, w)
+from perception.webcam.webcam_read import CVCamera
 
 # Video
-model = ultralytics.YOLO('./target_localization/neuralnet/weight/yolov8x-seg.pt')
+cam = CVCamera()
+model = ultralytics.YOLO('./perception/neuralnet/weight/yolov8x-seg.pt')
 
 # Everythind detection
-# while capture.isOpened():
-#     success, frame = capture.read()
+# while cam.capture.isOpened():
+#     success, frame = cam.capture.read()
 #     if success:
 #         results = model(frame)
 #         annotated_frame = results[0].plot()
@@ -29,8 +24,8 @@ model = ultralytics.YOLO('./target_localization/neuralnet/weight/yolov8x-seg.pt'
 
 
 # Everything mask only
-# while capture.isOpened():
-#     success, img = capture.read()
+# while cam.capture.isOpened():
+#     success, img = cam.capture.read()
 #     imgShow = np.ones_like(img)
 #     imgMask = np.zeros((img.shape[0], img.shape[1]))
 #     result = model(img, stream=True, conf=0.5)
@@ -50,8 +45,8 @@ model = ultralytics.YOLO('./target_localization/neuralnet/weight/yolov8x-seg.pt'
 
 
 # Apple mask only
-while capture.isOpened():
-    success, img = capture.read()
+while cam.capture.isOpened():
+    success, img = cam.capture.read()
     imgShow = np.ones_like(img)
     imgMask = np.zeros((img.shape[0], img.shape[1]))
     result = model(img, stream=True, conf=0.5)
@@ -65,7 +60,6 @@ while capture.isOpened():
                 appleMask = masks.masks[bi, :, :].cpu().numpy()
                 appleMask = appleMask.reshape(appleMask.shape[0], appleMask.shape[1])
                 imgMask = imgMask + appleMask
-    # np.save("./mask.npy", imgMask)
     imgshow = np.where(imgMask[..., None], img, 0)
     cv2.imshow("Apple mask only", imgshow)
     cv2.waitKey(0)

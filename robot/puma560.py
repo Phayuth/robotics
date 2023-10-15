@@ -18,7 +18,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from rigid_body_transformation.homogeneous_transformation import inverse_hom_trans as invht
+from rigid_body_transformation.rigid_trans import RigidBodyTransformation as rbt
 
 
 class Puma560:
@@ -28,20 +28,13 @@ class Puma560:
         self.a = np.array([[0], [0], [0.4318], [-0.0203], [0], [0]])
         self.d = np.array([[0], [0], [-0.0934], [0.4331], [0], [0]])
 
-    def dh_transformation_mod(self, theta, alpha, d, a): # modified dh method from craig
-        R = np.array([[              np.cos(theta),              -np.sin(theta),              0,                a],
-                      [np.sin(theta)*np.cos(alpha), np.cos(theta)*np.cos(alpha), -np.sin(alpha), -np.sin(alpha)*d],
-                      [np.sin(theta)*np.sin(alpha), np.cos(theta)*np.sin(alpha),  np.cos(alpha),  np.cos(alpha)*d],
-                      [                          0,                           0,              0,                1]])
-        return R
-
     def forward_kinematic(self, theta, return_full_H=False, return_each_H=False):
-        T01 = self.dh_transformation_mod(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-        T12 = self.dh_transformation_mod(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
-        T23 = self.dh_transformation_mod(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
-        T34 = self.dh_transformation_mod(theta[3, 0], self.alpha[3, 0], self.d[3, 0], self.a[3, 0])
-        T45 = self.dh_transformation_mod(theta[4, 0], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-        T56 = self.dh_transformation_mod(theta[5, 0], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
+        T01 = rbt.dh_transformation_mod(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
+        T12 = rbt.dh_transformation_mod(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
+        T23 = rbt.dh_transformation_mod(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
+        T34 = rbt.dh_transformation_mod(theta[3, 0], self.alpha[3, 0], self.d[3, 0], self.a[3, 0])
+        T45 = rbt.dh_transformation_mod(theta[4, 0], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
+        T56 = rbt.dh_transformation_mod(theta[5, 0], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
 
         T06 = T01 @ T12 @ T23 @ T34 @ T45 @ T56
 
@@ -88,11 +81,11 @@ class Puma560:
             theta1 = theta[0, i]
             theta2 = theta[1, i]
             theta3 = theta[2, i]
-            T01 = self.dh_transformation_mod(theta1, self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-            T12 = self.dh_transformation_mod(theta2, self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
-            T23 = self.dh_transformation_mod(theta3, self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
+            T01 = rbt.dh_transformation_mod(theta1, self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
+            T12 = rbt.dh_transformation_mod(theta2, self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
+            T23 = rbt.dh_transformation_mod(theta3, self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
             T03 = T01 @ T12 @ T23
-            Rprime = invht(T03) @ T06
+            Rprime = rbt.h_inverse(T03) @ T06
 
             r11prm, r12prm, r13prm, pxprm = Rprime[0, 0], Rprime[0, 1], Rprime[0, 2], Rprime[0, 3]
             r21prm, r22prm, r23prm, pyprm = Rprime[1, 0], Rprime[1, 1], Rprime[1, 2], Rprime[1, 3]

@@ -8,11 +8,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
-from rigid_body_transformation.rotation_matrix import rotx, roty, rotz
-from util.read_txt import read_txt_to_numpy
+from rigid_body_transformation.rigid_trans import RigidBodyTransformation as rbt
+from util.general_util import read_txt_to_numpy
 
 # Original data
 parray = read_txt_to_numpy(txtFileString='target_localization/ball_trajectory/newposition.txt')
+parray = parray[30:650, :]  # manual Trim
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
@@ -24,8 +25,8 @@ plt.show()
 
 # Data manipulation, rotation, shift
 ppp = parray.T
-hx = rotx(-np.pi / 2)
-hz = rotz(np.pi / 2)
+hx = rbt.rotx(-np.pi / 2)
+hz = rbt.rotz(np.pi / 2)
 
 pnew = hz @ hx @ ppp
 pnew = pnew.T

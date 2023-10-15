@@ -14,241 +14,285 @@ from planner_dev.rrt_star_connect import RRTStarConnect
 from planner_dev.rrt_informed_connect import RRTInformedConnect
 
 from planner_dev.rrt_connect_ast_informed import RRTConnectAstInformed
-from planner_dev.rrt_star_localopt import RRTStarLocalOpt
-from planner_dev.rrt_connect_localopt import RRTConnectLocalOpt
 
 
-class RRTBaseDev2D(RRTBase):
+class RRTBase2D(RRTBase):
 
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=2, envChoice="Planar", nearGoalRadius=0.3):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice, nearGoalRadius=nearGoalRadius)
+    def __init__(self, 
+                 xStart, 
+                 xApp, 
+                 xGoal, 
+                 eta=0.3, 
+                 subEta=0.05, 
+                 maxIteration=2000, 
+                 numDoF=2, 
+                 envChoice="Planar", 
+                 nearGoalRadius=0.3, 
+                 rewireRadius=None, 
+                 terminationConditionID=1, 
+                 print_debug=False):
+        super().__init__(xStart=xStart,
+                         xApp=xApp,
+                         xGoal=xGoal,
+                         eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
+        self.start()
         path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XInGoalRegion, attachNode=self.xGoal)
         timePlanningEnd = time.perf_counter_ns()
 
         # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = 0.0
-        self.perfMatrix["Number of Node"] = len(self.treeVertex)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
+        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
         return path
 
 
 class RRTConnect2D(RRTConnect):
 
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=2, envChoice="Planar"):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice)
+    def __init__(self,
+                 xStart,
+                 xApp,
+                 xGoal,
+                 eta=0.3,
+                 subEta=0.05,
+                 maxIteration=2000,
+                 numDoF=2,
+                 envChoice="Planar",
+                 nearGoalRadius=None,
+                 rewireRadius=None,
+                 terminationConditionID=1,
+                 print_debug=False,
+                 localOptEnable=False):
+        super().__init__(xStart=xStart,
+                         xApp=xApp,
+                         xGoal=xGoal,
+                         eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug,
+                         localOptEnable=localOptEnable)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
-        path = self.search_backtrack_single_directional_path(backFromNode=self.xApp, attachNode=self.xGoal)
+        self.start()
+        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
+        # path = self.search_backtrack_single_directional_path(backFromNode=self.xApp, attachNode=self.xGoal)
         timePlanningEnd = time.perf_counter_ns()
 
         # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = 0.0
-        self.perfMatrix["Number of Node"] = len(self.treeVertexStart) + len(self.treeVertexGoal)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
+        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
         return path
 
 
 class RRTStar2D(RRTStar):
 
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=2, envChoice="Planar", nearGoalRadius=0.3):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice, nearGoalRadius=nearGoalRadius)
+    def __init__(self,
+                 xStart,
+                 xApp,
+                 xGoal,
+                 eta=0.3,
+                 subEta=0.05,
+                 maxIteration=2000,
+                 numDoF=2,
+                 envChoice="Planar",
+                 nearGoalRadius=0.3,
+                 rewireRadius=None,
+                 terminationConditionID=1,
+                 print_debug=False,
+                 localOptEnable=False):
+        super().__init__(xStart=xStart,
+                         xApp=xApp,
+                         xGoal=xGoal,
+                         eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug,
+                         localOptEnable=localOptEnable)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
+        self.start()
         path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XInGoalRegion, attachNode=self.xGoal)
         timePlanningEnd = time.perf_counter_ns()
 
         # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
-        self.perfMatrix["Number of Node"] = len(self.treeVertex)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
+        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
         return path
 
 
 class RRTInformed2D(RRTInformed):
 
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=2, envChoice="Planar", nearGoalRadius=0.3):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice, nearGoalRadius=nearGoalRadius)
+    def __init__(self, 
+                 xStart, 
+                 xApp, 
+                 xGoal, 
+                 eta=0.3, 
+                 subEta=0.05, 
+                 maxIteration=2000, 
+                 numDoF=2, 
+                 envChoice="Planar", 
+                 nearGoalRadius=0.3, 
+                 rewireRadius=None, 
+                 terminationConditionID=1, 
+                 print_debug=False):
+        super().__init__(xStart=xStart,
+                         xApp=xApp,
+                         xGoal=xGoal,
+                         eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
+        self.start()
         path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XSoln, attachNode=self.xGoal)
         timePlanningEnd = time.perf_counter_ns()
 
         # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
-        self.perfMatrix["Number of Node"] = len(self.treeVertex)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
+        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
         return path
 
 
 class RRTStarConnect2D(RRTStarConnect):
 
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=2, envChoice="Planar"):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice)
+    def __init__(self,
+                 xStart,
+                 xApp,
+                 xGoal,
+                 eta=0.3,
+                 subEta=0.05,
+                 maxIteration=2000,
+                 numDoF=2,
+                 envChoice="Planar",
+                 nearGoalRadius=None,
+                 rewireRadius=None,
+                 terminationConditionID=1,
+                 print_debug=False,
+                 localOptEnable=False):
+        super().__init__(xStart=xStart,
+                         xApp=xApp,
+                         xGoal=xGoal,
+                         eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug,
+                         localOptEnable=localOptEnable)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
+        self.start()
         path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
         timePlanningEnd = time.perf_counter_ns()
 
         # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
-        self.perfMatrix["Number of Node"] = len(self.treeVertexStart) + len(self.treeVertexGoal)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
+        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
         return path
 
 
 class RRTInformedConnect2D(RRTInformedConnect):
 
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=2, envChoice="Planar"):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice)
+    def __init__(self, 
+                 xStart, 
+                 xApp, 
+                 xGoal, 
+                 eta=0.3, 
+                 subEta=0.05, 
+                 maxIteration=2000, 
+                 numDoF=2, 
+                 envChoice="Planar", 
+                 nearGoalRadius=None, 
+                 rewireRadius=None, 
+                 terminationConditionID=1, 
+                 print_debug=False):
+        super().__init__(xStart=xStart,
+                         xApp=xApp,
+                         xGoal=xGoal,
+                         eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
+        self.start()
         path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
         timePlanningEnd = time.perf_counter_ns()
 
         # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
-        self.perfMatrix["Number of Node"] = len(self.treeVertexStart) + len(self.treeVertexGoal)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
+        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
         return path
 
 
 class RRTConnectAstInformed2D(RRTConnectAstInformed):
 
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=2, envChoice="Planar", nearGoalRadius=0.3):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice, nearGoalRadius=nearGoalRadius)
+    def __init__(self, 
+                 xStart, 
+                 xApp, 
+                 xGoal, 
+                 eta=0.3, 
+                 subEta=0.05, 
+                 maxIteration=2000, 
+                 numDoF=2, 
+                 envChoice="Planar", 
+                 nearGoalRadius=0.3, 
+                 rewireRadius=None, 
+                 terminationConditionID=1, 
+                 print_debug=False):
+        super().__init__(xStart=xStart,
+                         xApp=xApp,
+                         xGoal=xGoal,
+                         eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
+        self.start()
         path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XSoln, attachNode=self.xGoal)
         timePlanningEnd = time.perf_counter_ns()
 
         # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
-        self.perfMatrix["Number of Node"] = len(self.treeVertexStart)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
-        return path
-
-
-class RRTStarLocalOpt2D(RRTStarLocalOpt):
-
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=2, envChoice="Planar", nearGoalRadius=0.3):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice, nearGoalRadius=nearGoalRadius)
-
-    def planning(self):
-        timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XInGoalRegion, attachNode=self.xGoal)
-        timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
-        self.perfMatrix["Number of Node"] = len(self.treeVertex)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
-        return path
-
-
-class RRTConnectLocalOpt2D(RRTConnectLocalOpt):
-
-    def __init__(self, xStart, xApp, xGoal, eta=0.3, subEta=0.05, maxIteration=2000, numDoF=2, envChoice="Planar", nearGoalRadius=0.3):
-        super().__init__(xStart=xStart, xApp=xApp, xGoal=xGoal, eta=eta, subEta=subEta, maxIteration=maxIteration, numDoF=numDoF, envChoice=envChoice, nearGoalRadius=nearGoalRadius)
-
-    def planning(self):
-        timePlanningStart = time.perf_counter_ns()
-        itera = self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XInGoalRegion, attachNode=self.xGoal)
-        timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
-        self.perfMatrix["Parameters"]["eta"] = self.eta
-        self.perfMatrix["Parameters"]["subEta"] = self.subEta
-        self.perfMatrix["Parameters"]["Max Iteration"] = self.maxIteration
-        self.perfMatrix["Parameters"]["Rewire Radius"] = self.rewireRadius
-        self.perfMatrix["Number of Node"] = len(self.treeVertexStart)
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
-        self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
-        self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
-        self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
-
+        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
         return path
 
 
@@ -266,14 +310,15 @@ if __name__ == "__main__":
     xApp = np.array([np.pi / 2 - 0.1, 0.2]).reshape(2, 1)
 
     # planner = RRTBase2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000)
-    # planner = RRTConnect2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000)
-    # planner = RRTStar2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000)
+    # planner = RRTConnect2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000, localOptEnable=True)
+    # planner = RRTConnect2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000, localOptEnable=False)
+    # planner = RRTStar2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000, localOptEnable=True)
+    # planner = RRTStar2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000, localOptEnable=False)
     # planner = RRTInformed2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000)
-    planner = RRTStarConnect2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000)
+    planner = RRTStarConnect2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000, localOptEnable=True)
+    # planner = RRTStarConnect2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000, localOptEnable=False)
     # planner = RRTInformedConnect2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000)
     # planner = RRTConnectAstInformed2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000)
-    # planner = RRTStarLocalOpt2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000)
-    # planner = RRTConnectLocalOpt2D(xStart, xApp, xGoal, eta=0.3, maxIteration=3000)
 
     planner.robotEnv.robot.plot_arm(xStart, plt_basis=True)
     planner.robotEnv.robot.plot_arm(xGoal)

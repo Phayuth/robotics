@@ -14,7 +14,7 @@ from planner_dev.rrt_component import Node, RRTComponent
 
 class RRTInformedStarDev2D(RRTComponent):
     def __init__(self, xStart, xApp=[], xGoal=[], eta=0.3, maxIteration=1000) -> None:
-        super().__init__(NumDoF=2, EnvChoice="Planar")
+        super().__init__(numDoF=2, envChoice="Planar")
         self.xStart = Node(xStart)
 
         self.xGoal1 = Node(xGoal[0])

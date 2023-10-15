@@ -13,7 +13,7 @@ from planner_dev.rrt_component import Node, RRTComponent
 
 class RRTMyDevMultiGoal(RRTComponent):
     def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius) -> None:
-        super().__init__(NumDoF=numDoF, EnvChoice=envChoice)
+        super().__init__(numDoF=numDoF, envChoice=envChoice)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoalList = [Node(xGoali) for xGoali in xGoal]

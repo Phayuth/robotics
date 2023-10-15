@@ -20,10 +20,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-import matplotlib.pyplot as plt
-from rigid_body_transformation.homogeneous_transformation import inverse_hom_trans as invht
-
-# ax = plt.axes(projection='3d')
+from rigid_body_transformation.rigid_trans import RigidBodyTransformation as rbt
 
 
 class UR5e:
@@ -34,20 +31,13 @@ class UR5e:
         self.a     = np.array([     [0],       [0], [-0.425], [-0.392],       [0],        [0]])
         self.d     = np.array([ [0.089],       [0],      [0],  [0.109],   [0.094],    [0.082]])
 
-    def dh_transformation(self, theta, alpha, d, a): # modified dh method from craig
-        R = np.array([[              np.cos(theta),              -np.sin(theta),              0,                a],
-                      [np.sin(theta)*np.cos(alpha), np.cos(theta)*np.cos(alpha), -np.sin(alpha), -np.sin(alpha)*d],
-                      [np.sin(theta)*np.sin(alpha), np.cos(theta)*np.sin(alpha),  np.cos(alpha),  np.cos(alpha)*d],
-                      [                          0,                           0,              0,                1]])
-        return R
-
     def forward_kinematic(self, theta, return_full_H=False, return_each_H=False):
-        T01 = self.dh_transformation(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-        T12 = self.dh_transformation(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
-        T23 = self.dh_transformation(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
-        T34 = self.dh_transformation(theta[3, 0], self.alpha[3, 0], self.d[3, 0], self.a[3, 0])
-        T45 = self.dh_transformation(theta[4, 0], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-        T56 = self.dh_transformation(theta[5, 0], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
+        T01 = rbt.dh_transformation_mod(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
+        T12 = rbt.dh_transformation_mod(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
+        T23 = rbt.dh_transformation_mod(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
+        T34 = rbt.dh_transformation_mod(theta[3, 0], self.alpha[3, 0], self.d[3, 0], self.a[3, 0])
+        T45 = rbt.dh_transformation_mod(theta[4, 0], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
+        T56 = rbt.dh_transformation_mod(theta[5, 0], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
 
         T06 = T01 @ T12 @ T23 @ T34 @ T45 @ T56
 
@@ -69,12 +59,12 @@ class UR5e:
             return x_current
 
     def jacobian(self, theta):
-        A1 = self.dh_transformation(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-        A2 = self.dh_transformation(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
-        A3 = self.dh_transformation(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
-        A4 = self.dh_transformation(theta[3, 0], self.alpha[3, 0], self.d[3, 0], self.a[3, 0])
-        A5 = self.dh_transformation(theta[4, 0], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-        A6 = self.dh_transformation(theta[5, 0], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
+        A1 = rbt.dh_transformation_mod(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
+        A2 = rbt.dh_transformation_mod(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
+        A3 = rbt.dh_transformation_mod(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
+        A4 = rbt.dh_transformation_mod(theta[3, 0], self.alpha[3, 0], self.d[3, 0], self.a[3, 0])
+        A5 = rbt.dh_transformation_mod(theta[4, 0], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
+        A6 = rbt.dh_transformation_mod(theta[5, 0], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
 
         T01 = A1
         T02 = A1 @ A2
@@ -177,7 +167,7 @@ class UR5e:
 
         # theta6
         for i in range(8):
-            T60 = invht(T06)
+            T60 = rbt.h_inverse(T06)
             Xy60 = T60[1, 0]
             Yy60 = T60[1, 1]
             Xx60 = T60[0, 0]
@@ -197,15 +187,15 @@ class UR5e:
         col1 = [0, 2, 4, 6]
         col2 = [1, 3, 5, 7]
         for i in range(8):
-            T01 = self.dh_transformation(theta[0, i], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-            T45 = self.dh_transformation(theta[4, i], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-            T56 = self.dh_transformation(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
+            T01 = rbt.dh_transformation_mod(theta[0, i], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
+            T45 = rbt.dh_transformation_mod(theta[4, i], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
+            T56 = rbt.dh_transformation_mod(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
 
             T46 = T45 @ T56
-            T60 = invht(T06)
+            T60 = rbt.h_inverse(T06)
             T40 = T46 @ T60
             T41 = T40 @ T01
-            T14 = invht(T41)
+            T14 = rbt.h_inverse(T41)
 
             p14x = T14[0, 3]
             p14z = T14[2, 3]
@@ -221,15 +211,15 @@ class UR5e:
 
         # theta2
         for i in range(8):
-            T01 = self.dh_transformation(theta[0, i], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-            T45 = self.dh_transformation(theta[4, i], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-            T56 = self.dh_transformation(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
+            T01 = rbt.dh_transformation_mod(theta[0, i], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
+            T45 = rbt.dh_transformation_mod(theta[4, i], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
+            T56 = rbt.dh_transformation_mod(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
 
             T46 = T45 @ T56
-            T60 = invht(T06)
+            T60 = rbt.h_inverse(T06)
             T40 = T46 @ T60
             T41 = T40 @ T01
-            T14 = invht(T41)
+            T14 = rbt.h_inverse(T41)
 
             p14x = T14[0, 3]
             p14z = T14[2, 3]
@@ -245,17 +235,17 @@ class UR5e:
 
         # theta 4
         for i in range(8):
-            T01 = self.dh_transformation(theta[0, i], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-            T12 = self.dh_transformation(theta[1, i], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
-            T23 = self.dh_transformation(theta[2, i], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
+            T01 = rbt.dh_transformation_mod(theta[0, i], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
+            T12 = rbt.dh_transformation_mod(theta[1, i], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
+            T23 = rbt.dh_transformation_mod(theta[2, i], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
             T03 = T01 @ T12 @ T23
 
-            T45 = self.dh_transformation(theta[4, i], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-            T56 = self.dh_transformation(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
+            T45 = rbt.dh_transformation_mod(theta[4, i], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
+            T56 = rbt.dh_transformation_mod(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
             T46 = T45 @ T56
 
-            T30 = invht(T03)
-            T64 = invht(T46)
+            T30 = rbt.h_inverse(T03)
+            T64 = rbt.h_inverse(T46)
             T34 = T30 @ T06 @ T64
 
             Xy34 = T34[1, 0]
@@ -266,12 +256,12 @@ class UR5e:
         return theta
 
     def plot_arm(self, theta, plt_basis=False, ax=None):
-        A1 = self.dh_transformation(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
-        A2 = self.dh_transformation(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
-        A3 = self.dh_transformation(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
-        A4 = self.dh_transformation(theta[3, 0], self.alpha[3, 0], self.d[3, 0], self.a[3, 0])
-        A5 = self.dh_transformation(theta[4, 0], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
-        A6 = self.dh_transformation(theta[5, 0], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
+        A1 = rbt.dh_transformation_mod(theta[0, 0], self.alpha[0, 0], self.d[0, 0], self.a[0, 0])
+        A2 = rbt.dh_transformation_mod(theta[1, 0], self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
+        A3 = rbt.dh_transformation_mod(theta[2, 0], self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
+        A4 = rbt.dh_transformation_mod(theta[3, 0], self.alpha[3, 0], self.d[3, 0], self.a[3, 0])
+        A5 = rbt.dh_transformation_mod(theta[4, 0], self.alpha[4, 0], self.d[4, 0], self.a[4, 0])
+        A6 = rbt.dh_transformation_mod(theta[5, 0], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
 
         T01 = A1
         T02 = A1 @ A2

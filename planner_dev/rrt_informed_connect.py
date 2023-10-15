@@ -10,32 +10,38 @@ from planner_dev.rrt_component import Node, RRTComponent
 
 class RRTInformedConnect(RRTComponent):
 
-    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice) -> None:
-        super().__init__(NumDoF=numDoF, EnvChoice=envChoice)
+    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, terminationConditionID, print_debug) -> None:
+        super().__init__(eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoal = Node(xGoal)
         self.xApp = Node(xApp)
 
-        self.eta = eta
-        self.subEta = subEta
-        self.maxIteration = maxIteration
+        # planner properties
         self.treeVertexStart = [self.xStart]
         self.treeVertexGoal = [self.xApp]
-        self.treeSwapFlag = True
-        self.connectNodePair = []  # (connectStart, connectGoal)
         self.distGoalToApp = self.distance_between_config(self.xGoal, self.xApp)
-        self.rewireRadius = None
+        self.treeSwapFlag = True
 
         # informed sampling properties
         self.C = self.rotation_to_world(self.xStart, self.xGoal) # hyperellipsoid rotation axis
         self.cMin = self.distance_between_config(self.xStart, self.xGoal)
         self.xCenter = (self.xStart.config + self.xApp.config) / 2
 
+        # solutions
+        self.connectNodePair = []  # (connectStart, connectGoal)
+
     @RRTComponent.catch_key_interrupt
     def start(self):
         for itera in range(self.maxIteration):
-            print(itera)
             if self.treeSwapFlag is True:
                 Ta = self.treeVertexStart
                 Tb = self.treeVertexGoal
@@ -43,12 +49,12 @@ class RRTInformedConnect(RRTComponent):
                 Ta = self.treeVertexGoal
                 Tb = self.treeVertexStart
 
-            cBest = self.dual_tree_cbest(self.connectNodePair, itera)
+            self.cBestNow = self.cbest_dual_tree(self.connectNodePair, itera, self.print_debug)
 
-            if cBest == np.inf:
+            if self.cBestNow == np.inf:
                 xRand = self.uni_sampling()
-            elif cBest < np.inf:
-                xRand = self.informed_sampling(self.xCenter, cBest, self.cMin, self.C)
+            elif self.cBestNow < np.inf:
+                xRand = self.informed_sampling(self.xCenter, self.cBestNow, self.cMin, self.C)
 
             xNearest, vertexDistList = self.nearest_node(Ta, xRand, returnDistList=True)
             xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnxNewIsxRand=True)
@@ -87,6 +93,9 @@ class RRTInformedConnect(RRTComponent):
                             xNewPrime.child.append(xNewPPrime)
                             self.star_optimizer(Tb, xNewPPrime, self.rewireRadius, xNewPPrimeIsxNewPrime)
                             xNewPrime = xNewPPrime
+            
+            if self.termination_check(self.connectNodePair):
+                break
 
             self.tree_swap_flag()
 

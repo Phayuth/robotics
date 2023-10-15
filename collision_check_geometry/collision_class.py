@@ -17,7 +17,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from rigid_body_transformation.rotation_matrix import rot2d
+from rigid_body_transformation.rigid_trans import RigidBodyTransformation as rbt
 from planner_util.coord_transform import circle_plt
 
 
@@ -53,10 +53,10 @@ class ObjRec:
         v3 = np.array([self.w, self.h]).reshape(2, 1)
         v4 = np.array([0, self.h]).reshape(2, 1)
 
-        v1 = rot2d(self.angle) @ v1 + np.array([self.x, self.y]).reshape(2, 1)
-        v2 = rot2d(self.angle) @ v2 + np.array([self.x, self.y]).reshape(2, 1)
-        v3 = rot2d(self.angle) @ v3 + np.array([self.x, self.y]).reshape(2, 1)
-        v4 = rot2d(self.angle) @ v4 + np.array([self.x, self.y]).reshape(2, 1)
+        v1 = rbt.rot2d(self.angle) @ v1 + np.array([self.x, self.y]).reshape(2, 1)
+        v2 = rbt.rot2d(self.angle) @ v2 + np.array([self.x, self.y]).reshape(2, 1)
+        v3 = rbt.rot2d(self.angle) @ v3 + np.array([self.x, self.y]).reshape(2, 1)
+        v4 = rbt.rot2d(self.angle) @ v4 + np.array([self.x, self.y]).reshape(2, 1)
 
         plt.plot([v1[0, 0], v2[0, 0]], [v1[1, 0], v2[1, 0]], c=color)
         plt.plot([v2[0, 0], v3[0, 0]], [v2[1, 0], v3[1, 0]], c=color)
@@ -263,10 +263,10 @@ def intersect_line_v_rectangle(line, rec):
     v3 = np.array([rec.w, rec.h]).reshape(2, 1)
     v4 = np.array([0, rec.h]).reshape(2, 1)
 
-    v1 = rot2d(rec.angle) @ v1 + np.array([rec.x, rec.y]).reshape(2, 1)
-    v2 = rot2d(rec.angle) @ v2 + np.array([rec.x, rec.y]).reshape(2, 1)
-    v3 = rot2d(rec.angle) @ v3 + np.array([rec.x, rec.y]).reshape(2, 1)
-    v4 = rot2d(rec.angle) @ v4 + np.array([rec.x, rec.y]).reshape(2, 1)
+    v1 = rbt.rot2d(rec.angle) @ v1 + np.array([rec.x, rec.y]).reshape(2, 1)
+    v2 = rbt.rot2d(rec.angle) @ v2 + np.array([rec.x, rec.y]).reshape(2, 1)
+    v3 = rbt.rot2d(rec.angle) @ v3 + np.array([rec.x, rec.y]).reshape(2, 1)
+    v4 = rbt.rot2d(rec.angle) @ v4 + np.array([rec.x, rec.y]).reshape(2, 1)
 
     l1 = ObjLine2D(v1[0, 0], v1[1, 0], v2[0, 0], v2[1, 0])
     l2 = ObjLine2D(v2[0, 0], v2[1, 0], v3[0, 0], v3[1, 0])

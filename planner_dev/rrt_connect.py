@@ -9,27 +9,40 @@ from planner_dev.rrt_component import Node, RRTComponent
 
 class RRTConnect(RRTComponent):
 
-    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice):
-        super().__init__(NumDoF=numDoF, EnvChoice=envChoice)
+    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, terminationConditionID, print_debug, localOptEnable):
+        super().__init__(eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoal = Node(xGoal)
         self.xApp = Node(xApp)
 
-        self.eta = eta
-        self.subEta = subEta
-        self.maxIteration = maxIteration
+        # planner properties
         self.treeVertexStart = [self.xStart]
         self.treeVertexGoal = [self.xApp]
-        self.treeSwapFlag = True
-        self.connectNodeStart = None
-        self.connectNodeGoal = None
         self.distGoalToApp = self.distance_between_config(self.xGoal, self.xApp)
+        self.treeSwapFlag = True
+
+        # local sampling properties
+        self.localOptEnable = localOptEnable
+        if self.localOptEnable:
+            self.anchorPath = None
+            self.localPath = None
+            self.numSegSamplingNode = None
+
+        # solutions
+        self.connectNodePair = []  # (connectStart, connectGoal)
 
     @RRTComponent.catch_key_interrupt
     def start(self):
         for itera in range(self.maxIteration):
-            print(itera)
             if self.treeSwapFlag is True:
                 Ta = self.treeVertexStart
                 Tb = self.treeVertexGoal
@@ -37,7 +50,16 @@ class RRTConnect(RRTComponent):
                 Ta = self.treeVertexGoal
                 Tb = self.treeVertexStart
 
-            xRand = self.uni_sampling()
+            self.cBestNow = self.cbest_dual_tree(self.connectNodePair, itera, self.print_debug)  # save cost graph
+
+            if self.localOptEnable:
+                if len(self.connectNodePair) == 0:
+                    xRand = self.uni_sampling()
+                else:
+                    xRand = self.local_path_sampling(self.anchorPath, self.localPath, self.numSegSamplingNode)
+            else:
+                xRand = self.uni_sampling()
+
             xNearest = self.nearest_node(Ta, xRand)
             xNew = self.steer(xNearest, xRand, self.eta)
 
@@ -46,6 +68,7 @@ class RRTConnect(RRTComponent):
                 xNew.cost = xNew.parent.cost + self.cost_line(xNew, xNew.parent)
                 xNearest.child.append(xNew)
                 Ta.append(xNew)
+
                 xNearestPrime = self.nearest_node(Tb, xNew)
                 xNewPrime = self.steer(xNearestPrime, xNew, self.eta)
 
@@ -63,11 +86,14 @@ class RRTConnect(RRTComponent):
 
                         if self.distance_between_config(xNewPPrime, xNew) < 1e-3:
                             if self.treeSwapFlag is True:
-                                self.connectNodeGoal = xNewPrime
-                                self.connectNodeStart = xNew
+                                self.connectNodePair.append((xNew, xNewPrime))
                             elif self.treeSwapFlag is False:
-                                self.connectNodeGoal = xNew
-                                self.connectNodeStart = xNewPrime
+                                self.connectNodePair.append((xNewPrime, xNew))
+                            if self.localOptEnable:
+                                if self.anchorPath is None:
+                                    self.localPath = self.search_best_cost_bidirection_path(self.connectNodePair)
+                                    self.numSegSamplingNode = len(self.localPath) - 1
+                                    self.anchorPath = self.segment_interpolation_between_config(self.localPath[0], self.localPath[-1], self.numSegSamplingNode, includexStart=True)
                             break
 
                         else:
@@ -77,10 +103,7 @@ class RRTConnect(RRTComponent):
                             Tb.append(xNewPPrime)
                             xNewPrime = xNewPPrime
 
-            if self.connectNodeGoal is not None and self.connectNodeStart is not None:
-                cBest = self.connectNodeStart.cost + self.connectNodeGoal.cost + self.cost_line(self.connectNodeStart, self.connectNodeGoal)
-                self.perfMatrix["Cost Graph"].append((itera, cBest))
-                self.reparent_merge_tree(xTobeParent=self.connectNodeStart, xNow=self.connectNodeGoal, treeToAddTo=self.treeVertexStart)
+            if self.termination_check(self.connectNodePair):
                 break
 
             self.tree_swap_flag()
@@ -94,27 +117,41 @@ class RRTConnect(RRTComponent):
 
 class RRTConnectMulti(RRTComponent):
 
-    def __init__(self, xStart, xAppList, xGoalList, eta, subEta, maxIteration, numDoF, envChoice):
-        super().__init__(NumDoF=numDoF, EnvChoice=envChoice)
+    def __init__(self, xStart, xAppList, xGoalList, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, terminationConditionID, print_debug, localOptEnable):
+        super().__init__(eta=eta,
+                         subEta=subEta,
+                         maxIteration=maxIteration,
+                         numDoF=numDoF,
+                         envChoice=envChoice,
+                         nearGoalRadius=nearGoalRadius,
+                         rewireRadius=rewireRadius,
+                         terminationConditionID=terminationConditionID,
+                         print_debug=print_debug)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoalList = [Node(xGoali) for xGoali in xGoalList]
         self.xAppList = [Node(xAppi) for xAppi in xAppList]
         self.numGoal = len(self.xAppList)
 
-        self.eta = eta
-        self.subEta = subEta
-        self.maxIteration = maxIteration
+        # planner properties
         self.treeVertexStart = [self.xStart]
         self.treeVertexGoal = [xAppi for xAppi in self.xAppList]
-        self.treeSwapFlag = True
-        self.connectNodePair = []  # (connectStart, connectGoal)
         self.distGoalToAppList = [self.distance_between_config(xAppi, xGoali) for xAppi, xGoali in zip(self.xAppList, self.xGoalList)]
+        self.treeSwapFlag = True
+
+        # local sampling properties
+        self.localOptEnable = localOptEnable
+        if self.localOptEnable:
+            self.anchorPath = None
+            self.localPath = None
+            self.numSegSamplingNode = None
+
+        # solutions
+        self.connectNodePair = []  # (connectStart, connectGoal)
 
     @RRTComponent.catch_key_interrupt
     def start(self):
         for itera in range(self.maxIteration):
-            print(itera)
             if self.treeSwapFlag is True:
                 Ta = self.treeVertexStart
                 Tb = self.treeVertexGoal
@@ -122,11 +159,18 @@ class RRTConnectMulti(RRTComponent):
                 Ta = self.treeVertexGoal
                 Tb = self.treeVertexStart
 
-            _ = self.dual_tree_cbest(self.connectNodePair, itera)  # save cost graph
+            self.cBestNow = self.cbest_dual_tree(self.connectNodePair, itera, self.print_debug)  # save cost graph
 
-            xRand = self.uni_sampling()
-            xNearest, vertexDistList = self.nearest_node(Ta, xRand, returnDistList=True)
-            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnxNewIsxRand=True)
+            if self.localOptEnable:
+                if len(self.connectNodePair) == 0:
+                    xRand = self.uni_sampling()
+                else:
+                    xRand = self.local_path_sampling(self.anchorPath, self.localPath, self.numSegSamplingNode)
+            else:
+                xRand = self.uni_sampling()
+
+            xNearest = self.nearest_node(Ta, xRand)
+            xNew = self.steer(xNearest, xRand, self.eta)
 
             if not self.is_collision(xNearest, xNew):
                 xNew.parent = xNearest
@@ -135,7 +179,7 @@ class RRTConnectMulti(RRTComponent):
                 Ta.append(xNew)
 
                 xNearestPrime = self.nearest_node(Tb, xNew)
-                xNewPrime, xNewPrimeIsxNew = self.steer(xNearestPrime, xNew, self.eta, returnxNewIsxRand=True)
+                xNewPrime = self.steer(xNearestPrime, xNew, self.eta)
 
                 if not self.is_collision(xNearestPrime, xNewPrime):
                     xNewPrime.parent = xNearestPrime
@@ -144,7 +188,7 @@ class RRTConnectMulti(RRTComponent):
                     Tb.append(xNewPrime)
 
                     while True:
-                        xNewPPrime, xNewPPrimeIsxNewPrime = self.steer(xNewPrime, xNew, self.eta, returnxNewIsxRand=True)
+                        xNewPPrime = self.steer(xNewPrime, xNew, self.eta)
 
                         if self.is_collision(xNewPrime, xNewPPrime):
                             break
@@ -154,6 +198,11 @@ class RRTConnectMulti(RRTComponent):
                                 self.connectNodePair.append((xNew, xNewPrime))
                             elif self.treeSwapFlag is False:
                                 self.connectNodePair.append((xNewPrime, xNew))
+                            if self.localOptEnable:
+                                if self.anchorPath is None:
+                                    self.localPath = self.search_best_cost_bidirection_path(self.connectNodePair)
+                                    self.numSegSamplingNode = len(self.localPath) - 1
+                                    self.anchorPath = self.segment_interpolation_between_config(self.localPath[0], self.localPath[-1], self.numSegSamplingNode, includexStart=True)
                             break
 
                         else:
@@ -162,6 +211,9 @@ class RRTConnectMulti(RRTComponent):
                             xNewPrime.child.append(xNewPPrime)
                             Tb.append(xNewPPrime)
                             xNewPrime = xNewPPrime
+
+            if self.termination_check(self.connectNodePair):
+                break
 
             self.tree_swap_flag()
 

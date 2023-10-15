@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import timeit
 
 def sum_loop(a):
     result = 0
@@ -19,3 +20,7 @@ if __name__=="__main__":
         np.random.uniform(low=-np.pi, high=np.pi)
     timeend = time.perf_counter_ns()
     print(f"Elapsed time = {(timeend - timestart)}")
+
+
+    executionTime = timeit.timeit(lambda: sum_loop(6), number=1000)
+    print(f"Execution time: {executionTime:.6f} seconds")

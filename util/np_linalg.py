@@ -110,27 +110,52 @@ import timeit
 
 
 
-# a = [[2, 43, 68, 3], [86, 23, 67], [2, 3, 76], []]
-a = [[],[]]
+# # a = [[2, 43, 68, 3], [86, 23, 67], [2, 3, 76], []]
+# a = [[],[]]
 
-# Initialize variables to store the minimum value and its index
-min_value = None
-min_index = None
+# # Initialize variables to store the minimum value and its index
+# min_value = None
+# min_index = None
 
-for index, sublist in enumerate(a):
-    # Check if the sublist is empty
-    if not sublist:
-        continue  # Skip empty lists
+# for index, sublist in enumerate(a):
+#     # Check if the sublist is empty
+#     if not sublist:
+#         continue  # Skip empty lists
     
-    # Find the minimum value in the sublist
-    sublist_min = min(sublist)
+#     # Find the minimum value in the sublist
+#     sublist_min = min(sublist)
     
-    # Check if it's the first minimum found or smaller than the current minimum
-    if min_value is None or sublist_min < min_value:
-        min_value = sublist_min
-        min_index = index
+#     # Check if it's the first minimum found or smaller than the current minimum
+#     if min_value is None or sublist_min < min_value:
+#         min_value = sublist_min
+#         min_index = index
 
-if min_index is not None:
-    print(f"The minimum value is {min_value} and it is found in the sublist at index {min_index}.")
-else:
-    print("No minimum value found in non-empty sublists.")
+# if min_index is not None:
+#     print(f"The minimum value is {min_value} and it is found in the sublist at index {min_index}.")
+# else:
+#     print("No minimum value found in non-empty sublists.")
+
+
+# import time
+
+# lines_to_print = ["Line 1", "Line 2", "Line 3", "Line 4"]
+
+# for line in lines_to_print:
+#     # Pad the line with spaces to clear previous lines
+#     padded_line = line.ljust(max(len(line), len(max(lines_to_print, key=len))))
+#     print(f"\r{padded_line}", end='', flush=True)
+#     time.sleep(1)
+
+# # Print a newline character to move to the next line after the loop
+# print("\nAll done!")
+
+class test:
+    @staticmethod
+    def adder(a):
+        return a + 1
+    
+testint = test()
+
+b = 4
+c = testint.adder(b)
+print(f"==>> c: {c}")

@@ -8,7 +8,7 @@ capture.set(4, 720)
 
 # Video
 # capture = cv2.VideoCapture('./dataset/cars.mp4')
-model = ultralytics.YOLO('./target_localization/neuralnet/weight/yolov8l.pt')
+model = ultralytics.YOLO('./perception/neuralnet/weight/yolov8l.pt')
 
 while True:
     success, img = capture.read()
