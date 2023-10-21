@@ -10,7 +10,7 @@ sys.path.append(str(wd))
 import matplotlib.pyplot as plt
 import numpy as np
 
-from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle
+from geometry.geometry_class import ObjLine2D, intersect_line_v_rectangle
 
 
 class Node:
@@ -308,7 +308,7 @@ class RuntimeRRTStar():
 if __name__ == "__main__":
     np.random.seed(9)
     from robot.planar_rrr import PlanarRRR
-    from planner_util.extract_path_class import extract_path_class_6d
+    from planner.extract_path_class import extract_path_class_6d
 
     robot = PlanarRRR()
 

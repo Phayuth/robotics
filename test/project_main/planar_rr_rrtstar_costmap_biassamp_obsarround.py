@@ -12,7 +12,7 @@ from map.mapclass import map_val, map_vec
 from map.taskmap_geo_format import task_rectangle_obs_5
 from planner.research_rrt_2dof.rrtstar_costmap_biassampling import node, rrt_star
 from robot.planar_rr import PlanarRR
-from planner_util.extract_path_class import extract_path_class_2d
+from planner.extract_path_class import extract_path_class_2d
 
 
 # robot, inverse kinematic and plot

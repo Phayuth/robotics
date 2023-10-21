@@ -7,13 +7,13 @@ sys.path.append(str(wd))
 import matplotlib.pyplot as plt
 import numpy as np
 
-from collision_check_geometry import collision_class
+from geometry import geometry_class
 from config_space_2d.generate_config_planar_rrr import configuration_generate_plannar_rrr
 from robot.planar_rrr import PlanarRRR
 from planner_util.coord_transform import circle_plt, polar2cats
 from map.mapclass import map_val, map_vec
 from planner.ready.rrtstar_costmap_biassampling3d import rrt_star
-from planner_util.extract_path_class import extract_path_class_3d
+from planner.extract_path_class import extract_path_class_3d
 
 # create robot instance
 robot = PlanarRRR()
@@ -32,8 +32,8 @@ xTopStart = (rCrop + hD) * np.cos(alphaTarg - np.pi / 2) + xTarg
 yTopStart = (rCrop + hD) * np.sin(alphaTarg - np.pi / 2) + yTarg
 xBotStart = (rCrop) * np.cos(alphaTarg + np.pi / 2) + xTarg
 yBotStart = (rCrop) * np.sin(alphaTarg + np.pi / 2) + yTarg
-recTop = collision_class.ObjRec(xTopStart, yTopStart, hD, wD, angle=alphaTarg)
-recBot = collision_class.ObjRec(xBotStart, yBotStart, hD, wD, angle=alphaTarg)
+recTop = geometry_class.ObjRectangle(xTopStart, yTopStart, hD, wD, angle=alphaTarg)
+recBot = geometry_class.ObjRectangle(xBotStart, yBotStart, hD, wD, angle=alphaTarg)
 
 thetaGoal = robot.inverse_kinematic_geometry(target, elbow_option=0)
 

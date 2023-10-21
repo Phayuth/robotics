@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import glob
 
-map_list = glob.glob('./map/mapdata/task_space/*.npy')
+map_list = glob.glob('./datasave/task_space/*.npy')
 
 def Obstacle_generater(obstacle):
     obs = []

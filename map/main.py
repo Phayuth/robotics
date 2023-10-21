@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 # SECTION - view 2D map in config space folder
-map_list = glob.glob('./map/mapdata/config_space_data_2d/*.npy')
+map_list = glob.glob('./datasave/config_space_data_2d/*.npy')
 fig, axs = plt.subplots(2, 3)
 axs[0, 0].imshow(np.load(map_list[0]))
 axs[0, 0].set_title('Axis [0, 0]')
@@ -20,23 +20,14 @@ plt.show()
 
 
 # SECTION - plot config space in 3d #slow
-map = np.load('./map/mapdata/config_space_data_3d/config3D.npy')
+map = np.load('./datasave/config_space_data_3d/config3D.npy')
 print(f"==>> map.shape: \n{map.shape}")
 plt.imshow(map[:,:,39])
 plt.show()
 
-# map = np.load('./map/mapdata/config_rrr.npy')
-# ax = plt.figure().add_subplot(projection='3d')
-# ax.voxels(map, edgecolor='k')
-# plt.show()
-
-
-# SECTION - slice 3d to view easier
-# map = 
-
 
 # SECTION - point cloud
-# map = np.load('./map/mapdata/point_cloud/xyz(0.3).npy')
+# map = np.load('./datasave/point_cloud/xyz(0.3).npy')
 # x_coord = map[:,0]
 # y_coord = map[:,1]
 # z_coord = map[:,2]

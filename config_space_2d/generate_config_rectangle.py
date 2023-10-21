@@ -12,7 +12,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from collision_check_geometry.collision_class import ObjRec, intersect_rectangle_v_rectangle
+from geometry.geometry_class import ObjRectangle, CollisionGeometry
 
 
 def configuration_generate_rectangle(obsList):
@@ -21,10 +21,10 @@ def configuration_generate_rectangle(obsList):
     aRowOfGrid = []
     for i in sample:
         for j in sample:
-            recMoving = ObjRec(i, j, h=2, w=2)
+            recMoving = ObjRectangle(i, j, h=2, w=2)
             col = []
             for k in obsList:
-                collision = intersect_rectangle_v_rectangle(recMoving, k)
+                collision = CollisionGeometry.intersect_rectangle_v_rectangle(recMoving, k)
                 col.append(collision)
             if True in col:
                 aRowOfGrid.append(True)

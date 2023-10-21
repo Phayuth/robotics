@@ -38,7 +38,7 @@ if __name__=="__main__":
     wd = os.path.abspath(os.getcwd())
     sys.path.append(str(wd))
 
-    from robot_used.plannar_rr import RobotArm2D
+    from robot.planar_rr import PlanarRRVoxel
     from map import taskmap_img_format
     from generate_config_space import construct_config_space_2d
     import matplotlib.pyplot as plt
@@ -49,7 +49,7 @@ if __name__=="__main__":
     # Create robot
     basePosition = [15, 15]
     linkLenths = [5, 5]
-    robot = RobotArm2D.Robot(basePosition, linkLenths)
+    robot = PlanarRRVoxel(basePosition, linkLenths)
 
     # Create Configuration space
     configuration = construct_config_space_2d(robot, map)
@@ -58,7 +58,7 @@ if __name__=="__main__":
     plt.figure(figsize=(10,10))
     plt.axes().set_aspect('equal')
     r1 = robot.robot_position(90,0)
-    plt.plot([robot.basePosition[0], r1[0][0]],[robot.basePosition[1], r1[0][1]] , "b", linewidth=8)
+    plt.plot([basePosition[0], r1[0][0]],[basePosition[1], r1[0][1]] , "b", linewidth=8)
     plt.plot([r1[0][0], r1[1][0]],[r1[0][1], r1[1][1]] , "b", linewidth=8)
     plt.plot([r1[1][0], r1[2][0]],[r1[1][1], r1[2][1]] , "r", linewidth=8)
     plt.imshow(np.transpose(map),cmap = "gray", interpolation = 'nearest')

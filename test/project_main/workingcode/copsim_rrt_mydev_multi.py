@@ -41,7 +41,7 @@ class RRTMyDevMultiGoalCopSim6D(RRTMyDevMultiGoal):
 
 if __name__ == "__main__":
     np.random.seed(9)
-    from target_localization.pre_record_value import wrap_to_pi, newThetaInit, newThetaApp, newThetaGoal
+    from datasave.joint_value.pre_record_value import wrap_to_pi, newThetaInit, newThetaApp, newThetaGoal
     from util.general_util import write_dict_to_file
 
     # Define pose

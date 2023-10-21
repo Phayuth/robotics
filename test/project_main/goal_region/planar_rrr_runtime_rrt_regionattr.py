@@ -10,7 +10,7 @@ sys.path.append(str(wd))
 import matplotlib.pyplot as plt
 import numpy as np
 
-from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle
+from geometry.geometry_class import ObjLine2D, intersect_line_v_rectangle
 
 
 class Node:
@@ -173,11 +173,11 @@ class RuntimeRRTBase():
 
 if __name__ == "__main__":
     np.random.seed(9)
-    from collision_check_geometry.collision_class import ObjRec
+    from geometry.geometry_class import ObjRectangle
     from map.taskmap_geo_format import task_rectangle_obs_6
     from robot.planar_rrr import PlanarRRR
     from planner_util.coord_transform import circle_plt
-    from planner_util.extract_path_class import extract_path_class_3d
+    from planner.extract_path_class import extract_path_class_3d
 
     robot = PlanarRRR()
 

@@ -10,7 +10,7 @@ sys.path.append(str(wd))
 import matplotlib.pyplot as plt
 import numpy as np
 
-from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle
+from geometry.geometry_class import ObjLine2D, intersect_line_v_rectangle
 
 
 class Node:
@@ -203,11 +203,11 @@ class RuntimeRRTStar():
 if __name__ == "__main__":
     np.random.seed(9)
     from scipy.optimize import curve_fit
-    from collision_check_geometry.collision_class import ObjRec
+    from geometry.geometry_class import ObjRectangle
     from map.taskmap_geo_format import task_rectangle_obs_6
     from robot.planar_rrr import PlanarRRR
     from planner_util.coord_transform import circle_plt
-    from planner_util.extract_path_class import extract_path_class_3d
+    from planner.extract_path_class import extract_path_class_3d
     from planner_util.plot_util import plot_tree_3d
 
     robot = PlanarRRR()
@@ -257,8 +257,8 @@ if __name__ == "__main__":
     yTopStart = (rCrop + hD) * np.sin(alphaTarg - np.pi / 2) + yTarg
     xBotStart = (rCrop) * np.cos(alphaTarg + np.pi / 2) + xTarg
     yBotStart = (rCrop) * np.sin(alphaTarg + np.pi / 2) + yTarg
-    recTop = ObjRec(xTopStart, yTopStart, hD, wD, angle=alphaTarg)
-    recBot = ObjRec(xBotStart, yBotStart, hD, wD, angle=alphaTarg)
+    recTop = ObjRectangle(xTopStart, yTopStart, hD, wD, angle=alphaTarg)
+    recBot = ObjRectangle(xBotStart, yBotStart, hD, wD, angle=alphaTarg)
     obsList = [recTop, recBot]
     thetaGoal = robot.inverse_kinematic_geometry(target, elbow_option=0)
     initPose = np.array([[2.5], [0], [0]])

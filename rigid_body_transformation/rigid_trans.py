@@ -312,3 +312,61 @@ class RigidBodyTransformation:
             return RigidBodyTransformation.vec_to_skew(thetaDot*RigidBodyTransformation.basis_vec(rotAx)) @ RigidBodyTransformation.roty(theta)
         elif rotAx == 'z':
             return RigidBodyTransformation.vec_to_skew(thetaDot*RigidBodyTransformation.basis_vec(rotAx)) @ RigidBodyTransformation.rotz(theta)
+
+
+class PlotTransformation:
+
+    def plot_frame_2d(rot2d, translation, ax, plt_basis=False):
+
+        r1 = np.array([[0],[0]])
+        r2 = np.array([[1],[0]])
+        r4 = np.array([[0],[1]])
+
+        dx = translation[0,0]
+        dy = translation[1,0]
+
+        d1 = np.array([[dx],[dy]])
+        d2 = np.array([[dx],[dy]])
+        d4 = np.array([[dx],[dy]])
+
+        # rnew = Rotation @ rold + d
+        r1new = rot2d @ r1 + d1
+        r2new = rot2d @ r2 + d2
+        r4new = rot2d @ r4 + d4
+
+        ax.set_aspect('equal')
+        if plt_basis:
+            # plot basic axis
+            ax.axvline(x=0, c="black")
+            ax.axhline(y=0, c="black")
+
+        # plot frame
+        ax.plot([r1new[0,0], r2new[0,0]],[r1new[1,0], r2new[1,0]],"blue", linewidth=4) # x axis
+        ax.plot([r1new[0,0], r4new[0,0]],[r1new[1,0], r4new[1,0]],"red", linewidth=4)  # y axis
+
+ 
+    def plot_frame_3d(H, ax, plt_basis=False): # input 4x4 transform matrix. use ax = plt.axes(projection='3d')
+        rotation = H[0:3, 0:3]
+        d = H[0:3, 3, np.newaxis]
+
+        r1 = np.array([[1],[0],[0]])
+        r2 = np.array([[0],[1],[0]])
+        r3 = np.array([[0],[0],[1]])
+        r4 = np.array([[0],[0],[0]])
+
+        r1new = rotation @ r1 + d
+        r2new = rotation @ r2 + d
+        r3new = rotation @ r3 + d
+        r4new = rotation @ r4 + d
+
+        if plt_basis:
+            # plot basic axis
+            ax.plot3D([0, 2], [0, 0], [0, 0], 'red', linewidth=4)
+            ax.plot3D([0, 0], [0, 2], [0, 0], 'purple', linewidth=4)
+            ax.plot3D([0, 0], [0, 0], [0, 2], 'green', linewidth=4)
+
+        # plot frame
+        ax.plot3D([r4new[0,0], r1new[0,0]], [r4new[1,0], r1new[1,0]], [r4new[2,0], r1new[2,0]], 'gray', linewidth=4, label="gray is x")
+        ax.plot3D([r4new[0,0], r2new[0,0]], [r4new[1,0], r2new[1,0]], [r4new[2,0], r2new[2,0]], 'blue', linewidth=4, label="blue is y")
+        ax.plot3D([r4new[0,0], r3new[0,0]], [r4new[1,0], r3new[1,0]], [r4new[2,0], r3new[2,0]], 'yellow', linewidth=4, label="yellow is z")
+        ax.legend()

@@ -27,7 +27,7 @@ import glob
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import binary_dilation
-from collision_check_geometry.collision_class import ObjRec
+from geometry.geometry_class import ObjRectangle
 
 
 class CostMapLoader:
@@ -41,8 +41,8 @@ class CostMapLoader:
 
     @classmethod
     def loadsave(cls, maptype, mapindex, reverse=False):
-        task_map_list = glob.glob('./map/mapdata/task_space/*.npy')
-        config_map_list = glob.glob('./map/mapdata/config_space_data_2d/*.npy')
+        task_map_list = glob.glob('./datasave/task_space/*.npy')
+        config_map_list = glob.glob('./datasave/config_space_data_2d/*.npy')
         if maptype == "task":
             costmap = 1 - np.load(task_map_list[mapindex]).astype(np.uint8)
         elif maptype == "config":
@@ -106,7 +106,7 @@ class CostMapClass:
         xval = np.linspace(self.xmin, self.xmax, size_x)
         yval = np.linspace(self.ymin, self.ymax, size_y)
 
-        obj = [ObjRec(xval[i], yval[j], xval[i + 1] - xval[i], yval[j + 1] - yval[j], p=free_space_value) for i in range(len(xval) - 1) for j in range(len(yval) - 1) if self.costmap[j, i] != free_space_value]
+        obj = [ObjRectangle(xval[i], yval[j], xval[i + 1] - xval[i], yval[j + 1] - yval[j], p=free_space_value) for i in range(len(xval) - 1) for j in range(len(yval) - 1) if self.costmap[j, i] != free_space_value]
 
         return obj
 

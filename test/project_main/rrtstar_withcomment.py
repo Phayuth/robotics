@@ -5,7 +5,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from collision_check_geometry.collision_class import obj_line2d, obj_point2d, intersect_point_v_rectangle, intersect_line_v_rectangle
+from geometry.geometry_class import obj_line2d, obj_point2d, intersect_point_v_rectangle, intersect_line_v_rectangle
 
 class node:
     def __init__(self, x, y, parent=None, cost=0.0) -> None:

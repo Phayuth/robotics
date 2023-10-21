@@ -9,7 +9,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 
-from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle
+from geometry.geometry_class import ObjLine2D, intersect_line_v_rectangle
 
 
 class Node:
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     np.random.seed(9)
     from robot.planar_rr import PlanarRR
     from map.taskmap_geo_format import task_rectangle_obs_1
-    from planner_util.extract_path_class import extract_path_class_2d
+    from planner.extract_path_class import extract_path_class_2d
     from planner_util.plot_util import plot_tree
     plt.style.use("seaborn")
 

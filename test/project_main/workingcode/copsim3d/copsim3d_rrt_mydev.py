@@ -297,8 +297,8 @@ class RRTMyDev(CopSim3DRRTComponent):
 if __name__ == "__main__":
     np.random.seed(9)
     import matplotlib.pyplot as plt
-    from planner_util.extract_path_class import extract_path_class_3d
-    from target_localization.pre_record_value import wrap_to_pi , newThetaInit, newThetaApp, newThetaGoal
+    from planner.extract_path_class import extract_path_class_3d
+    from datasave.joint_value.pre_record_value import wrap_to_pi , newThetaInit, newThetaApp, newThetaGoal
     from copsim.arm_api import UR5eStateArmCoppeliaSimAPI
     from util.general_util import write_dict_to_file
 

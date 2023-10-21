@@ -15,7 +15,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from collision_check_geometry import collision_class
+from geometry.geometry_class import ObjLine2D, CollisionGeometry
 
 
 def configuration_generate_plannar_rrr(robot, obsList):
@@ -36,15 +36,15 @@ def configuration_generate_plannar_rrr(robot, obsList):
                     print(f"at theta1 {theta1[th1]} | at theta2 {theta2[th2]} | at theta3 {theta3[th3]}")
                     theta = np.array([[theta1[th1]], [theta2[th2]], [theta3[th3]]])
                     linkPose = robot.forward_kinematic(theta, return_link_pos=True)
-                    linearm1 = collision_class.ObjLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
-                    linearm2 = collision_class.ObjLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
-                    linearm3 = collision_class.ObjLine2D(linkPose[2][0], linkPose[2][1], linkPose[3][0], linkPose[3][1])
+                    linearm1 = ObjLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
+                    linearm2 = ObjLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
+                    linearm3 = ObjLine2D(linkPose[2][0], linkPose[2][1], linkPose[3][0], linkPose[3][1])
 
                     col = []
                     for i in obsList:
-                        col1 = collision_class.intersect_line_v_rectangle(linearm1, i)
-                        col2 = collision_class.intersect_line_v_rectangle(linearm2, i)
-                        col3 = collision_class.intersect_line_v_rectangle(linearm3, i)
+                        col1 = CollisionGeometry.intersect_line_v_rectangle(linearm1, i)
+                        col2 = CollisionGeometry.intersect_line_v_rectangle(linearm2, i)
+                        col3 = CollisionGeometry.intersect_line_v_rectangle(linearm3, i)
                         col.extend((col1, col2, col3))
 
                     if True in col:
@@ -66,13 +66,13 @@ def configuration_generate_plannar_rrr_first_2joints(robot, obsList):
             print(f"at theta1 {theta1[th1]} | at theta2 {theta2[th2]}")
             theta = np.array([[theta1[th1]], [theta2[th2]], [theta3]])
             linkPose = robot.forward_kinematic(theta, return_link_pos=True)
-            linearm1 = collision_class.ObjLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
-            linearm2 = collision_class.ObjLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
+            linearm1 = ObjLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
+            linearm2 = ObjLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
 
             col = []
             for i in obsList:
-                col1 = collision_class.intersect_line_v_rectangle(linearm1, i)
-                col2 = collision_class.intersect_line_v_rectangle(linearm2, i)
+                col1 = CollisionGeometry.intersect_line_v_rectangle(linearm1, i)
+                col2 = CollisionGeometry.intersect_line_v_rectangle(linearm2, i)
                 col.extend((col1, col2))
 
             if True in col:

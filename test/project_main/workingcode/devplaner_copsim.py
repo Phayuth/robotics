@@ -611,9 +611,9 @@ if __name__ == "__main__":
     np.random.seed(9)
     import matplotlib.pyplot as plt
     from scipy.optimize import curve_fit
-    from planner_util.extract_path_class import extract_path_class_6d
+    from planner.extract_path_class import extract_path_class_6d
     from util.dictionary_pretty import print_dict
-    from target_localization.pre_record_value import thetaInit, thetaGoal1, thetaApp1
+    from datasave.joint_value.pre_record_value import thetaInit, thetaGoal1, thetaApp1
 
     # Define pose
     thetaInit = thetaInit

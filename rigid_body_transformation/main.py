@@ -1,7 +1,7 @@
 import numpy as np
-from rigid_trans import RigidBodyTransformation as rbt
+from rigid_trans import RigidBodyTransformation as rbt, PlotTransformation as pltt
 from scipy.spatial.transform import Rotation as R
-from plot_frame import *
+import matplotlib.pyplot as plt
 
 # homog transform
 theta = np.pi / 4
@@ -15,10 +15,12 @@ H = H01 @ H12 @ H23
 p0 = H @ p1
 
 # # plot frame
-# # 2D
-# rot = rbt.rot2d(theta)
-# tran = np.array([[1],[1]])
-# plot_frame_2d(rot,tran, plt_basis=True, plt_show=True)
+# 2D
+rot = rbt.rot2d(theta)
+tran = np.array([[1],[1]])
+fig, ax = plt.subplots()
+pltt.plot_frame_2d(rot, tran, ax, plt_basis=True)
+plt.show()
 
 # # 3D
 # gs = rbt.hrz(theta)

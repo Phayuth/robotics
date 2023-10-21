@@ -438,7 +438,7 @@ class rrt_star():
  
 if __name__=="__main__":
     from map.taskmap_img_format import map_3d_empty
-    from planner_util.extract_path_class import extract_path_class_3d
+    from planner.extract_path_class import extract_path_class_3d
     np.random.seed(0)
 
 

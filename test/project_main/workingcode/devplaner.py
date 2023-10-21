@@ -20,7 +20,7 @@ sys.path.append(str(wd))
 
 import time
 import numpy as np
-from collision_check_geometry.collision_class import ObjLine2D, intersect_line_v_rectangle
+from geometry.geometry_class import ObjLine2D, intersect_line_v_rectangle
 
 
 class Node:
@@ -664,7 +664,7 @@ class DevPlanner():
 if __name__ == "__main__":
     np.random.seed(9)
     from robot.planar_sixdof import PlanarSixDof
-    from planner_util.extract_path_class import extract_path_class_6d
+    from planner.extract_path_class import extract_path_class_6d
     import matplotlib.pyplot as plt
     from map.taskmap_geo_format import two_near_ee_for_devplanner
     from planner_util.plot_util import plot_joint_6d
