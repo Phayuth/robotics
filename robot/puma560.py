@@ -85,7 +85,7 @@ class Puma560:
             T12 = rbt.dh_transformation_mod(theta2, self.alpha[1, 0], self.d[1, 0], self.a[1, 0])
             T23 = rbt.dh_transformation_mod(theta3, self.alpha[2, 0], self.d[2, 0], self.a[2, 0])
             T03 = T01 @ T12 @ T23
-            Rprime = rbt.h_inverse(T03) @ T06
+            Rprime = rbt.hinverse(T03) @ T06
 
             r11prm, r12prm, r13prm, pxprm = Rprime[0, 0], Rprime[0, 1], Rprime[0, 2], Rprime[0, 3]
             r21prm, r22prm, r23prm, pyprm = Rprime[1, 0], Rprime[1, 1], Rprime[1, 2], Rprime[1, 3]

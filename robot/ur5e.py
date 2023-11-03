@@ -167,7 +167,7 @@ class UR5e:
 
         # theta6
         for i in range(8):
-            T60 = rbt.h_inverse(T06)
+            T60 = rbt.hinverse(T06)
             Xy60 = T60[1, 0]
             Yy60 = T60[1, 1]
             Xx60 = T60[0, 0]
@@ -192,10 +192,10 @@ class UR5e:
             T56 = rbt.dh_transformation_mod(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
 
             T46 = T45 @ T56
-            T60 = rbt.h_inverse(T06)
+            T60 = rbt.hinverse(T06)
             T40 = T46 @ T60
             T41 = T40 @ T01
-            T14 = rbt.h_inverse(T41)
+            T14 = rbt.hinverse(T41)
 
             p14x = T14[0, 3]
             p14z = T14[2, 3]
@@ -216,10 +216,10 @@ class UR5e:
             T56 = rbt.dh_transformation_mod(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
 
             T46 = T45 @ T56
-            T60 = rbt.h_inverse(T06)
+            T60 = rbt.hinverse(T06)
             T40 = T46 @ T60
             T41 = T40 @ T01
-            T14 = rbt.h_inverse(T41)
+            T14 = rbt.hinverse(T41)
 
             p14x = T14[0, 3]
             p14z = T14[2, 3]
@@ -244,8 +244,8 @@ class UR5e:
             T56 = rbt.dh_transformation_mod(theta[5, i], self.alpha[5, 0], self.d[5, 0], self.a[5, 0])
             T46 = T45 @ T56
 
-            T30 = rbt.h_inverse(T03)
-            T64 = rbt.h_inverse(T46)
+            T30 = rbt.hinverse(T03)
+            T64 = rbt.hinverse(T46)
             T34 = T30 @ T06 @ T64
 
             Xy34 = T34[1, 0]

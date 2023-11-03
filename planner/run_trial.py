@@ -7,8 +7,8 @@ sys.path.append(str(wd))
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-from planner_dev.planner2d.planar_rrt_single import RRTConnect2D, RRTStar2D, RRTInformed2D, RRTStarConnect2D, RRTInformedConnect2D, RRTConnectAstInformed2D
-from planner_dev.copsim6d.copsim_rrt_single import RRTConnectCopSim, RRTStarCopSim, RRTInformedCopSim, RRTStarConnectCopSim, RRTInformedConnectCopSim, RRTConnectAstInformedCopSim
+from planner.planner2d.planar_rrt_single import RRTConnect2D, RRTStar2D, RRTInformed2D, RRTStarConnect2D, RRTInformedConnect2D, RRTConnectAstInformed2D
+from planner.copsim6d.copsim_rrt_single import RRTConnectCopSim, RRTStarCopSim, RRTInformedCopSim, RRTStarConnectCopSim, RRTInformedConnectCopSim, RRTConnectAstInformedCopSim
 from datasave.joint_value.pre_record_value import wrap_to_pi, newThetaInit, newThetaApp, newThetaGoal
 
 # # # multi goal

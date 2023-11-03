@@ -6,6 +6,7 @@ sys.path.append(str(wd))
 sys.path.append("/home/yuth/coppelia/programming/zmqRemoteApi/clients/python")
 
 import numpy as np
+import time
 from zmqRemoteApi import RemoteAPIClient
 
 
@@ -116,9 +117,21 @@ class UR5eArmCoppeliaSimAPI:
         for i in range(jointValue.config.shape[0]):
             self.sim.setJointTargetPosition(self.jointHandleList[i], jointValue.config[i, 0])
 
+    def play_back_path(self, path):
+        self.start_sim()
+        self.set_start_joint_value(path[0])
+        self.set_goal_joint_value(path[-1])
+        self.set_aux_joint_value(path[-2])
+        for i in range(len(path)):
+            self.set_joint_value(path[i])
+            time.sleep(0.3)
+            # triggers next simulation step
+            # client.step()
+        self.stop_sim()
+
 
 if __name__ == "__main__":
-    from datasave.joint_value.pre_record_value import wrap_to_pi, newThetaInit, newThetaApp, newThetaGoal
+    from datasave.joint_value.pre_record_value import newThetaInit, newThetaApp, newThetaGoal
 
     # UR5e scene
     # armVirtual = UR5eVirtualArmCoppeliaSimAPI()

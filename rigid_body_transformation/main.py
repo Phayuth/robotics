@@ -28,7 +28,7 @@ plt.show()
 
 # transformation
 gs = rbt.hrx(theta=1)
-gs_iv = rbt.h_inverse(gs)
+gs_iv = rbt.hinverse(gs)
 check = gs @ gs_iv  # return Identity Matrix
 
 tac = np.array([[np.cos(np.deg2rad(90)), np.cos(np.deg2rad(120)), np.cos(np.deg2rad(30)), 3], 
@@ -36,7 +36,7 @@ tac = np.array([[np.cos(np.deg2rad(90)), np.cos(np.deg2rad(120)), np.cos(np.deg2
                 [np.cos(np.deg2rad(180)), np.cos(np.deg2rad(90)),np.cos(np.deg2rad(90)), 2], 
                 [0, 0, 0, 1]])
 
-tca = rbt.h_inverse(tac)
+tca = rbt.hinverse(tac)
 tac_rotation_mat = tac[0:3, 0:3]
 tca_rotation_mat = tca[0:3, 0:3]
 

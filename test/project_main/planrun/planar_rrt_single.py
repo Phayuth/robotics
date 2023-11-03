@@ -6,14 +6,14 @@ sys.path.append(str(wd))
 
 import time
 import numpy as np
-from planner_dev.rrt_base import RRTBase
-from planner_dev.rrt_connect import RRTConnect
-from planner_dev.rrt_star import RRTStar
-from planner_dev.rrt_informed import RRTInformed
-from planner_dev.rrt_star_connect import RRTStarConnect
-from planner_dev.rrt_informed_connect import RRTInformedConnect
+from planner.rrt_base import RRTBase
+from planner.rrt_connect import RRTConnect
+from planner.rrt_star import RRTStar
+from planner.rrt_informed import RRTInformed
+from planner.rrt_star_connect import RRTStarConnect
+from planner.rrt_informed_connect import RRTInformedConnect
 
-from planner_dev.rrt_connect_ast_informed import RRTConnectAstInformed
+from planner.rrt_connect_ast_informed import RRTConnectAstInformed
 
 
 class RRTBase2D(RRTBase):
@@ -29,7 +29,7 @@ class RRTBase2D(RRTBase):
                  envChoice="Planar", 
                  nearGoalRadius=0.3, 
                  rewireRadius=None, 
-                 terminationConditionID=1, 
+                 endIterationID=1, 
                  print_debug=False):
         super().__init__(xStart=xStart,
                          xApp=xApp,
@@ -41,17 +41,15 @@ class RRTBase2D(RRTBase):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XInGoalRegion, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -68,7 +66,7 @@ class RRTConnect2D(RRTConnect):
                  envChoice="Planar",
                  nearGoalRadius=None,
                  rewireRadius=None,
-                 terminationConditionID=1,
+                 endIterationID=1,
                  print_debug=False,
                  localOptEnable=False):
         super().__init__(xStart=xStart,
@@ -81,19 +79,16 @@ class RRTConnect2D(RRTConnect):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug,
                          localOptEnable=localOptEnable)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
-        # path = self.search_backtrack_single_directional_path(backFromNode=self.xApp, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -110,7 +105,7 @@ class RRTStar2D(RRTStar):
                  envChoice="Planar",
                  nearGoalRadius=0.3,
                  rewireRadius=None,
-                 terminationConditionID=1,
+                 endIterationID=1,
                  print_debug=False,
                  localOptEnable=False):
         super().__init__(xStart=xStart,
@@ -123,18 +118,16 @@ class RRTStar2D(RRTStar):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug,
                          localOptEnable=localOptEnable)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XInGoalRegion, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -151,7 +144,7 @@ class RRTInformed2D(RRTInformed):
                  envChoice="Planar", 
                  nearGoalRadius=0.3, 
                  rewireRadius=None, 
-                 terminationConditionID=1, 
+                 endIterationID=1, 
                  print_debug=False):
         super().__init__(xStart=xStart,
                          xApp=xApp,
@@ -163,17 +156,15 @@ class RRTInformed2D(RRTInformed):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XSoln, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -190,7 +181,7 @@ class RRTStarConnect2D(RRTStarConnect):
                  envChoice="Planar",
                  nearGoalRadius=None,
                  rewireRadius=None,
-                 terminationConditionID=1,
+                 endIterationID=1,
                  print_debug=False,
                  localOptEnable=False):
         super().__init__(xStart=xStart,
@@ -203,18 +194,16 @@ class RRTStarConnect2D(RRTStarConnect):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug,
                          localOptEnable=localOptEnable)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -231,7 +220,7 @@ class RRTInformedConnect2D(RRTInformedConnect):
                  envChoice="Planar", 
                  nearGoalRadius=None, 
                  rewireRadius=None, 
-                 terminationConditionID=1, 
+                 endIterationID=1, 
                  print_debug=False):
         super().__init__(xStart=xStart,
                          xApp=xApp,
@@ -243,17 +232,15 @@ class RRTInformedConnect2D(RRTInformedConnect):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -270,7 +257,7 @@ class RRTConnectAstInformed2D(RRTConnectAstInformed):
                  envChoice="Planar", 
                  nearGoalRadius=0.3, 
                  rewireRadius=None, 
-                 terminationConditionID=1, 
+                 endIterationID=1, 
                  print_debug=False):
         super().__init__(xStart=xStart,
                          xApp=xApp,
@@ -282,17 +269,15 @@ class RRTConnectAstInformed2D(RRTConnectAstInformed):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XSoln, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -302,7 +287,7 @@ if __name__ == "__main__":
     # import seaborn as sns
     # sns.set_theme()
     # sns.set_context("paper")
-    from planner_util.coord_transform import circle_plt
+    # from planner_util.coord_transform import circle_plt
     from util.general_util import write_dict_to_file
 
     xStart = np.array([0, 0]).reshape(2, 1)
@@ -330,11 +315,11 @@ if __name__ == "__main__":
     path = planner.planning()
     print(f"==>> path: \n{path}")
     print(planner.perfMatrix)
-    # write_dict_to_file(planner.perfMatrix, "./planner_dev/result_2d/result_2d_rrtinformed.txt")
+    # write_dict_to_file(planner.perfMatrix, "./planner/result_2d/result_2d_rrtinformed.txt")
     fig, ax = plt.subplots()
     fig.set_size_inches(w=3.40067, h=3.40067)
     fig.tight_layout()
-    circle_plt(planner.xGoal.config[0, 0], planner.xGoal.config[1, 0], planner.distGoalToApp)
+    # circle_plt(planner.xGoa`l.config[0, 0], planner.xGoal.config[1, 0], planner.distGoalToApp)
     # circle_plt(planner.xApp.config[0, 0], planner.xApp.config[1, 0], planner.nearGoalRadius)
     plt.xlim((-np.pi, np.pi))
     plt.ylim((-np.pi, np.pi))

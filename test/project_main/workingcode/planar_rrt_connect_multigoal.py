@@ -9,7 +9,7 @@ sys.path.append(str(wd))
 
 import time
 import numpy as np
-from planner_dev.rrt_component import Node, RRTComponent
+from planner.rrt_component import Node, RRTComponent
 
 
 class RRTInformedStarDev2D(RRTComponent):
@@ -249,7 +249,7 @@ if __name__ == "__main__":
 
     path1, path2, path3 = planner.planning()
     print(planner.perfMatrix)
-    # write_dict_to_file(planner.perfMatrix, "./planner_dev/result_2d/result_2d_proposed_2000.txt")
+    # write_dict_to_file(planner.perfMatrix, "./planner/result_2d/result_2d_proposed_2000.txt")
     fig, ax = plt.subplots()
     fig.set_size_inches(w=3.40067, h=3.40067)
     fig.tight_layout()

@@ -71,7 +71,7 @@ if __name__ == "__main__":
     print(f"==>> path2: \n{path2}")
     print(f"==>> path3: \n{path3}")
     print(planner.perfMatrix)
-    # write_dict_to_file(planner.perfMatrix, "./planner_dev/result_2d/result_2d_proposed_2000.txt")
+    # write_dict_to_file(planner.perfMatrix, "./planner/result_2d/result_2d_proposed_2000.txt")
     
     fig, ax = plt.subplots()
     fig.set_size_inches(w=3.40067, h=3.40067)

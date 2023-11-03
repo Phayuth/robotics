@@ -6,11 +6,11 @@ sys.path.append(str(wd))
 
 import time
 import numpy as np
-from planner_dev.rrt_base import RRTBaseMulti
-from planner_dev.rrt_connect import RRTConnectMulti
-from planner_dev.rrt_star import RRTStarMulti
-from planner_dev.rrt_informed import RRTInformedMulti
-from planner_dev.rrt_star_connect import RRTStarConnectMulti
+from planner.rrt_base import RRTBaseMulti
+from planner.rrt_connect import RRTConnectMulti
+from planner.rrt_star import RRTStarMulti
+from planner.rrt_informed import RRTInformedMulti
+from planner.rrt_star_connect import RRTStarConnectMulti
 
 
 class RRTBaseMultiCopSim(RRTBaseMulti):
@@ -43,17 +43,11 @@ class RRTBaseMultiCopSim(RRTBaseMulti):
 
     def planning(self):
         self.robotEnv.start_sim()
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xAppList[self.xGoalBestIndex],
-                                                          treeVertexList=self.XInGoalRegion[self.xGoalBestIndex],
-                                                          attachNode=self.xGoalList[self.xGoalBestIndex])
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -90,17 +84,11 @@ class RRTConnectMultiCopSim(RRTConnectMulti):
 
     def planning(self):
         self.robotEnv.start_sim()
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair)
-        xGoalIndex = self.xAppList.index(path[-1])
-        path = path + [self.xGoalList[xGoalIndex]]
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -135,17 +123,11 @@ class RRTStarMultiCopSim(RRTStarMulti):
 
     def planning(self):
         self.robotEnv.start_sim()
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xAppList[self.xGoalBestIndex],
-                                                          treeVertexList=self.XInGoalRegion[self.xGoalBestIndex],
-                                                          attachNode=self.xGoalList[self.xGoalBestIndex])
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -180,17 +162,11 @@ class RRTInformedMultiCopSim(RRTInformedMulti):
 
     def planning(self):
         self.robotEnv.start_sim()
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xAppList[self.xGoalBestIndex],
-                                                          treeVertexList=self.XSoln[self.xGoalBestIndex],
-                                                          attachNode=self.xGoalList[self.xGoalBestIndex])
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -227,17 +203,11 @@ class RRTStarConnectMultiCopSim(RRTStarConnectMulti):
 
     def planning(self):
         self.robotEnv.start_sim()
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair)
-        xGoalIndex = self.xAppList.index(path[-1])
-        path = path + [self.xGoalList[xGoalIndex]]
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -272,7 +242,7 @@ if __name__ == "__main__":
 
     path = planner.planning()
     print(planner.perfMatrix)
-    # write_dict_to_file(planner.perfMatrix, "./planner_dev/result_6d/result_6d_rrtstar.txt")
+    # write_dict_to_file(planner.perfMatrix, "./planner/result_6d/result_6d_rrtstar.txt")
     print(f"==>> path: \n{path}")
 
     time.sleep(3)

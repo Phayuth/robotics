@@ -1,5 +1,5 @@
 import numpy as np
-
+from scipy.spatial.transform import rotation as R
 
 class RigidBodyTransformation:
     
@@ -27,7 +27,7 @@ class RigidBodyTransformation:
                          [            0,              0,  1,  z],
                          [            0,              0,  0,  1]])
 
-    def h_inverse(H):
+    def hinverse(H):
         R = H[0:3, 0:3]
         P = H[0:3, 3, np.newaxis]
 
@@ -283,6 +283,20 @@ class RigidBodyTransformation:
         q3 = (r21 - r12) / (4 * q0)
 
         return np.array([q0, q1, q2, q3]).reshape(4,1)
+
+    def conv_t_and_quat_to_h(translation, rotation):
+        rot = R.from_quat(rotation)
+        H = np.eye(4)
+        H[:3, :3] = rot.as_matrix()
+        H[:3, 3] = translation
+        return H
+
+    def conv_h_to_t_and_quat(H):
+        rotation_matrix = H[:3, :3]
+        rotation = R.from_matrix(rotation_matrix)
+        quaternion = rotation.as_quat()
+        translation = H[:3, 3]
+        return translation, quaternion 
 
     def vec_to_skew(x):
         return np.array([[      0,  -x[2,0],  x[1,0]],

@@ -4,12 +4,12 @@ import sys
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
-from planner_dev.rrt_component import Node, RRTComponent
+from planner.rrt_component import Node, RRTComponent
 
 
 class RRTConnectLocalOpt(RRTComponent):
 
-    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, terminationConditionID, print_debug) -> None:
+    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug) -> None:
         super().__init__(eta=eta,
                          subEta=subEta,
                          maxIteration=maxIteration,
@@ -17,7 +17,7 @@ class RRTConnectLocalOpt(RRTComponent):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug)        
         # start, aux, goal node
         self.xStart = Node(xStart)

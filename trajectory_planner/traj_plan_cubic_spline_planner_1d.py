@@ -4,19 +4,19 @@ import matplotlib.pyplot as plt
 
 class CubicSpline1D:
 
-    def __init__(self, x, y):
+    def __init__(self, t, q):
 
-        h = np.diff(x)
+        h = np.diff(t)
         if np.any(h < 0):
             raise ValueError("x coordinates must be sorted in ascending order")
 
         self.a, self.b, self.c, self.d = [], [], [], []
-        self.x = x
-        self.y = y
-        self.nx = len(x)  # dimension of x
+        self.t = t
+        self.q = q
+        self.nx = len(t)  # dimension of x
 
         # calc coefficient a
-        self.a = [iy for iy in y]
+        self.a = [qi for qi in q]
 
         # calc coefficient c
         A = self.__calc_A(h)
@@ -30,52 +30,52 @@ class CubicSpline1D:
             self.d.append(d)
             self.b.append(b)
 
-    def calc_position(self, x):
+    def calc_position(self, t):
 
         # check if the time given is inside the segment area
-        if x < self.x[0]:
+        if t < self.t[0]:
             return None
-        elif x > self.x[-1]:
+        elif t > self.t[-1]:
             return None
 
         # check if the time given belong to what segment area
-        i = self.__search_index(x)
-        dx = x - self.x[i]
+        i = self.__search_index(t)
+        dx = t - self.t[i]
 
         # calculate the equation q(t) = a + bt + ct^2 + dt^3
         position = self.a[i] + self.b[i] * dx + self.c[i] * dx ** 2.0 + self.d[i] * dx ** 3.0
 
         return position
 
-    def calc_first_derivative(self, x):
+    def calc_first_derivative(self, t):
      
-        if x < self.x[0]:
+        if t < self.t[0]:
             return None
-        elif x > self.x[-1]:
+        elif t > self.t[-1]:
             return None
 
-        i = self.__search_index(x)
-        dx = x - self.x[i]
+        i = self.__search_index(t)
+        dx = t - self.t[i]
         dy = self.b[i] + 2.0 * self.c[i] * dx + 3.0 * self.d[i] * dx ** 2.0
         return dy
 
-    def calc_second_derivative(self, x):
+    def calc_second_derivative(self, t):
 
-        if x < self.x[0]:
+        if t < self.t[0]:
             return None
-        elif x > self.x[-1]:
+        elif t > self.t[-1]:
             return None
 
-        i = self.__search_index(x)
-        dx = x - self.x[i]
+        i = self.__search_index(t)
+        dx = t - self.t[i]
         ddy = 2.0 * self.c[i] + 6.0 * self.d[i] * dx
         return ddy
 
-    def __search_index(self, x):
+    def __search_index(self, t):
         """
         search data segment index
         """
-        return bisect.bisect(self.x, x) - 1
+        return bisect.bisect(self.t, t) - 1
 
     def __calc_A(self, h):
         """
@@ -104,11 +104,11 @@ class CubicSpline1D:
         return B
 
 print("CubicSpline1D test") 
-t = [0  ,  1, 2,   6,   8, 10, 11,  12, 13, 18, 20, 21, 22] # desired time for joint to arrive
+t = [0  ,  1, 2,   3,   4, 5, 6,  7, 8, 9, 10, 11, 12] # desired time for joint to arrive
 y = [1.7, -6, 5, 6.5, 0.0,  5,  7,  -1,  4,  5,  7, 12, 34] # desired joint position
 
 sp = CubicSpline1D(t, y)
-ti = np.linspace(0.0, 23, 1000)
+ti = np.linspace(0.0, 11.99999, 1000)
 
 pos = [sp.calc_position(t) for t in ti]
 vel = [sp.calc_first_derivative(t) for t in ti]

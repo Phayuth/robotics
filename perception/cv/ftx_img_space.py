@@ -227,7 +227,7 @@ if __name__ == "__main__":
     import cv2
 
     # import image
-    imgPath = "./test/img.jpg"
+    imgPath = "/home/yuth/Downloads/harriscorner.jpg"
     # imgPath = "./map/mapdata/image/map1.png"
     img = cv2.imread(imgPath)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -251,30 +251,30 @@ if __name__ == "__main__":
     # plt.show()
 
     # Hough Circle 
-    r_min = 10
-    r_max = 200
-    delta_r = 1
-    num_thetas = 100
-    bin_threshold = 0.4
-    min_edge_threshold = 100
-    max_edge_threshold = 200
+    # r_min = 10
+    # r_max = 200
+    # delta_r = 1
+    # num_thetas = 100
+    # bin_threshold = 0.4
+    # min_edge_threshold = 100
+    # max_edge_threshold = 200
 
-    input_img = cv2.imread("/home/yuth/Downloads/ex2.png")
+    # input_img = cv2.imread("/home/yuth/Downloads/ex2.png")
         
-    #Edge detection on the input image
-    edge_image = cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY)
-    #ret, edge_image = cv2.threshold(edge_image, 120, 255, cv2.THRESH_BINARY_INV)
-    edge_image = cv2.Canny(edge_image, min_edge_threshold, max_edge_threshold)
-    circle_img, circles = ImageFeature.hough_circle(input_img, edge_image, r_min, r_max, delta_r, num_thetas, bin_threshold)
+    # #Edge detection on the input image
+    # edge_image = cv2.cvtColor(input_img, cv2.COLOR_BGR2GRAY)
+    # #ret, edge_image = cv2.threshold(edge_image, 120, 255, cv2.THRESH_BINARY_INV)
+    # edge_image = cv2.Canny(edge_image, min_edge_threshold, max_edge_threshold)
+    # circle_img, circles = ImageFeature.hough_circle(input_img, edge_image, r_min, r_max, delta_r, num_thetas, bin_threshold)
 
-    fig, axs = plt.subplots(1, 3)
-    axs[0].imshow(input_img)
-    axs[0].set_title("original")
-    axs[1].imshow(edge_image, cmap='gray')
-    axs[1].set_title("gray")
-    axs[2].imshow(circle_img, cmap='gray')
-    axs[2].set_title("edge")
-    plt.show()
+    # fig, axs = plt.subplots(1, 3)
+    # axs[0].imshow(input_img)
+    # axs[0].set_title("original")
+    # axs[1].imshow(edge_image, cmap='gray')
+    # axs[1].set_title("gray")
+    # axs[2].imshow(circle_img, cmap='gray')
+    # axs[2].set_title("edge")
+    # plt.show()
 
 
     # Bresenham
@@ -308,16 +308,17 @@ if __name__ == "__main__":
     # plt.show()
 
     # Harris corner
-    # corners = ImageFeature.harris_corners(imgGray, windowSize=2, threshold=1000)
-    # imgShow = np.zeros_like(imgGray)
-    # for x, y in corners:
-    #     imgShow[y, x] = 1
+    corners = ImageFeature.harris_corners(imgGray, windowSize=2, threshold=1000)
+    imgShow = np.zeros_like(imgGray)
+    for x, y in corners:
+        imgShow[y, x] = 1
 
-    # fig, axs = plt.subplots(1, 3)
-    # axs[0].imshow(img)
-    # axs[0].set_title("original")
-    # axs[1].imshow(imgGray, cmap='gray')
-    # axs[1].set_title("gray")
-    # axs[2].imshow(imgShow, cmap='gray')
-    # axs[2].set_title("edge")
-    # plt.show()
+    fig, axs = plt.subplots(1, 3)
+    fig.set_size_inches(20,20)
+    axs[0].imshow(img)
+    axs[0].set_title("original")
+    axs[1].imshow(imgGray, cmap='gray')
+    axs[1].set_title("gray")
+    axs[2].imshow(imgShow, cmap='gray')
+    axs[2].set_title("edge")
+    plt.show()

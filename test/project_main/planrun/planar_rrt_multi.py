@@ -6,11 +6,11 @@ sys.path.append(str(wd))
 
 import time
 import numpy as np
-from planner_dev.rrt_base import RRTBaseMulti
-from planner_dev.rrt_connect import RRTConnectMulti
-from planner_dev.rrt_star import RRTStarMulti
-from planner_dev.rrt_informed import RRTInformedMulti
-from planner_dev.rrt_star_connect import RRTStarConnectMulti
+from planner.rrt_base import RRTBaseMulti
+from planner.rrt_connect import RRTConnectMulti
+from planner.rrt_star import RRTStarMulti
+from planner.rrt_informed import RRTInformedMulti
+from planner.rrt_star_connect import RRTStarConnectMulti
 
 
 class RRTBaseMulti2D(RRTBaseMulti):
@@ -26,7 +26,7 @@ class RRTBaseMulti2D(RRTBaseMulti):
                  envChoice="Planar",
                  nearGoalRadius=0.3,
                  rewireRadius=None,
-                 terminationConditionID=1,
+                 endIterationID=1,
                  print_debug=False):
         super().__init__(xStart=xStart,
                          xAppList=xAppList,
@@ -38,19 +38,15 @@ class RRTBaseMulti2D(RRTBaseMulti):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xAppList[self.xGoalBestIndex],
-                                                          treeVertexList=self.XInGoalRegion[self.xGoalBestIndex],
-                                                          attachNode=self.xGoalList[self.xGoalBestIndex])
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -67,7 +63,7 @@ class RRTConnectMulti2D(RRTConnectMulti):
                  envChoice="Planar",
                  nearGoalRadius=None,
                  rewireRadius=None,
-                 terminationConditionID=1,
+                 endIterationID=1,
                  print_debug=False,
                  localOptEnable=False):
         super().__init__(xStart=xStart,
@@ -80,20 +76,16 @@ class RRTConnectMulti2D(RRTConnectMulti):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug, 
                          localOptEnable=localOptEnable)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair)
-        xGoalIndex = self.xAppList.index(path[-1])
-        path = path + [self.xGoalList[xGoalIndex]]
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -110,7 +102,7 @@ class RRTStarMulti2D(RRTStarMulti):
                  envChoice="Planar",
                  nearGoalRadius=0.3,
                  rewireRadius=None,
-                 terminationConditionID=1,
+                 endIterationID=1,
                  print_debug=False):
         super().__init__(xStart=xStart,
                          xAppList=xAppList,
@@ -122,19 +114,15 @@ class RRTStarMulti2D(RRTStarMulti):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xAppList[self.xGoalBestIndex],
-                                                          treeVertexList=self.XInGoalRegion[self.xGoalBestIndex],
-                                                          attachNode=self.xGoalList[self.xGoalBestIndex])
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -151,7 +139,7 @@ class RRTInformedMulti2D(RRTInformedMulti):
                  envChoice="Planar",
                  nearGoalRadius=0.3,
                  rewireRadius=None,
-                 terminationConditionID=1,
+                 endIterationID=1,
                  print_debug=False):
         super().__init__(xStart=xStart,
                          xAppList=xAppList,
@@ -163,19 +151,15 @@ class RRTInformedMulti2D(RRTInformedMulti):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xAppList[self.xGoalBestIndex],
-                                                          treeVertexList=self.XSoln[self.xGoalBestIndex],
-                                                          attachNode=self.xGoalList[self.xGoalBestIndex])
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -192,7 +176,7 @@ class RRTStarConnectMulti2D(RRTStarConnectMulti):
                  envChoice="Planar",
                  nearGoalRadius=None,
                  rewireRadius=None,
-                 terminationConditionID=1,
+                 endIterationID=1,
                  print_debug=False,
                  localOptEnable=False):
         super().__init__(xStart=xStart,
@@ -205,20 +189,16 @@ class RRTStarConnectMulti2D(RRTStarConnectMulti):
                          envChoice=envChoice,
                          nearGoalRadius=nearGoalRadius,
                          rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
+                         endIterationID=endIterationID,
                          print_debug=print_debug, 
                          localOptEnable=localOptEnable)
 
     def planning(self):
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair)
-        xGoalIndex = self.xAppList.index(path[-1])
-        path = path + [self.xGoalList[xGoalIndex]]
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
+        self.update_perf(timePlanningStart, timePlanningEnd)
         return path
 
 
@@ -252,7 +232,7 @@ if __name__ == "__main__":
     path = planner.planning()
     print(f"==>> path: \n{path}")
     print(planner.perfMatrix)
-    # write_dict_to_file(planner.perfMatrix, "./planner_dev/result_2d/result_2d_rrtinformed.txt")
+    # write_dict_to_file(planner.perfMatrix, "./planner/result_2d/result_2d_rrtinformed.txt")
     fig, ax = plt.subplots()
     fig.set_size_inches(w=3.40067, h=3.40067)
     fig.tight_layout()

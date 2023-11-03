@@ -8,7 +8,7 @@ import time
 import numpy as np
 import matplotlib.patches as mpatches
 from copsim.arm_api import UR5eArmCoppeliaSimAPI
-from planner_dev.planner2d.arm_env2d import RobotArm2DEnvironment
+from planner.planner2d.arm_env2d import RobotArm2DEnvironment, TaskSpace2DEnvironment
 
 
 class Node:
@@ -25,7 +25,7 @@ class Node:
 
 class RRTComponent:
 
-    def __init__(self, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, terminationConditionID, print_debug) -> None:
+    def __init__(self, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug) -> None:
         # Check DOF [min, max]
         if numDoF == 2:
             self.jointRange = [[-np.pi, np.pi], [-np.pi, np.pi]]
@@ -38,7 +38,8 @@ class RRTComponent:
         if envChoice == "CopSim":
             self.robotEnv = UR5eArmCoppeliaSimAPI()
         elif envChoice == "Planar":
-            self.robotEnv = RobotArm2DEnvironment()
+            # self.robotEnv = RobotArm2DEnvironment()
+            self.robotEnv = TaskSpace2DEnvironment()
 
         # planner properties
         self.eta = eta
@@ -48,7 +49,7 @@ class RRTComponent:
         self.rewireRadius = rewireRadius
         self.probabilityGoalBias = 0.05  # When close to goal select goal, with this probability? default: 0.05, must modify my code
         self.maxGoalSample = 10  #Goal samples are only sampled until maxSampleCount() goals are in the tree, to prohibit duplicate goal states.
-        self.terminationConditionID = terminationConditionID # break condition
+        self.endIterationID = endIterationID # break condition
         self.terminateNumSolutions = 5
 
         # collision database
@@ -86,7 +87,7 @@ class RRTComponent:
         # debug setting
         self.print_debug = print_debug
 
-    def uni_sampling(self):
+    def uni_sampling(self) -> Node:
         config = np.array([[np.random.uniform(low=j[0], high=j[1])] for j in self.jointRange])
         xRand = Node(config)
         return xRand
@@ -170,11 +171,11 @@ class RRTComponent:
         return np.min([self.eta, gammaRRG * (np.log(numVertex) / numVertex)**(inverseDoF)])
 
     def termination_check(self, solutionList):
-        if self.terminationConditionID == 1: # maxIteration exceeded
+        if self.endIterationID == 1: # maxIteration exceeded
             return self.termination_on_max_iteration()
-        elif self.terminationConditionID == 2: # first solution found
+        elif self.endIterationID == 2: # first solution found
             return self.termination_on_first_solution(solutionList)
-        elif self.terminationConditionID == 3: #cost drop different is low
+        elif self.endIterationID == 3: #cost drop different is low
             return self.termination_on_cost_drop_different()
 
     def termination_on_max_iteration(self): # already in for loop, no break is needed
@@ -192,98 +193,86 @@ class RRTComponent:
         else:
             return False
 
-    def nearest_node(self, treeVertex, xRand, returnDistList=False):
-        vertexDistListToxRand = [self.distance_between_config(xRand, eachVertex) for eachVertex in treeVertex]
-        minIndex = np.argmin(vertexDistListToxRand)
-        xNearest = treeVertex[minIndex]
+    def nearest_node(self, treeVertices, xCheck, returnDistList=False):
+        distListToxCheck = [self.distance_between_config(xCheck, x) for x in treeVertices]
+        minIndex = np.argmin(distListToxCheck)
+        xNearest = treeVertices[minIndex]
         if returnDistList:
-            return xNearest, vertexDistListToxRand
+            return xNearest, distListToxCheck
         else:
             return xNearest
 
-    def steer_node_in_between_percentage(self, xStart, xStop, percentage):  # percentage only between [0.0 - 1.0]
-        distI = self.distance_each_component_between_config(xStart, xStop)
-        newI = xStart.config + percentage*distI
+    def steer_node_in_between_percentage(self, xFrom, xTo, percentage):  # percentage only between [0.0 - 1.0]
+        distI = self.distance_each_component_between_config(xFrom, xTo)
+        newI = xFrom.config + percentage*distI
         xNew = Node(newI)
         return xNew
 
-    def steer(self, xNearest, xRand, toDistance, returnxNewIsxRand=False):
-        distI = self.distance_each_component_between_config(xNearest, xRand)
+    def steer(self, xFrom, xTo, distance, returnxNewIsxRand=False):
+        distI = self.distance_each_component_between_config(xFrom, xTo)
         dist = np.linalg.norm(distI)
-        if dist <= toDistance:
-            xNew = Node(xRand.config)
-            if returnxNewIsxRand:
-                return xNew, True
-            else:
-                return xNew
+        if dist <= distance:
+            xNew = Node(xTo.config)
         else:
-            dI = (distI/dist) * toDistance
-            newI = xNearest.config + dI
+            dI = (distI/dist) * distance
+            newI = xFrom.config + dI
             xNew = Node(newI)
-            if returnxNewIsxRand:
-                return xNew, False
-            else:
-                return xNew
-
-    def near(self, treeToSearch, xNew, radiusToSearch=None, numTopNearest=10, preCalTreeToSearchDistToxNewList=None, dynamicSubset=False):
-        if radiusToSearch is None:
-            radiusToSearch = self.calculate_rewire_radius(len(treeToSearch))
-
-        neighborIndexandDist = []
-
-        if preCalTreeToSearchDistToxNewList: # we get this from nearest operation, optimized for when xNew is xRand
-            for index, dist in enumerate(preCalTreeToSearchDistToxNewList):
-                if dist <= radiusToSearch:
-                    neighborIndexandDist.append([index, dist])
+        if returnxNewIsxRand:
+            return xNew, False
         else:
-            for index, vertex in enumerate(treeToSearch):
-                if vertex is xNew.parent:
-                    continue  # exclude the xNearest node of xNew to avoid any unessary calculation, we assume the xNew parent is set to xNearest already
-                dist = self.distance_between_config(xNew, vertex)
-                if dist <= radiusToSearch:
-                    neighborIndexandDist.append([index, dist])
+            return xNew
+
+    def near(self, treeVertices, xCheck, searchRadius=None, numTopNearest=10, distListToxCheck=None, dynamicSubset=False):
+        if searchRadius is None:
+            searchRadius = self.calculate_rewire_radius(len(treeVertices))
+
+        if distListToxCheck:
+            distListToxCheck = np.array(distListToxCheck)
+        else:
+            distListToxCheck = np.array([self.distance_between_config(xCheck, vertex) for vertex in treeVertices])
+
+        nearIndices = np.where(distListToxCheck<=searchRadius)[0]
 
         if dynamicSubset:
-            return [treeToSearch[item[0]] for item in neighborIndexandDist]
+            return [treeVertices[item] for item in nearIndices]
         else:
-            if len(neighborIndexandDist) < numTopNearest:
-                return [treeToSearch[item[0]] for item in neighborIndexandDist]
+            if len(nearIndices) < numTopNearest:
+                return [treeVertices[item] for item in nearIndices]
             else:
-                sortedDist = sorted(neighborIndexandDist, key=lambda x: x[1])
-                indexSorted = [sortedDist[j][0] for j in range(numTopNearest)]
-            return [treeToSearch[i] for i in indexSorted]
+                sortedDist = np.argsort(distListToxCheck)[:numTopNearest]
+                return [treeVertices[item] for item in sortedDist]
 
-    def cost_line(self, xStart, xEnd):
-        return self.distance_between_config(xStart, xEnd)
+    def cost_line(self, xFrom, xTo):
+        return self.distance_between_config(xFrom, xTo)
 
-    def is_collision_and_in_goal_region(self, xNearest, xNew, xCenter, radius):  # return True if any of it is true
-        if self.is_config_in_region_of_config(xNew, xCenter, radius):
+    def is_collision_and_in_goal_region(self, xFrom, xTo, xCenter, radius):  # return True if any of it is true
+        if self.is_config_in_region_of_config(xTo, xCenter, radius):
             return True
-        elif self.is_connect_config_in_region_of_config(xNearest, xNew, xCenter, radius):
+        elif self.is_connect_config_in_region_of_config(xFrom, xTo, xCenter, radius):
             return True
-        elif self.is_config_in_collision(xNew):
+        elif self.is_config_in_collision(xTo):
             return True
-        elif self.is_connect_config_in_collision(xNearest, xNew):
+        elif self.is_connect_config_in_collision(xFrom, xTo):
             return True
         else:
             return False
 
-    def is_collision(self, xNearest, xNew):
-        if self.is_config_in_collision(xNew):
+    def is_collision(self, xFrom, xTo):
+        if self.is_config_in_collision(xTo):
             return True
-        elif self.is_connect_config_in_collision(xNearest, xNew):
+        elif self.is_connect_config_in_collision(xFrom, xTo):
             return True
         else:
             return False
 
-    def is_config_in_region_of_config(self, xToCheck, xCenter, radius):
-        if self.distance_between_config(xToCheck, xCenter) < radius:
+    def is_config_in_region_of_config(self, xCheck, xCenter, radius):
+        if self.distance_between_config(xCheck, xCenter) < radius:
             return True
         return False
 
-    def is_connect_config_in_region_of_config(self, xToCheckStart, xToCheckEnd, xCenter, radius, NumSeg=None):
+    def is_connect_config_in_region_of_config(self, xCheckFrom, xCheckTo, xCenter, radius, NumSeg=None):
         limitedNumSeg = 10
-        distI = self.distance_each_component_between_config(xToCheckStart, xToCheckEnd)
+        distI = self.distance_each_component_between_config(xCheckFrom, xCheckTo)
         dist = np.linalg.norm(distI)
         if NumSeg:
             NumSeg = NumSeg
@@ -293,23 +282,23 @@ class RRTComponent:
                 NumSeg = limitedNumSeg
         rateI = distI / NumSeg
         for i in range(1, NumSeg):
-            newI = xToCheckStart.config + rateI*i
+            newI = xCheckFrom.config + rateI*i
             xNew = Node(newI)
             if self.is_config_in_region_of_config(xNew, xCenter, radius):
                 return True
         return False
 
-    def is_config_in_collision(self, xNew):
+    def is_config_in_collision(self, xCheck):
         timeStartKCD = time.perf_counter_ns()
-        result = self.robotEnv.collision_check(xNew)
+        result = self.robotEnv.collision_check(xCheck)
         timeEndKCD = time.perf_counter_ns()
         self.perfMatrix["KCD Time Spend"] += timeEndKCD - timeStartKCD
         self.perfMatrix["Number of Collision Check"] += 1
         return result
 
-    def is_connect_config_in_collision(self, xNearest, xNew, NumSeg=None):
+    def is_connect_config_in_collision(self, xFrom, xTo, NumSeg=None):
         limitedNumSeg = 10
-        distI = self.distance_each_component_between_config(xNearest, xNew)
+        distI = self.distance_each_component_between_config(xFrom, xTo)
         dist = np.linalg.norm(distI)
         if NumSeg:
             NumSeg = NumSeg
@@ -319,21 +308,22 @@ class RRTComponent:
                 NumSeg = limitedNumSeg
         rateI = distI / NumSeg
         for i in range(1, NumSeg):
-            newI = xNearest.config + rateI*i
-            xNew = Node(newI)
-            if self.is_config_in_collision(xNew):
+            newI = xFrom.config + rateI*i
+            xTo = Node(newI)
+            if self.is_config_in_collision(xTo):
                 return True
         return False
 
-    def distance_between_config(self, xStart, xEnd):
-        return np.linalg.norm(self.distance_each_component_between_config(xStart, xEnd))
+    def distance_between_config(self, xFrom, xTo):
+        return np.linalg.norm(self.distance_each_component_between_config(xFrom, xTo))
 
-    def distance_each_component_between_config(self, xStart, xEnd):
-        return xEnd.config - xStart.config
+    def distance_each_component_between_config(self, xFrom, xTo):
+        return xTo.config - xFrom.config
 
-    def star_optimizer(self, treeToAdd, xNew, rewireRadius, xNewIsxRand=None, preCalTreeToSearchDistToxNewList=None):
-        if xNewIsxRand: # optimized to reduce dist cal if xNew is xRand
-            XNear = self.near(treeToAdd, xNew, rewireRadius, preCalTreeToSearchDistToxNewList=preCalTreeToSearchDistToxNewList)
+    def star_optimizer(self, treeToAdd, xNew, rewireRadius, xNewIsxRand=None, preCalDistListToxNew=None):
+        # optimized to reduce dist cal if xNew is xRand
+        if xNewIsxRand:
+            XNear = self.near(treeToAdd, xNew, rewireRadius, preCalDistListToxNew)
         else:
             XNear = self.near(treeToAdd, xNew, rewireRadius)
 
@@ -376,9 +366,9 @@ class RRTComponent:
         elif self.treeSwapFlag is False:
             self.treeSwapFlag = True
 
-    def is_config_in_joint_limit(self, xNew):
+    def is_config_in_joint_limit(self, xCheck):
         for j in self.jointIndex:
-            if not self.jointRange[j][0] < xNew.config[j] < self.jointRange[j][1]:
+            if not self.jointRange[j][0] < xCheck.config[j] < self.jointRange[j][1]:
                 return False
         return True
 
@@ -388,7 +378,7 @@ class RRTComponent:
                 xNow.parent = xTobeParent
                 xNow.cost = xNow.parent.cost + self.cost_line(xNow.parent, xNow)
                 xTobeParent.child.append(xNow)
-                self.update_child_cost_and_add_to_tree(xNow, treeToAddTo)
+                self.update_child_cost(xNow, treeToAddTo)
                 # xParentSave.child.remove(xNow) # Xnow is Xapp which has no parent so we dont have to do this
                 treeToAddTo.append(xNow)
                 break
@@ -397,7 +387,7 @@ class RRTComponent:
             xNow.parent = xTobeParent
             xNow.cost = xNow.parent.cost + self.cost_line(xNow.parent, xNow)
             xTobeParent.child.append(xNow)
-            self.update_child_cost_and_add_to_tree(xNow, treeToAddTo)
+            self.update_child_cost(xNow, treeToAddTo)
             xParentSave.child.remove(xNow)
             treeToAddTo.append(xNow)
 
@@ -405,15 +395,11 @@ class RRTComponent:
             xTobeParent = xNow
             xNow = xParentSave
 
-    def update_child_cost_and_add_to_tree(self, node, treeToAddTo): # recursively updates the cost of the children of this node if the cost up to this node has changed and add to tree.
-        for child in node.child:
+    def update_child_cost(self, xCheck, treeToAdd=None): # recursively updates the cost of the children of this node if the cost up to this node has changed.
+        for child in xCheck.child:
             child.cost = child.parent.cost + self.cost_line(child.parent, child)
-            treeToAddTo.append(child)
-            self.update_child_cost_and_add_to_tree(child, treeToAddTo)
-
-    def update_child_cost(self, node): # recursively updates the cost of the children of this node if the cost up to this node has changed.
-        for child in node.child:
-            child.cost = child.parent.cost + self.cost_line(child.parent, child)
+            if treeToAdd:
+                treeToAdd.append(child)
             self.update_child_cost(child)
 
     def search_backtrack_single_directional_path(self, backFromNode, attachNode=None):  # return path is [xinit, x1, x2, ..., xapp, xgoal]
@@ -545,21 +531,21 @@ class RRTComponent:
             prunedPath.pop(i)
         return prunedPath
 
-    def cbest_single_tree(self, treeVertexList, nodeToward, itera, print_debug=False): # search in treeGoalRegion for the current best cost
-        if len(treeVertexList) == 0:
+    def cbest_single_tree(self, treeVertices, nodeToward, iteration, print_debug=False): # search in treeGoalRegion for the current best cost
+        if len(treeVertices) == 0:
             cBest = np.inf
             xSolnCost = []
         else:
-            xSolnCost = [xSoln.cost + self.cost_line(xSoln, nodeToward) for xSoln in treeVertexList]
+            xSolnCost = [xSoln.cost + self.cost_line(xSoln, nodeToward) for xSoln in treeVertices]
             cBest = min(xSolnCost)
             if cBest < self.cBestPrevious : # this has nothing to do with planning itself, just for record performance data only
-                self.perfMatrix["Cost Graph"].append((itera, cBest))
+                self.perfMatrix["Cost Graph"].append((iteration, cBest))
                 self.cBestPrevious = cBest
         if print_debug:
-            print(f"Iteration : [{itera}] - Best Cost : [{cBest}] - xSolnCost : {xSolnCost}", end='\r', flush=True)
+            print(f"Iteration : [{iteration}] - Best Cost : [{cBest}]", end='\r', flush=True)
         return cBest
 
-    def cbest_dual_tree(self, connectNodePair, itera, print_debug=False): # search in connectNodePairList for the current best cost
+    def cbest_dual_tree(self, connectNodePair, iteration, print_debug=False): # search in connectNodePairList for the current best cost
         if len(connectNodePair) == 0:
             cBest = np.inf
             xSolnCost = []
@@ -567,14 +553,14 @@ class RRTComponent:
             xSolnCost = [vertexA.cost + vertexB.cost + self.cost_line(vertexA, vertexB) for vertexA, vertexB in connectNodePair]
             cBest = min(xSolnCost)
             if cBest < self.cBestPrevious:
-                self.perfMatrix["Cost Graph"].append((itera, cBest))
+                self.perfMatrix["Cost Graph"].append((iteration, cBest))
                 self.cBestPrevious = cBest
         if print_debug:
-            print(f"Iteration : [{itera}] - Best Cost : [{cBest}] - xSolnCost : {xSolnCost}", end='\r', flush=True)
+            print(f"Iteration : [{iteration}] - Best Cost : [{cBest}]", end='\r', flush=True)
         return cBest
     
-    def cbest_single_tree_multi(self, treeVertexListList, nodeTowardList, itera, print_debug=False):
-        xSolnCost = [[node.cost + self.cost_line(node, nodeTowardList[ind]) for node in vertexList] for ind, vertexList in enumerate(treeVertexListList)]
+    def cbest_single_tree_multi(self, treeVerticesList, nodeTowardList, iteration, print_debug=False):
+        xSolnCost = [[node.cost + self.cost_line(node, nodeTowardList[ind]) for node in vertexList] for ind, vertexList in enumerate(treeVerticesList)]
         cBest = None
         xGoalBestIndex = None
         for index, sublist in enumerate(xSolnCost):
@@ -587,10 +573,10 @@ class RRTComponent:
 
         if xGoalBestIndex is not None:
             if cBest < self.cBestPrevious:
-                self.perfMatrix["Cost Graph"].append((itera, cBest))
+                self.perfMatrix["Cost Graph"].append((iteration, cBest))
                 self.cBestPrevious = cBest
             if print_debug:
-                print(f"Iteration : [{itera}] - Best Cost : [{cBest}] - xSolnCost : {xSolnCost}", end='\r', flush=True)
+                print(f"Iteration : [{iteration}] - Best Cost : [{cBest}]", end='\r', flush=True)
             return cBest, xGoalBestIndex
         else:
             return np.inf, None

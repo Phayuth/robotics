@@ -6,14 +6,14 @@ sys.path.append(str(wd))
 
 import time
 import numpy as np
-from planner_dev.rrt_base import RRTBase
-from planner_dev.rrt_connect import RRTConnect
-from planner_dev.rrt_star import RRTStar
-from planner_dev.rrt_informed import RRTInformed
-from planner_dev.rrt_star_connect import RRTStarConnect
-from planner_dev.rrt_informed_connect import RRTInformedConnect
+from planner.rrt_base import RRTBase
+from planner.rrt_connect import RRTConnect
+from planner.rrt_star import RRTStar
+from planner.rrt_informed import RRTInformed
+from planner.rrt_star_connect import RRTStarConnect
+from planner.rrt_informed_connect import RRTInformedConnect
 
-from planner_dev.rrt_connect_ast_informed import RRTConnectAstInformed
+from planner.rrt_connect_ast_informed import RRTConnectAstInformed
 
 
 class RRTBaseCopSim(RRTBase):
@@ -49,15 +49,11 @@ class RRTBaseCopSim(RRTBase):
         self.robotEnv.set_start_joint_value(self.xStart)
         self.robotEnv.set_aux_joint_value(self.xApp)
         self.robotEnv.set_goal_joint_value(self.xGoal)
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XInGoalRegion, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -97,15 +93,11 @@ class RRTConnectCopSim(RRTConnect):
         self.robotEnv.set_start_joint_value(self.xStart)
         self.robotEnv.set_aux_joint_value(self.xApp)
         self.robotEnv.set_goal_joint_value(self.xGoal)
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -145,15 +137,11 @@ class RRTStarCopSim(RRTStar):
         self.robotEnv.set_start_joint_value(self.xStart)
         self.robotEnv.set_aux_joint_value(self.xApp)
         self.robotEnv.set_goal_joint_value(self.xGoal)
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XInGoalRegion, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -179,15 +167,11 @@ class RRTInformedCopSim(RRTInformed):
         self.robotEnv.set_start_joint_value(self.xStart)
         self.robotEnv.set_aux_joint_value(self.xApp)
         self.robotEnv.set_goal_joint_value(self.xGoal)
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XSoln, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -227,15 +211,11 @@ class RRTStarConnectCopSim(RRTStarConnect):
         self.robotEnv.set_start_joint_value(self.xStart)
         self.robotEnv.set_aux_joint_value(self.xApp)
         self.robotEnv.set_goal_joint_value(self.xGoal)
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -273,15 +253,11 @@ class RRTInformedConnectCopSim(RRTInformedConnect):
         self.robotEnv.set_start_joint_value(self.xStart)
         self.robotEnv.set_aux_joint_value(self.xApp)
         self.robotEnv.set_goal_joint_value(self.xGoal)
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 
@@ -319,15 +295,11 @@ class RRTConnectAstInformedCopSim(RRTConnectAstInformed):
         self.robotEnv.set_start_joint_value(self.xStart)
         self.robotEnv.set_aux_joint_value(self.xApp)
         self.robotEnv.set_goal_joint_value(self.xGoal)
-
         timePlanningStart = time.perf_counter_ns()
         self.start()
-        path = self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XSoln, attachNode=self.xGoal)
+        path = self.get_path()
         timePlanningEnd = time.perf_counter_ns()
-
-        # record performance
-        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
+        self.update_perf(timePlanningStart, timePlanningEnd)
         self.robotEnv.stop_sim()
         return path
 

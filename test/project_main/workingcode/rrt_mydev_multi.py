@@ -8,7 +8,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from planner_dev.rrt_component import Node, RRTComponent
+from planner.rrt_component import Node, RRTComponent
 
 
 class RRTMyDevMultiGoal(RRTComponent):

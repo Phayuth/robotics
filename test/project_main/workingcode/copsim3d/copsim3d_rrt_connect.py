@@ -9,7 +9,7 @@ sys.path.append(str(wd))
 
 import time
 import numpy as np
-from planner_dev.rrt_component import Node, RRTComponent
+from planner.rrt_component import Node, RRTComponent
 
 
 class RRTConnectDev(RRTComponent):
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     planner = RRTConnectDev(thetaInit, thetaApp, thetaGoal, eta=0.2, maxIteration=5000)
     path = planner.planning()
     print(planner.perfMatrix)
-    # write_dict_to_file(planner.perfMatrix, "./planner_dev/result_6d/result_6d_rrtstar.txt")
+    # write_dict_to_file(planner.perfMatrix, "./planner/result_6d/result_6d_rrtstar.txt")
     print(f"==>> path: \n{path}")
 
     fig = plt.figure()

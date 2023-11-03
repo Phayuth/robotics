@@ -131,13 +131,12 @@ def map_vec(in_array, in_min, in_max, out_min, out_max):
 
 
 if __name__ == "__main__":
-    import taskmap_img_format
-    from taskmap_img_format import bmap, map_2d_1, map_2d_2, pmap
+    from taskmap_img_format import map_2d_1
 
     # SECTION - load from numpy array
-    loader = CostMapLoader.loadarray(taskmap_img_format.map_2d_1())
-    plt.imshow(loader.costmap)
-    plt.show()
+    # loader = CostMapLoader.loadarray(map_2d_1())
+    # plt.imshow(loader.costmap)
+    # plt.show()
 
     # SECTION - load from numpy save
     loader = CostMapLoader.loadsave(maptype="task", mapindex=0, reverse=False)
@@ -155,24 +154,3 @@ if __name__ == "__main__":
     for obs in obj_list:
         obs.plot()
     plt.show()
-
-
-
-
-
-
-
-    # SECTION - convert joint angle to pixel value (after inverse kinematic -> convert to pixel value -> planning)
-    theta = np.pi
-    pixel_val = map_val(theta, -np.pi, np.pi, 0, 360)
-    print("==>> pixel_val: ", pixel_val)
-
-    # SECTION - convert pixel value to joint angle (after planning -> convert to joint angle -> forward kinematic)
-    pixel = 180
-    theta_val = map_val(pixel, 0, 360, -np.pi, np.pi)
-    print("==>> theta_val: ", theta_val)
-
-    # SECTION - map value but the input is in array of shape (N,1)
-    theta_arr = np.array([[np.pi], [-np.pi], [2]])
-    pixel_val = map_vec(theta_arr, -np.pi, np.pi, 0, 360)
-    print("==>> pixel_val: ", pixel_val)

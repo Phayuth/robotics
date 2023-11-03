@@ -5,21 +5,13 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from planner_dev.rrt_component import Node, RRTComponent
+from planner.rrt_component import Node, RRTComponent
 
 
 class RRTInformedConnect(RRTComponent):
 
-    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, terminationConditionID, print_debug) -> None:
-        super().__init__(eta=eta,
-                         subEta=subEta,
-                         maxIteration=maxIteration,
-                         numDoF=numDoF,
-                         envChoice=envChoice,
-                         nearGoalRadius=nearGoalRadius,
-                         rewireRadius=rewireRadius,
-                         terminationConditionID=terminationConditionID,
-                         print_debug=print_debug)
+    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug) -> None:
+        super().__init__(eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoal = Node(xGoal)
@@ -98,6 +90,12 @@ class RRTInformedConnect(RRTComponent):
                 break
 
             self.tree_swap_flag()
+
+    def get_path(self):
+        return self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
+        
+    def update_perf(self, timePlanningStart, timePlanningEnd):
+        self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
 
     def plot_tree(self, path, ax):
         self.plot_2d_obstacle(ax)

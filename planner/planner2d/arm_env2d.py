@@ -5,10 +5,12 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-from geometry.geometry_class import ObjLine2D, CollisionGeometry
+from geometry.geometry_class import ObjLine2D, ObjRectangle, CollisionGeometry
 from robot.planar_rr import PlanarRR
 from map.taskmap_geo_format import task_rectangle_obs_1
 
+from map.mapclass import CostMapClass, CostMapLoader
+from map.taskmap_img_format import map_2d_1
 
 class RobotArm2DEnvironment:
 
@@ -31,11 +33,28 @@ class RobotArm2DEnvironment:
         return False
 
 
+class TaskSpace2DEnvironment:
+
+    def __init__(self) -> None:
+        loader = CostMapLoader.loadsave(maptype="task", mapindex=0, reverse=False)
+        costMap = CostMapClass(loader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
+        self.taskMapObs = costMap.costmap2geo(free_space_value=1)
+
+    def collision_check(self, xNew):
+        theta = xNew.config
+        robot = ObjRectangle(theta[0,0], theta[1,0], 0.1, 0.1)
+        for obs in self.taskMapObs:
+            if CollisionGeometry.intersect_rectangle_v_rectangle(robot, obs):
+                return True
+        return False
+
+
 if __name__ == "__main__":
-    from planner_dev.rrt_component import Node
+    from planner.rrt_component import Node
     import matplotlib.pyplot as plt
 
-    env = RobotArm2DEnvironment()
+    # env = RobotArm2DEnvironment()
+    env = TaskSpace2DEnvironment()
 
     jointRange = np.linspace(-np.pi, np.pi, 360)
     xy_points = []
