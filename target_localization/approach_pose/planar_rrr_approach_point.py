@@ -6,7 +6,7 @@ sys.path.append(str(wd))
 
 import matplotlib.pyplot as plt
 import numpy as np
-from planner_util.coord_transform import polar2cats, circle_plt
+from geometry.geometry_class import CoordinateTransform
 from robot.planar_rrr import PlanarRRR
 
 # create robot instance
@@ -31,5 +31,5 @@ t_app = robot.inverse_kinematic_geometry(aprch, elbow_option=0)
 # SECTION - plot task space
 robot.plot_arm(t_targ, plt_basis=True)
 robot.plot_arm(t_app)
-circle_plt(x_targ, y_targ, d_app)
+# circle_plt(x_targ, y_targ, d_app)
 plt.show()

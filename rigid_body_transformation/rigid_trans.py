@@ -1,8 +1,9 @@
 import numpy as np
 from scipy.spatial.transform import rotation as R
 
+
 class RigidBodyTransformation:
-    
+
     def hrx(theta):
         return np.array([[1,             0,              0,  0],
                          [0, np.cos(theta), -np.sin(theta),  0],
@@ -106,7 +107,7 @@ class RigidBodyTransformation:
 
     def rot_fix_ang(seq, angle_seq):
         """rotation in fixed coordinate system. front multiply.
-        
+
         Args:
             seq (str): sequence of rotation. ex: xyz, zyx, xyx, ...
             angle_seq (np.ndarray): the input of angle_seq sequence must be (gamma(x), beta(y), alpha(z))
@@ -296,7 +297,7 @@ class RigidBodyTransformation:
         rotation = R.from_matrix(rotation_matrix)
         quaternion = rotation.as_quat()
         translation = H[:3, 3]
-        return translation, quaternion 
+        return translation, quaternion
 
     def vec_to_skew(x):
         return np.array([[      0,  -x[2,0],  x[1,0]],
@@ -310,7 +311,7 @@ class RigidBodyTransformation:
             return np.array([[0], [1], [0]])
         elif ax == 'z':
             return np.array([[0], [0], [1]])
-        
+
     def derivative_rot(rotAx, theta): # Derivative of rotation matrix about x = skew matrix of x basis vector @ Rotation Matrix x
         if rotAx == 'x':
             return RigidBodyTransformation.vec_to_skew(RigidBodyTransformation.basis_vec(rotAx)) @ RigidBodyTransformation.rotx(theta)
@@ -358,7 +359,7 @@ class PlotTransformation:
         ax.plot([r1new[0,0], r2new[0,0]],[r1new[1,0], r2new[1,0]],"blue", linewidth=4) # x axis
         ax.plot([r1new[0,0], r4new[0,0]],[r1new[1,0], r4new[1,0]],"red", linewidth=4)  # y axis
 
- 
+
     def plot_frame_3d(H, ax, plt_basis=False): # input 4x4 transform matrix. use ax = plt.axes(projection='3d')
         rotation = H[0:3, 0:3]
         d = H[0:3, 3, np.newaxis]

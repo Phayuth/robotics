@@ -8,7 +8,7 @@ import open3d as o3d
 import matplotlib.pyplot as plt
 
 # Pointcloud from stl https://github.com/isl-org/Open3D/issues/867
-# mesh = o3d.io.read_triangle_mesh("map_pcd/stl/model_pkin.stl")
+# mesh = o3d.io.read_triangle_mesh('./datasave/stl/model_pkin.stl')
 # pc = mesh.sample_points_poisson_disk(500)
 
 # Pointcloud from numpy
@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 # pcd.orient_normals_towards_camera_location()
 
 # Pointcloud from PLY
-ply_path = 'map_pcd/ply/testply.ply'
+ply_path = './datasave/ply/testply.ply'
 pcd = o3d.io.read_point_cloud(ply_path)
 
 # Acessing info

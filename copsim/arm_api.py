@@ -14,52 +14,41 @@ class UR5eArmCoppeliaSimAPI:
 
     def __init__(self, robotChoice="V") -> None:
         # robot choice
-        self.robotChoice = {"V":"UR5e_virtual",
-                            "D":"UR5e_dynamic",
-                            "UR5V":"UR5_virtual",
-                            "UR5D":"UR5_dynamic"}
+        self.robotChoice = {"V": "UR5e_virtual",
+                            "D": "UR5e_dynamic",
+                            "UR5V": "UR5_virtual",
+                            "UR5D": "UR5_dynamic"}
         self.robot = self.robotChoice[robotChoice]
+
+        # limit joint and dof
+        self.configLimit = [[-np.pi, np.pi],
+                            [-np.pi, np.pi],
+                            [-np.pi, np.pi],
+                            [-np.pi, np.pi],
+                            [-np.pi, np.pi],
+                            [-np.pi, np.pi]]
+        self.configDoF = len(self.configLimit)
 
         # coppeliasim
         self.client = RemoteAPIClient()
         self.sim = self.client.getObject('sim')
         self.client.setStepping(True)
 
-        # arm handle
-        self.joint1Handle = self.sim.getObject(f'/{self.robot}/shoulder_pan_joint')
-        self.joint2Handle = self.sim.getObject(f'/{self.robot}/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint')
-        self.joint3Handle = self.sim.getObject(f'/{self.robot}/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint')
-        self.joint4Handle = self.sim.getObject(f'/{self.robot}/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint')
-        self.joint5Handle = self.sim.getObject(f'/{self.robot}/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint')
-        self.joint6Handle = self.sim.getObject(f'/{self.robot}/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint/wrist_2_link_resp/wrist_3_joint')
-        self.jointHandleList = [self.joint1Handle, self.joint2Handle, self.joint3Handle, self.joint4Handle, self.joint5Handle, self.joint6Handle]
+        self.robotHeadNames = [self.robot, "UR5e_Goal", "UR5e_Aux", "UR5e_Start"]
+        self.jointNames = ['/shoulder_pan_joint',
+                           '/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint',
+                           '/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint',
+                           '/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint',
+                           '/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint',
+                           '/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint/wrist_2_link_resp/wrist_3_joint']
 
-        # Start Aux Goal Handle
-        self.joint1GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint')
-        self.joint2GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint')
-        self.joint3GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint')
-        self.joint4GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint')
-        self.joint5GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint')
-        self.joint6GoalHandle = self.sim.getObject('/UR5e_Goal/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint/wrist_2_link_resp/wrist_3_joint')
-        self.jointGoalHandleList = [self.joint1GoalHandle, self.joint2GoalHandle, self.joint3GoalHandle, self.joint4GoalHandle, self.joint5GoalHandle, self.joint6GoalHandle]
+        # arm joint handle
+        self.jointHandleList = [self.sim.getObject('/' + self.robotHeadNames[0] + jointName) for jointName in self.jointNames]
+        self.jointGoalHandleList = [self.sim.getObject('/' + self.robotHeadNames[1] + jointName) for jointName in self.jointNames]
+        self.jointAuxHandleList = [self.sim.getObject('/' + self.robotHeadNames[2] + jointName) for jointName in self.jointNames]
+        self.jointStartHandleList = [self.sim.getObject('/' + self.robotHeadNames[3] + jointName) for jointName in self.jointNames]
 
-        self.joint1AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint')
-        self.joint2AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint')
-        self.joint3AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint')
-        self.joint4AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint')
-        self.joint5AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint')
-        self.joint6AuxHandle = self.sim.getObject('/UR5e_Aux/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint/wrist_2_link_resp/wrist_3_joint')
-        self.jointAuxHandleList = [self.joint1AuxHandle, self.joint2AuxHandle, self.joint3AuxHandle, self.joint4AuxHandle, self.joint5AuxHandle, self.joint6AuxHandle]
-
-        self.joint1StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint')
-        self.joint2StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint')
-        self.joint3StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint')
-        self.joint4StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint')
-        self.joint5StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint')
-        self.joint6StartHandle = self.sim.getObject('/UR5e_Start/shoulder_pan_joint/shoulder_link_resp/shoulder_lift_joint/upper_arm_link_resp/elbow_joint/forearm_link_resp/wrist_1_joint/wrist_1_link_resp/wrist_2_joint/wrist_2_link_resp/wrist_3_joint')
-        self.jointStartHandleList = [self.joint1StartHandle, self.joint2StartHandle, self.joint3StartHandle, self.joint4StartHandle, self.joint5StartHandle, self.joint6StartHandle]
-
-        # arm collision
+        # arm collision handle
         self.robotBase = self.sim.getObject(f'/{self.robot}')
         self.collection = self.sim.createCollection(0)
         self.sim.addItemToCollection(self.collection, self.sim.handle_tree, self.robotBase, 0)
@@ -81,37 +70,25 @@ class UR5eArmCoppeliaSimAPI:
         else:
             return False
 
-    def set_joint_value(self, jointValue):
+    def set_handle_joint_value(self, jointValue, jointHandle):
         if isinstance(jointValue, np.ndarray):
             for i in range(jointValue.shape[0]):
-                self.sim.setJointPosition(self.jointHandleList[i], jointValue[i, 0])
+                self.sim.setJointPosition(jointHandle[i], jointValue[i, 0])
         else:
             for i in range(jointValue.config.shape[0]):
-                self.sim.setJointPosition(self.jointHandleList[i], jointValue.config[i, 0])
+                self.sim.setJointPosition(jointHandle[i], jointValue.config[i, 0])
+
+    def set_joint_value(self, jointValue):
+        self.set_handle_joint_value(jointValue, self.jointHandleList)
 
     def set_goal_joint_value(self, jointValue):
-        if isinstance(jointValue, np.ndarray):
-            for i in range(jointValue.shape[0]):
-                self.sim.setJointPosition(self.jointGoalHandleList[i], jointValue[i, 0])
-        else:
-            for i in range(jointValue.config.shape[0]):
-                self.sim.setJointPosition(self.jointGoalHandleList[i], jointValue.config[i, 0])
+        self.set_handle_joint_value(jointValue, self.jointGoalHandleList)
 
     def set_aux_joint_value(self, jointValue):
-        if isinstance(jointValue, np.ndarray):
-            for i in range(jointValue.shape[0]):
-                self.sim.setJointPosition(self.jointAuxHandleList[i], jointValue[i, 0])
-        else:
-            for i in range(jointValue.config.shape[0]):
-                self.sim.setJointPosition(self.jointAuxHandleList[i], jointValue.config[i, 0])
+        self.set_handle_joint_value(jointValue, self.jointAuxHandleList)
 
     def set_start_joint_value(self, jointValue):
-        if isinstance(jointValue, np.ndarray):
-            for i in range(jointValue.shape[0]):
-                self.sim.setJointPosition(self.jointStartHandleList[i], jointValue[i, 0])
-        else:
-            for i in range(jointValue.config.shape[0]):
-                self.sim.setJointPosition(self.jointStartHandleList[i], jointValue.config[i, 0])
+        self.set_handle_joint_value(jointValue, self.jointStartHandleList)
 
     def set_joint_target_value(self, jointValue):
         for i in range(jointValue.config.shape[0]):
@@ -131,28 +108,22 @@ class UR5eArmCoppeliaSimAPI:
 
 
 if __name__ == "__main__":
-    from datasave.joint_value.pre_record_value import newThetaInit, newThetaApp, newThetaGoal
-
-    # UR5e scene
-    # armVirtual = UR5eVirtualArmCoppeliaSimAPI()
-    # armVirtual.start_sim()
-    # angle = np.linspace(-np.pi, np.pi, 360)
-
-    # # loop in simulation
-    # for ang in angle:
-    #     jointValue = np.array([ang, 0.0, 0.0, 0.0, 0.0, 0.0]).reshape(6,1)
-    #     armVirtual.set_joint_value(jointValue)
-    #     # triggers next simulation step
-    #     armVirtual.step_sim()
-
-    # # stop simulation
-    # armVirtual.stop_sim()
+    from datasave.joint_value.pre_record_value import SinglePose
+    from datasave.joint_value.experiment_paper import URHarvesting
 
     # View State
     armState = UR5eArmCoppeliaSimAPI()
     # armState.start_sim()
-    jointV = np.array([0.0,0.0,0.0,0.0,0.0,0.0]).reshape(6,1)
-    armState.set_joint_value(jointV)
-    armState.set_goal_joint_value(jointV)
-    armState.set_aux_joint_value(jointV)
-    armState.set_start_joint_value(jointV)
+    # jointV = np.array([0.0,0.0,0.0,0.0,0.0,0.0]).reshape(6,1)
+    # armState.set_joint_value(jointV)
+    # armState.set_goal_joint_value(jointV)
+    # armState.set_aux_joint_value(jointV)
+    # armState.set_start_joint_value(jointV)
+
+    q = URHarvesting.PoseSingle1()
+    qS = q.xStart
+    qA = q.xApp
+    qG = q.xGoal
+    armState.set_goal_joint_value(qG)
+    armState.set_aux_joint_value(qA)
+    armState.set_start_joint_value(qS)

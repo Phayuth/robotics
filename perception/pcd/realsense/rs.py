@@ -1,13 +1,11 @@
 import open3d as o3d
 o3d.t.io.RealSenseSensor.list_devices()
 
-
-
 import json
 import open3d as o3d
 
-config_filename = './open3d/rs_default_config.json'
-bag_filename = './open3d/test_bag.bag'
+config_filename = './rs_default_config.json'
+bag_filename = './test_bag.bag'
 with open(config_filename) as cf:
     rs_cfg = o3d.t.io.RealSenseSensorConfig(json.load(cf))
 

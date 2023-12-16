@@ -10,8 +10,8 @@ from planner.rrt_component import Node, RRTComponent
 
 class RRTStar(RRTComponent):
 
-    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug, localOptEnable):
-        super().__init__(eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug)
+    def __init__(self, xStart, xApp, xGoal, config):
+        super().__init__(config)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoal = Node(xGoal)
@@ -22,7 +22,7 @@ class RRTStar(RRTComponent):
         self.distGoalToApp = self.distance_between_config(self.xGoal, self.xApp)
 
         # local sampling properties
-        self.localOptEnable = localOptEnable
+        self.localOptEnable = config["localOptEnable"]
         if self.localOptEnable:
             self.anchorPath = None
             self.localPath = None
@@ -34,7 +34,7 @@ class RRTStar(RRTComponent):
     @RRTComponent.catch_key_interrupt
     def start(self):
         for itera in range(self.maxIteration):
-            self.cBestNow = self.cbest_single_tree(self.XInGoalRegion, self.xApp, itera, self.print_debug)  # save cost graph
+            self.cBestNow = self.cbest_single_tree(self.XInGoalRegion, self.xApp, itera)  # save cost graph
 
             if self.localOptEnable:
                 if len(self.XInGoalRegion) == 0:
@@ -45,7 +45,7 @@ class RRTStar(RRTComponent):
                 xRand = self.bias_uniform_sampling(self.xApp, len(self.XInGoalRegion))
 
             xNearest, vertexDistList = self.nearest_node(self.treeVertex, xRand, returnDistList=True)
-            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnxNewIsxRand=True)
+            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnIsReached=True)
             if self.is_collision_and_in_goal_region(xNearest, xNew, self.xGoal, self.distGoalToApp):
                 continue
             xNew.parent = xNearest
@@ -69,21 +69,15 @@ class RRTStar(RRTComponent):
 
     def get_path(self):
         return self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XInGoalRegion, attachNode=self.xGoal)
-        
+
     def update_perf(self, timePlanningStart, timePlanningEnd):
         self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
-    def plot_tree(self, path, ax):
-        self.plot_2d_obstacle(ax)
-        self.plot_2d_single_tree(self.treeVertex, ax)
-        self.plot_2d_path(path, ax)
-        self.plot_2d_state_configuration(self.xStart, self.xApp, self.xGoal, ax)
 
 
 class RRTStarMulti(RRTComponent):
 
-    def __init__(self, xStart, xAppList, xGoalList, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug):
-        super().__init__(eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug)
+    def __init__(self, xStart, xAppList, xGoalList, config):
+        super().__init__(config)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoalList = [Node(xGoali) for xGoali in xGoalList]
@@ -101,12 +95,12 @@ class RRTStarMulti(RRTComponent):
     @RRTComponent.catch_key_interrupt
     def start(self):
         for itera in range(self.maxIteration):
-            self.cBestNow, self.xGoalBestIndex = self.cbest_single_tree_multi(self.XInGoalRegion, self.xAppList, itera, self.print_debug)
+            self.cBestNow, self.xGoalBestIndex = self.cbest_single_tree_multi(self.XInGoalRegion, self.xAppList, itera)
 
             biasIndex = np.random.randint(low=0, high=self.numGoal)
             xRand = self.bias_uniform_sampling(self.xAppList[biasIndex], len(self.XInGoalRegion[biasIndex]))
             xNearest, vertexDistList = self.nearest_node(self.treeVertex, xRand, returnDistList=True)
-            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnxNewIsxRand=True)
+            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnIsReached=True)
             if self.is_collision(xNearest, xNew):
                 continue
             xNew.parent = xNearest
@@ -127,12 +121,6 @@ class RRTStarMulti(RRTComponent):
         return self.search_best_cost_singledirection_path(backFromNode=self.xAppList[self.xGoalBestIndex],
                                                           treeVertexList=self.XInGoalRegion[self.xGoalBestIndex],
                                                           attachNode=self.xGoalList[self.xGoalBestIndex])
-        
+
     def update_perf(self, timePlanningStart, timePlanningEnd):
         self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
-    def plot_tree(self, path, ax):
-        self.plot_2d_obstacle(ax)
-        self.plot_2d_single_tree(self.treeVertex, ax)
-        self.plot_2d_path(path, ax)
-        self.plot_2d_state_configuration(self.xStart, self.xAppList, self.xGoalList, ax)

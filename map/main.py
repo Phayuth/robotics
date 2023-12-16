@@ -27,9 +27,16 @@ plt.show()
 
 
 # SECTION - point cloud
-# map = np.load('./datasave/point_cloud/xyz(0.3).npy')
-# x_coord = map[:,0]
-# y_coord = map[:,1]
-# z_coord = map[:,2]
-# plt.scatter(x_coord,y_coord,z_coord)
-# plt.show()
+map = np.load('./datasave/point_cloud/xyz(0.3).npy')
+print(f"==>> map.shape: {map.shape}")
+x_coord = map[:,0]
+y_coord = map[:,1]
+z_coord = map[:,2]
+
+fig = plt.figure()
+ax = fig.add_subplot(projection='3d')
+ax.plot(x_coord, y_coord, z_coord, linewidth=0, marker='o', markerfacecolor='darkcyan', markersize=1.5)
+ax.set_xlabel('X Label')
+ax.set_ylabel('Y Label')
+ax.set_zlabel('Z Label')
+plt.show()

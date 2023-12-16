@@ -9,8 +9,8 @@ from planner.rrt_component import Node, RRTComponent
 
 class RRTConnect(RRTComponent):
 
-    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug, localOptEnable):
-        super().__init__(eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug)
+    def __init__(self, xStart, xApp, xGoal, config):
+        super().__init__(config)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoal = Node(xGoal)
@@ -23,7 +23,7 @@ class RRTConnect(RRTComponent):
         self.treeSwapFlag = True
 
         # local sampling properties
-        self.localOptEnable = localOptEnable
+        self.localOptEnable = config["localOptEnable"]
         if self.localOptEnable:
             self.anchorPath = None
             self.localPath = None
@@ -42,7 +42,7 @@ class RRTConnect(RRTComponent):
                 Ta = self.treeVertexGoal
                 Tb = self.treeVertexStart
 
-            self.cBestNow = self.cbest_dual_tree(self.connectNodePair, itera, self.print_debug)  # save cost graph
+            self.cBestNow = self.cbest_dual_tree(self.connectNodePair, itera)  # save cost graph
 
             if self.localOptEnable:
                 if len(self.connectNodePair) == 0:
@@ -106,17 +106,11 @@ class RRTConnect(RRTComponent):
     def update_perf(self, timePlanningStart, timePlanningEnd):
         self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
 
-    def plot_tree(self, path, ax):
-        self.plot_2d_obstacle(ax)
-        self.plot_2d_dual_tree(self.treeVertexStart, self.treeVertexGoal, ax)
-        self.plot_2d_path(path, ax)
-        self.plot_2d_state_configuration(self.xStart, self.xApp, self.xGoal, ax)
-
 
 class RRTConnectMulti(RRTComponent):
 
-    def __init__(self, xStart, xAppList, xGoalList, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug, localOptEnable):
-        super().__init__(eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug)
+    def __init__(self, xStart, xAppList, xGoalList, config):
+        super().__init__(config)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoalList = [Node(xGoali) for xGoali in xGoalList]
@@ -130,7 +124,7 @@ class RRTConnectMulti(RRTComponent):
         self.treeSwapFlag = True
 
         # local sampling properties
-        self.localOptEnable = localOptEnable
+        self.localOptEnable = config["localOptEnable"]
         if self.localOptEnable:
             self.anchorPath = None
             self.localPath = None
@@ -149,7 +143,7 @@ class RRTConnectMulti(RRTComponent):
                 Ta = self.treeVertexGoal
                 Tb = self.treeVertexStart
 
-            self.cBestNow = self.cbest_dual_tree(self.connectNodePair, itera, self.print_debug)  # save cost graph
+            self.cBestNow = self.cbest_dual_tree(self.connectNodePair, itera)  # save cost graph
 
             if self.localOptEnable:
                 if len(self.connectNodePair) == 0:
@@ -212,12 +206,6 @@ class RRTConnectMulti(RRTComponent):
         xGoalIndex = self.xAppList.index(path[-1])
         path = path + [self.xGoalList[xGoalIndex]]
         return path
-    
+
     def update_perf(self, timePlanningStart, timePlanningEnd):
         self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
-    def plot_tree(self, path, ax):
-        self.plot_2d_obstacle(ax)
-        self.plot_2d_dual_tree(self.treeVertexStart, self.treeVertexGoal, ax)
-        self.plot_2d_path(path, ax)
-        self.plot_2d_state_configuration(self.xStart, self.xAppList, self.xGoalList, ax)

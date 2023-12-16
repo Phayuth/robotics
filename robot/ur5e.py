@@ -4,13 +4,6 @@ Reference:
 - DH Parameter
     1. DH parameter, Forward and Inverse Kinematic is from : http://rasmusan.dk/wp-content/uploads/ur5_kinematics.pdf
 
-- Convert TF to RPY
-    # x - y - z sequence
-    # tan(roll) = r32/r33
-    # tan(pitch)= -r31/(sqrt(r32^2 + r33^2))
-    # tan(yaw)  = r21/r11
-    # np.arctan2(y, x)
-
 """
 
 import os
@@ -50,7 +43,7 @@ class UR5e:
             return T01, T12, T23, T34, T45, T56
 
         if not return_each_H and not return_each_H:
-            # option to return 6 X 1 vector pose
+            # option to return 6 X 1 vector pose, x - y - z sequence
             roll = np.arctan2(T06[2, 1], T06[2, 2])
             pitch = np.arctan2(-T06[2, 0], np.sqrt(T06[2, 1] * T06[2, 1] + T06[2, 2] * T06[2, 2]))
             yaw = np.arctan2(T06[1, 0], T06[0, 0])

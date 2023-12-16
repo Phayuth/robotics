@@ -1,22 +1,3 @@
-""" Map Class for Path Planning. Costmap is in Image format
-- MapLoader:
-    - loadarray : load from numpy array
-    - loadsave : load from numpy save
-    - increase map size
-    - obstacle dilation
-    - padding size
-    - probabilitizer
-    - grid map probability : do all of above
-
-- MapClass:
-    - load cost map
-    - define the min and max value of configuration space eg. [-pi, pi]
-    - convert costmap to geometry format in rectangle for collision checking
-
-- map value : map number to specific range
-- map vector : map vector to specific range
-"""
-
 import os
 import sys
 
@@ -36,11 +17,11 @@ class CostMapLoader:
         self.costmap = costmap
 
     @classmethod
-    def loadarray(cls, costmap):
+    def loadarray(cls, costmap): # load from numpy array
         return cls(costmap)
 
     @classmethod
-    def loadsave(cls, maptype, mapindex, reverse=False):
+    def loadsave(cls, maptype, mapindex, reverse=False): # load from numpy save
         task_map_list = glob.glob('./datasave/task_space/*.npy')
         config_map_list = glob.glob('./datasave/config_space_data_2d/*.npy')
         if maptype == "task":
@@ -119,38 +100,44 @@ class GeoMapClass:
         self.obj = geomap
 
 
-def map_val(x, in_min, in_max, out_min, out_max):
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-
-
-def map_vec(in_array, in_min, in_max, out_min, out_max):
-    out_array = np.zeros_like(in_array)
-    for index, _ in enumerate(in_array):
-        out_array[index, 0] = (in_array[index, 0] - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
-    return out_array
+def map_val(x, inMin, inMax, outMin, outMax):
+    return (x - inMin) * (outMax - outMin) / (inMax - inMin) + outMin
 
 
 if __name__ == "__main__":
     from taskmap_img_format import map_2d_1
 
-    # SECTION - load from numpy array
+    # load from numpy array
     # loader = CostMapLoader.loadarray(map_2d_1())
     # plt.imshow(loader.costmap)
     # plt.show()
 
-    # SECTION - load from numpy save
+    # load from numpy save
     loader = CostMapLoader.loadsave(maptype="task", mapindex=0, reverse=False)
     plt.imshow(loader.costmap)
     plt.show()
 
-    # SECTION - create map class and probibilitize step by step
+    loader.grid_map_probability()
+    plt.imshow(loader.costmap)
+    plt.show()
+
+    # create map class and probibilitize step by step
     map = CostMapClass(loader, maprange=[[-np.pi, np.pi], [-np.pi, np.pi]])
     print(map.xmin, map.xmax, map.ymin, map.ymax)
     plt.imshow(map.costmap)
     plt.show()
 
-    # SECTION - convert from image to geometry format
+    # convert from image to geometry format
     obj_list = map.costmap2geo(free_space_value=1)
     for obs in obj_list:
         obs.plot()
     plt.show()
+
+    # map val
+    m = 2
+    n = map_val(m, 0, 5, 0, 100)
+    print(f"==>> n: {n}")
+
+    q = np.random.random((6,1))
+    w = map_val(q, 0, 1, 0, 100)
+    print(f"==>> w: {w}")

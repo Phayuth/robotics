@@ -8,8 +8,8 @@ from planner.rrt_component import Node, RRTComponent
 
 
 class RRTConnectAstInformed(RRTComponent):
-    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug) -> None:
-        super().__init__(eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug)
+    def __init__(self, xStart, xApp, xGoal, config) -> None:
+        super().__init__(config)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoal = Node(xGoal)
@@ -97,12 +97,12 @@ class RRTConnectAstInformed(RRTComponent):
 
         # start inform sampling
         for remainItera in range(self.maxIteration - itera):
-            cBest = self.cbest_single_tree(self.XSoln, self.xApp, itera+remainItera, self.print_debug)
+            cBest = self.cbest_single_tree(self.XSoln, self.xApp, itera+remainItera)
 
             xRand = self.informed_sampling(self.xCenter, cBest, self.cMin, self.C)
             # xRand = self.bias_informed_sampling(self.xCenter, cBest, self.cMin, self.C, self.xApp)
             xNearest, vertexDistList = self.nearest_node(self.treeVertexStart, xRand, returnDistList=True)
-            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnxNewIsxRand=True)
+            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnIsReached=True)
             if self.is_collision_and_in_goal_region(xNearest, xNew, self.xGoal, self.distGoalToApp):
                 continue
             xNew.parent = xNearest
@@ -114,15 +114,9 @@ class RRTConnectAstInformed(RRTComponent):
             # in approach region
             if self.is_config_in_region_of_config(xNew, self.xApp, radius=self.nearGoalRadius):
                 self.XSoln.append(xNew)
-    
+
     def get_path(self):
         return self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XSoln, attachNode=self.xGoal)
-        
+
     def update_perf(self, timePlanningStart, timePlanningEnd):
         self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
-    def plot_tree(self, path, ax):
-        self.plot_2d_obstacle(ax)
-        self.plot_2d_single_tree(self.treeVertexStart, ax)
-        self.plot_2d_path(path, ax)
-        self.plot_2d_state_configuration(self.xStart, self.xApp, self.xGoal, ax)

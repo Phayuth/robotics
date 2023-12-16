@@ -10,8 +10,8 @@ from planner.rrt_component import Node, RRTComponent
 
 class RRTInformed(RRTComponent):
 
-    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug) -> None:
-        super().__init__(eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug)
+    def __init__(self, xStart, xApp, xGoal, config) -> None:
+        super().__init__(config)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoal = Node(xGoal)
@@ -32,7 +32,7 @@ class RRTInformed(RRTComponent):
     @RRTComponent.catch_key_interrupt
     def start(self):
         for itera in range(self.maxIteration):
-            self.cBestNow = self.cbest_single_tree(self.XSoln, self.xApp, itera, self.print_debug)
+            self.cBestNow = self.cbest_single_tree(self.XSoln, self.xApp, itera)
 
             if self.cBestNow == np.inf:
                 xRand = self.bias_uniform_sampling(self.xApp, len(self.XSoln))
@@ -40,7 +40,7 @@ class RRTInformed(RRTComponent):
                 xRand = self.informed_sampling(self.xCenter, self.cBestNow, self.cMin, self.C)
 
             xNearest, vertexDistList = self.nearest_node(self.treeVertex, xRand, returnDistList=True)
-            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnxNewIsxRand=True)
+            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnIsReached=True)
             if self.is_collision_and_in_goal_region(xNearest, xNew, self.xGoal, self.distGoalToApp):
                 continue
             xNew.parent = xNearest
@@ -58,21 +58,15 @@ class RRTInformed(RRTComponent):
 
     def get_path(self):
         return self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XSoln, attachNode=self.xGoal)
-        
+
     def update_perf(self, timePlanningStart, timePlanningEnd):
         self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
-    def plot_tree(self, path, ax):
-        self.plot_2d_obstacle(ax)
-        self.plot_2d_single_tree(self.treeVertex, ax)
-        self.plot_2d_path(path, ax)
-        self.plot_2d_state_configuration(self.xStart, self.xApp, self.xGoal, ax)
 
 
 class RRTInformedMulti(RRTComponent):
 
-    def __init__(self, xStart, xAppList, xGoalList, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug):
-        super().__init__(eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug)
+    def __init__(self, xStart, xAppList, xGoalList, config):
+        super().__init__(config)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoalList = [Node(xGoali) for xGoali in xGoalList]
@@ -96,7 +90,7 @@ class RRTInformedMulti(RRTComponent):
     def start(self):
         for itera in range(self.maxIteration):
             biasIndex = np.random.randint(low=0, high=self.numGoal)
-            self.cBestNow, self.xGoalBestIndex = self.cbest_single_tree_multi(self.XSoln, self.xAppList, itera, self.print_debug)
+            self.cBestNow, self.xGoalBestIndex = self.cbest_single_tree_multi(self.XSoln, self.xAppList, itera)
 
             if self.cBestNow == np.inf:
                 xRand = self.bias_uniform_sampling(self.xAppList[biasIndex], len(self.XSoln[biasIndex]))
@@ -104,7 +98,7 @@ class RRTInformedMulti(RRTComponent):
                 xRand = self.informed_sampling(self.xCenter[biasIndex], self.cBestNow, self.cMin[biasIndex], self.C[biasIndex])
 
             xNearest, vertexDistList = self.nearest_node(self.treeVertex, xRand, returnDistList=True)
-            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnxNewIsxRand=True)
+            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnIsReached=True)
             if self.is_collision(xNearest, xNew):
                 continue
             xNew.parent = xNearest
@@ -125,12 +119,6 @@ class RRTInformedMulti(RRTComponent):
         return self.search_best_cost_singledirection_path(backFromNode=self.xAppList[self.xGoalBestIndex],
                                                           treeVertexList=self.XSoln[self.xGoalBestIndex],
                                                           attachNode=self.xGoalList[self.xGoalBestIndex])
-        
+
     def update_perf(self, timePlanningStart, timePlanningEnd):
         self.perf_matrix_update(tree1=self.treeVertex, tree2=None, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
-    def plot_tree(self, path, ax):
-        self.plot_2d_obstacle(ax)
-        self.plot_2d_single_tree(self.treeVertex, ax)
-        self.plot_2d_path(path, ax)
-        self.plot_2d_state_configuration(self.xStart, self.xAppList, self.xGoalList, ax)

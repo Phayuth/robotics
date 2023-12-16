@@ -1,6 +1,6 @@
 import open3d as o3d
 
-bag_filename = '/home/yuth/ws_yuthdev/robotics_manipulator/map_pcd/test_bag.bag'
+bag_filename = './perception/pcd/realsense/test_bag.bag'
 
 bag_reader = o3d.t.io.RSBagReader()
 bag_reader.open(bag_filename)

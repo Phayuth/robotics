@@ -1,12 +1,5 @@
-"""
-Taskspace map in geometry format
-----
-
-"""
-
 import os
 import sys
-
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
@@ -15,14 +8,14 @@ from geometry.geometry_class import ObjRectangle
 
 def task_rectangle_obs_1():
     return [
-        ObjRectangle(x=2, y=2, h=2, w=2), 
+        ObjRectangle(x=2, y=2, h=2, w=2),
         ObjRectangle(x=-4, y=-0.2, h=6, w=3)]
 
 
 def task_rectangle_obs_2():
     return [
-        ObjRectangle(50, 50, h=3, w=3), 
-        ObjRectangle(40, 20, h=9, w=1), 
+        ObjRectangle(50, 50, h=3, w=3),
+        ObjRectangle(40, 20, h=9, w=1),
         ObjRectangle(70, 90, h=5, w=2)]
 
 
@@ -36,20 +29,20 @@ def task_rectangle_obs_3():
 
 def task_rectangle_obs_4():
     return [
-        ObjRectangle(x=1.5, y=1.56, h=0.2, w=1), 
-        ObjRectangle(x=1.5, y=0.8, h=0.2, w=1), 
+        ObjRectangle(x=1.5, y=1.56, h=0.2, w=1),
+        ObjRectangle(x=1.5, y=0.8, h=0.2, w=1),
         ObjRectangle(x=-4, y=-0.2, h=6, w=3)]
 
 
 def task_rectangle_obs_5():
     return [
-        ObjRectangle(x=1.5, y=2.3, h=0.2, w=1), 
+        ObjRectangle(x=1.5, y=2.3, h=0.2, w=1),
         ObjRectangle(x=1.5, y=1.8, h=0.2, w=1)]
 
 
 def task_rectangle_obs_6():
     return [
-        ObjRectangle(x=1.5, y=1.25, h=0.2, w=1, angle=1), 
+        ObjRectangle(x=1.5, y=1.25, h=0.2, w=1, angle=1),
         ObjRectangle(x=1.5, y=0.5, h=0.2, w=1, angle=0.3)]
 
 

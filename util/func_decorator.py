@@ -1,27 +1,22 @@
 import time
 
-def interrupt_decorator(handler):
-    def decorator(fun):
+def interrupt_decorator(sideFunction):
+    def decorator(mainFunction):
         def wrapper(*args, **kwargs):
             try:
-                fun(*args, **kwargs)
+                mainFunction(*args, **kwargs)
             except KeyboardInterrupt:
-                handler()
+                sideFunction()
         return wrapper
     return decorator
 
-# def fun():
-#     try:
-#         print("running...")
-#         time.sleep(30)
-#         print("finished")
-#     except KeyboardInterrupt:
-#         print("exiting...")
+def sideFunc():
+    print("exiting")
 
-@interrupt_decorator(lambda: print("exiting"))
-def fun2():
+@interrupt_decorator(sideFunc)
+def mainFunc():
     print("running...")
     time.sleep(2)
     print("finished")
 
-fun2()
+mainFunc()

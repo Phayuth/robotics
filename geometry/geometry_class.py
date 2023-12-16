@@ -1,14 +1,3 @@
-""" Collision check class based on geometry
-
-∧ is exactly 'and' in this context. V means 'or'. You can notice the similarity both in form and meaning with ∩ and U from set theory.
-References:
-    - https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
-    - http://www.jeffreythompson.org/collision-detection/table_of_contents.php
-    - https://www.baeldung.com/cs/circle-line-segment-collision-detection
-    - https://yal.cc/rectangle-circle-intersection-test/
-
-"""
-
 import os
 import sys
 

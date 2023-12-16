@@ -1,10 +1,3 @@
-"""
-Taskspace costmap in imageformat
-----
-Represented in numpy or image format thus can not directly use it must convert into continuous coordinate format
-
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw

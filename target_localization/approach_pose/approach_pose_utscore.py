@@ -6,8 +6,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from planner_util.coord_transform import polar2cats, circle_plt
-
+from geometry.geometry_class import CoordinateTransform
 
 # SECTION - target define pose
 x_targ = 1.5
@@ -18,8 +17,8 @@ t_targ = np.linspace(np.pi / 2, 3 * np.pi / 2, 50)  # Create canidate pose
 # SECTION - calculate inner and outer pose for circle
 r_inner = 0.1
 r_outer = r_inner + 0.1
-x_inner, y_inner = polar2cats(r_inner, t_targ, x_targ, y_targ)
-x_outer, y_outer = polar2cats(r_outer, t_targ, x_targ, y_targ)
+x_inner, y_inner = CoordinateTransform.polar_to_cartesian(r_inner, t_targ, x_targ, y_targ)
+x_outer, y_outer = CoordinateTransform.polar_to_cartesian(r_outer, t_targ, x_targ, y_targ)
 
 
 # SECTION - calculate score of each angle
@@ -71,7 +70,7 @@ print("==>> maxim_sorted: \n", maxim_sorted)
 plt.axes().set_aspect('equal')
 plt.axvline(x=0, c="black")
 plt.axhline(y=0, c="black")
-circle_plt(x_targ, y_targ, r_inner)
+# circle_plt(x_targ, y_targ, r_inner)
 
 for i in range(len(x_inner)):
     plt.plot([x_inner[i], x_outer[i]], [y_inner[i], y_outer[i]], c="orange")

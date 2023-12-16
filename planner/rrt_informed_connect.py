@@ -10,8 +10,8 @@ from planner.rrt_component import Node, RRTComponent
 
 class RRTInformedConnect(RRTComponent):
 
-    def __init__(self, xStart, xApp, xGoal, eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug) -> None:
-        super().__init__(eta, subEta, maxIteration, numDoF, envChoice, nearGoalRadius, rewireRadius, endIterationID, print_debug)
+    def __init__(self, xStart, xApp, xGoal, config) -> None:
+        super().__init__(config)
         # start, aux, goal node
         self.xStart = Node(xStart)
         self.xGoal = Node(xGoal)
@@ -41,7 +41,7 @@ class RRTInformedConnect(RRTComponent):
                 Ta = self.treeVertexGoal
                 Tb = self.treeVertexStart
 
-            self.cBestNow = self.cbest_dual_tree(self.connectNodePair, itera, self.print_debug)
+            self.cBestNow = self.cbest_dual_tree(self.connectNodePair, itera)
 
             if self.cBestNow == np.inf:
                 xRand = self.uni_sampling()
@@ -49,7 +49,7 @@ class RRTInformedConnect(RRTComponent):
                 xRand = self.informed_sampling(self.xCenter, self.cBestNow, self.cMin, self.C)
 
             xNearest, vertexDistList = self.nearest_node(Ta, xRand, returnDistList=True)
-            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnxNewIsxRand=True)
+            xNew, xNewIsxRand = self.steer(xNearest, xRand, self.eta, returnIsReached=True)
 
             if not self.is_collision_and_in_goal_region(xNearest, xNew, self.xGoal, self.distGoalToApp):
                 xNew.parent = xNearest
@@ -58,7 +58,7 @@ class RRTInformedConnect(RRTComponent):
                 self.star_optimizer(Ta, xNew, self.rewireRadius, xNewIsxRand, vertexDistList)
 
                 xNearestPrime = self.nearest_node(Tb, xNew)
-                xNewPrime, xNewPrimeIsxNew = self.steer(xNearestPrime, xNew, self.eta, returnxNewIsxRand=True)
+                xNewPrime, xNewPrimeIsxNew = self.steer(xNearestPrime, xNew, self.eta, returnIsReached=True)
 
                 if not self.is_collision_and_in_goal_region(xNearestPrime, xNewPrime, self.xGoal, self.distGoalToApp):
                     xNewPrime.parent = xNearestPrime
@@ -67,7 +67,7 @@ class RRTInformedConnect(RRTComponent):
                     self.star_optimizer(Tb, xNewPrime, self.rewireRadius, xNewIsxRand=xNewPrimeIsxNew)
 
                     while True:
-                        xNewPPrime, xNewPPrimeIsxNewPrime = self.steer(xNewPrime, xNew, self.eta, returnxNewIsxRand=True)
+                        xNewPPrime, xNewPPrimeIsxNewPrime = self.steer(xNewPrime, xNew, self.eta, returnIsReached=True)
 
                         if self.is_collision_and_in_goal_region(xNewPrime, xNewPPrime, self.xGoal, self.distGoalToApp):
                             break
@@ -85,7 +85,7 @@ class RRTInformedConnect(RRTComponent):
                             xNewPrime.child.append(xNewPPrime)
                             self.star_optimizer(Tb, xNewPPrime, self.rewireRadius, xNewPPrimeIsxNewPrime)
                             xNewPrime = xNewPPrime
-            
+
             if self.termination_check(self.connectNodePair):
                 break
 
@@ -93,12 +93,6 @@ class RRTInformedConnect(RRTComponent):
 
     def get_path(self):
         return self.search_best_cost_bidirection_path(connectNodePairList=self.connectNodePair, attachNode=self.xGoal)
-        
+
     def update_perf(self, timePlanningStart, timePlanningEnd):
         self.perf_matrix_update(tree1=self.treeVertexStart, tree2=self.treeVertexGoal, timePlanningStart=timePlanningStart, timePlanningEnd=timePlanningEnd)
-
-    def plot_tree(self, path, ax):
-        self.plot_2d_obstacle(ax)
-        self.plot_2d_dual_tree(self.treeVertexStart, self.treeVertexGoal, ax)
-        self.plot_2d_path(path, ax)
-        self.plot_2d_state_configuration(self.xStart, self.xApp, self.xGoal, ax)

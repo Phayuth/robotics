@@ -14,7 +14,7 @@ H23 = rbt.hrz(theta)
 H = H01 @ H12 @ H23
 p0 = H @ p1
 
-# # plot frame
+# plot frame
 # 2D
 rot = rbt.rot2d(theta)
 tran = np.array([[1],[1]])
@@ -22,7 +22,7 @@ fig, ax = plt.subplots()
 pltt.plot_frame_2d(rot, tran, ax, plt_basis=True)
 plt.show()
 
-# # 3D
+# 3D
 # gs = rbt.hrz(theta)
 # plot_frame_3d(gs, plt_basis=True, plt_show=True)
 
@@ -31,16 +31,16 @@ gs = rbt.hrx(theta=1)
 gs_iv = rbt.hinverse(gs)
 check = gs @ gs_iv  # return Identity Matrix
 
-tac = np.array([[np.cos(np.deg2rad(90)), np.cos(np.deg2rad(120)), np.cos(np.deg2rad(30)), 3], 
-                [np.cos(np.deg2rad(90)), np.cos(np.deg2rad(30)), np.cos(np.deg2rad(60)), 0], 
-                [np.cos(np.deg2rad(180)), np.cos(np.deg2rad(90)),np.cos(np.deg2rad(90)), 2], 
+tac = np.array([[np.cos(np.deg2rad(90)), np.cos(np.deg2rad(120)), np.cos(np.deg2rad(30)), 3],
+                [np.cos(np.deg2rad(90)), np.cos(np.deg2rad(30)), np.cos(np.deg2rad(60)), 0],
+                [np.cos(np.deg2rad(180)), np.cos(np.deg2rad(90)),np.cos(np.deg2rad(90)), 2],
                 [0, 0, 0, 1]])
 
 tca = rbt.hinverse(tac)
 tac_rotation_mat = tac[0:3, 0:3]
 tca_rotation_mat = tca[0:3, 0:3]
 
-tcb = np.array([[np.cos(np.deg2rad(90 + 90 - 36.9)), np.cos(np.deg2rad(90 + 36.9)), np.cos(np.deg2rad(90)), 3], 
+tcb = np.array([[np.cos(np.deg2rad(90 + 90 - 36.9)), np.cos(np.deg2rad(90 + 36.9)), np.cos(np.deg2rad(90)), 3],
                 [np.cos(np.deg2rad(90)), np.cos(np.deg2rad(90)), np.cos(np.deg2rad(0)), 2],
                 [np.cos(np.deg2rad(90 + 36.9)), np.cos(np.deg2rad(36.9)), np.cos(np.deg2rad(90)), 0], [0, 0, 0, 1]])
 tcb_rotation_mat = tcb[0:3, 0:3]
