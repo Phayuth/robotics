@@ -14,7 +14,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 import matplotlib.pyplot as plt
-from geometry.geometry_class import ObjLine2D, ObjPoint2D, intersect_point_v_rectangle, intersect_line_v_rectangle
+from spatial_geometry.spatial_shape import ShapeLine2D, ShapePoint2D, intersect_point_v_rectangle, intersect_line_v_rectangle
 
 
 class node:
@@ -147,7 +147,7 @@ class Rrtstar:
         return np.linalg.norm([(xstart.x - xend.x), (xstart.y - xend.y)])
 
     def collision_check_node(self, x_new):
-        nodepoint = ObjPoint2D(x_new.x, x_new.y)
+        nodepoint = ShapePoint2D(x_new.x, x_new.y)
 
         col = []
         for obs in self.obs:
@@ -160,7 +160,7 @@ class Rrtstar:
             return False
 
     def collision_check_line(self, x_nearest, x_new):
-        line = ObjLine2D(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
+        line = ShapeLine2D(x_nearest.x, x_nearest.y, x_new.x, x_new.y)
 
         col = []
         for obs in self.obs:
@@ -197,9 +197,9 @@ class Rrtstar:
 
 
 if __name__ == "__main__":
-    from map.taskmap_geo_format import task_rectangle_obs_7
-    from map.taskmap_img_format import bmap
-    from map.mapclass import CostMapLoader, CostMapClass
+    from spatial_geometry.taskmap_geo_format import task_rectangle_obs_7
+    from spatial_geometry.taskmap_img_format import bmap
+    from spatial_geometry.mapclass import CostMapLoader, CostMapClass
     np.random.seed(9)
 
     # SECTION - Experiment 1

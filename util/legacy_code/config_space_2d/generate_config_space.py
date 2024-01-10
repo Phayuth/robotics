@@ -1,6 +1,6 @@
 import numpy as np
 from skimage.measure import profile_line
-    
+
 def construct_config_space_2d(robot, map, grid = 361):
 
     configurationSpace = []
@@ -15,7 +15,7 @@ def construct_config_space_2d(robot, map, grid = 361):
             profileProb1 = profile_line(map, robotPosition[0], robotPosition[1], linewidth=2, order=0, reduce_func=None)
             profileProb2 = profile_line(map, robotPosition[1], robotPosition[2], linewidth=2, order=0, reduce_func=None)
             profileProb = np.concatenate((profileProb1, profileProb2))
-            
+
             if 0 in profileProb:
                 prob = 0
             else:
@@ -39,7 +39,7 @@ if __name__=="__main__":
     sys.path.append(str(wd))
 
     from robot.planar_rr import PlanarRRVoxel
-    from map import taskmap_img_format
+    from spatial_geometry import taskmap_img_format
     from generate_config_space import construct_config_space_2d
     import matplotlib.pyplot as plt
 

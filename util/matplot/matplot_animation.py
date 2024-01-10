@@ -12,6 +12,7 @@ line, = ax.plot(x_data, y_data)
 # Define the update function for the animation
 def update(frame):
     # Update the y data
+    print(frame)
     line.set_ydata(np.sin(x_data + frame/10))
 
     # Return the line object to be updated

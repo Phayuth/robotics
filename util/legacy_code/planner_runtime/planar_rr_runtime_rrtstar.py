@@ -9,7 +9,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 
-from geometry.geometry_class import ObjLine2D, intersect_line_v_rectangle
+from spatial_geometry.spatial_shape import ShapeLine2D, intersect_line_v_rectangle
 
 
 class Node:
@@ -140,15 +140,15 @@ class RuntimeRRTStar():
             if dist <= minStep:
                 neighbor.append(index)
         return [self.treeVertex[i] for i in neighbor]
-    
+
     def cost_line(self, xstart, xend):
         return np.linalg.norm([(xstart.x - xend.x), (xstart.y - xend.y)])
-    
+
     def is_config_in_collision(self, xNew):
         theta = np.array([xNew.x, xNew.y]).reshape(2, 1)
         linkPose = self.robot.forward_kinematic(theta, return_link_pos=True)
-        linearm1 = ObjLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
-        linearm2 = ObjLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
+        linearm1 = ShapeLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
+        linearm2 = ShapeLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
         for obs in self.taskMapObs:
             if intersect_line_v_rectangle(linearm1, obs):
                 return True
@@ -182,7 +182,7 @@ if __name__ == "__main__":
     from planner_util.plot_util import plot_tree
     plt.style.use("seaborn")
 
-    
+
     robot = PlanarRR()
     taskMapObs = task_rectangle_obs_1()
 
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     plot_tree(planner.treeVertex, path)
     plt.show()
 
-    # plot joint 
+    # plot joint
     t = np.linspace(0,5,len(pathx))
     fig1 = plt.figure("Joint 1")
     ax1 = fig1.add_subplot(111)

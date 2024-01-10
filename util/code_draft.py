@@ -40,6 +40,4 @@ def ik_selectivly_dls():
     # gamma = np.minimum(3, NdivM)
     # ic(gamma)
 
-
-if __name__ == "__main__":
-    ik_selectivly_dls()
+ik_selectivly_dls()

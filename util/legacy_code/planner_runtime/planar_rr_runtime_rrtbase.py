@@ -9,7 +9,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 
-from geometry.geometry_class import ObjLine2D, intersect_line_v_rectangle
+from spatial_geometry.spatial_shape import ShapeLine2D, intersect_line_v_rectangle
 
 
 class Node:
@@ -71,7 +71,7 @@ class RuntimeRRTBase():
         xRand = Node(x, y)
 
         return xRand
-    
+
     def bias_sampling(self):
         if np.random.uniform(low=0, high=1.0) < self.probabilityGoalBias:
             xRand = Node(self.xGoal.x, self.xGoal.y)
@@ -112,8 +112,8 @@ class RuntimeRRTBase():
     def is_config_in_collision(self, xNew):
         theta = np.array([xNew.x, xNew.y]).reshape(2, 1)
         linkPose = self.robot.forward_kinematic(theta, return_link_pos=True)
-        linearm1 = ObjLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
-        linearm2 = ObjLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
+        linearm1 = ShapeLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
+        linearm2 = ShapeLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
         for obs in self.taskMapObs:
             if intersect_line_v_rectangle(linearm1, obs):
                 return True
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     plt.style.use("seaborn")
     from robot.planar_rr import PlanarRR
-    from map.taskmap_geo_format import task_rectangle_obs_1
+    from spatial_geometry.taskmap_geo_format import task_rectangle_obs_1
     from planner.extract_path_class import extract_path_class_2d
     from planner_util.plot_util import plot_tree
 
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     plot_tree(planner.treeVertex, path)
     plt.show()
 
-    # plot joint 
+    # plot joint
     t = np.linspace(0,5,len(pathx))
     fig1 = plt.figure("Joint 1")
     ax1 = fig1.add_subplot(111)
