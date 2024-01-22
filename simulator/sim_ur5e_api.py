@@ -71,48 +71,42 @@ class UR5eArmCoppeliaSimAPI:
             return False
 
     def set_handle_joint_value(self, jointValue, jointHandle):
-        if isinstance(jointValue, np.ndarray):
-            for i in range(jointValue.shape[0]):
-                self.sim.setJointPosition(jointHandle[i], jointValue[i, 0])
-        else:
-            for i in range(jointValue.config.shape[0]):
-                self.sim.setJointPosition(jointHandle[i], jointValue.config[i, 0])
+        for i in range(jointValue.shape[0]):
+            self.sim.setJointPosition(jointHandle[i], jointValue[i, 0])
+
+    def set_joint_target_value(self, jointValue):
+        for i in range(jointValue.shape[0]):
+            self.sim.setJointTargetPosition(self.jointHandleList[i], jointValue[i, 0])
 
     def set_joint_value(self, jointValue):
         self.set_handle_joint_value(jointValue, self.jointHandleList)
 
-    def set_goal_joint_value(self, jointValue):
-        self.set_handle_joint_value(jointValue, self.jointGoalHandleList)
+    def set_pose_start_aux_goal(self, startValue=None, auxValue=None, goalValue=None):
+        if startValue is not None:
+            self.set_handle_joint_value(startValue, self.jointStartHandleList)
+        if auxValue is not None:
+            self.set_handle_joint_value(auxValue, self.jointAuxHandleList)
+        if goalValue is not None:
+            self.set_handle_joint_value(goalValue, self.jointGoalHandleList)
 
-    def set_aux_joint_value(self, jointValue):
-        self.set_handle_joint_value(jointValue, self.jointAuxHandleList)
+    def play_back_path(self, pathArray):  # shape=(numDoF, numSeq)
 
-    def set_start_joint_value(self, jointValue):
-        self.set_handle_joint_value(jointValue, self.jointStartHandleList)
+        if self.sim.getSimulationState() == 0:
+            self.start_sim()
 
-    def set_joint_target_value(self, jointValue):
-        for i in range(jointValue.config.shape[0]):
-            self.sim.setJointTargetPosition(self.jointHandleList[i], jointValue.config[i, 0])
-
-    def play_back_path(self, path):
-        self.start_sim()
-        self.set_start_joint_value(path[0])
-        self.set_goal_joint_value(path[-1])
-        self.set_aux_joint_value(path[-2])
-        for i in range(len(path)):
-            self.set_joint_value(path[i])
+        self.set_pose_start_aux_goal(startValue=pathArray[:, 0, np.newaxis], auxValue=pathArray[:, -2, np.newaxis], goalValue=pathArray[:, -1, np.newaxis])
+        for i in range(pathArray.shape[1]):
+            self.set_joint_value(pathArray[:, i, np.newaxis])
             time.sleep(0.3)
-            # triggers next simulation step
-            # client.step()
-        self.stop_sim()
 
 
 if __name__ == "__main__":
-    from datasave.joint_value.pre_record_value import SinglePose
+    from datasave.joint_value.pre_record_value import SinglePose, PreRecordedPath
     from datasave.joint_value.experiment_paper import URHarvesting
 
     # View State
     armState = UR5eArmCoppeliaSimAPI()
+    print(armState.sim.getSimulationState())
     # armState.start_sim()
     # jointV = np.array([0.0,0.0,0.0,0.0,0.0,0.0]).reshape(6,1)
     # armState.set_joint_value(jointV)
@@ -120,10 +114,13 @@ if __name__ == "__main__":
     # armState.set_aux_joint_value(jointV)
     # armState.set_start_joint_value(jointV)
 
-    q = URHarvesting.PoseSingle1()
-    qS = q.xStart
-    qA = q.xApp
-    qG = q.xGoal
-    armState.set_goal_joint_value(qG)
-    armState.set_aux_joint_value(qA)
-    armState.set_start_joint_value(qS)
+    # Set joint visualize
+    # q = URHarvesting.PoseSingle1()
+    # qS = q.xStart
+    # qA = q.xApp
+    # qG = q.xGoal
+    # armState.set_pose_start_aux_goal(qS, qA, qG)
+
+    # Play back path
+    path = PreRecordedPath.path.T # shape(6, 12)
+    armState.play_back_path(path)

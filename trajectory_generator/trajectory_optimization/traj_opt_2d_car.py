@@ -1,74 +1,11 @@
-# Notebook 7.1 - Introduction to Trajectory Optimisation in Python
-# https://transport-systems.imperial.ac.uk/tf/60008_21/n7_1_introduction_to_trajectory_optimisation.html
-# https://www.youtube.com/playlist?list=PLLBUgWXdTBDjxcpH9hRuq-bsm_ti2UvoB
-
-
-from gekko import GEKKO
-import numpy as np
 import matplotlib.pyplot as plt
-
-v_max = 30  # maximum velocity
-v_min = -4  # minimum velocity
-av_max = 2  # maximum acceleration
-av_min = -2  # minimum acceleration (ie. maximum deceleration)
-x_s = 0  # starting position
-x_f = 10  # ending position
-v_bound = 0  # velocity in the start and end of the journey
-
-# m = GEKKO()
-
-# nt = 501
-# m.time = np.linspace(0, 1, nt)
-
-# x = m.Var(value=0.0)
-# v = m.Var(value=0.0, lb=v_min, ub=v_max)
-
-# av = m.MV(value=0, lb=av_min, ub=av_max)
-# av.STATUS = 1
-
-# tf = m.FV(value=1.0, lb=0.1, ub=100.0)
-# tf.STATUS = 1
-
-# m.Equation(x.dt() == v * tf)
-# m.Equation(v.dt() == av * tf)
-
-# # path constraint
-# m.Equation(x >= 0)
-
-# # boundary constraints
-# m.fix(x, pos=len(m.time) - 1, val=10.0)  # vehicle must arrive at x=10
-# m.fix(v, pos=len(m.time) - 1, val=0.0)  # vehicle must come to a full stop
-
-# # objective - minimise the travel time
-# m.Obj(tf)
-
-# # solve
-# m.options.IMODE = 6
-# m.solve(disp=False)
-
-# # print final travel time
-# print('Final Time: ' + str(tf.value[0]))
-
-# # plot solution
-# tm = np.linspace(0, tf.value[0], nt)
-# plt.figure(1)
-# plt.plot(tm, x.value, 'k-', label=r'$x$')
-# plt.plot(tm, v.value, 'g-', label=r'$v$')
-# plt.plot(tm, av.value, 'r--', label=r'$a_v$')
-# plt.legend(loc='best')
-# plt.xlabel('Time')
-# plt.show()
-
-
-
-
-
-
-# 2. Mathematical model - 2D Vehicle Movement
+import numpy as np
+from gekko import GEKKO
 
 phi_max = 0.7
+v_max = 30  # maximum velocity
+v_min = -4  # minimum velocity
 
-# initialize GEKKO
 m = GEKKO(remote=True)
 nt = 501
 m.time = np.linspace(0, 1, nt)
@@ -105,7 +42,7 @@ m.fix(y, pos=len(m.time) - 1, val=10.0)
 m.fix(v, pos=len(m.time) - 1, val=0)
 m.fix(th, pos=len(m.time) - 1, val=0.1)
 
-# define voundary constraints
+# define waypoint constraints
 m.fix(x, pos=200 - 1, val=2.0)
 m.fix(y, pos=200 - 1, val=4.0)
 

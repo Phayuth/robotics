@@ -1,6 +1,3 @@
-"""
-Ackerman Steering Robot
-"""
 import numpy as np
 
 

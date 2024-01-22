@@ -13,7 +13,7 @@ sys.path.append(str(wd))
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-from spatial_geometry.mapclass import map_val
+from spatial_geometry.map_class import map_val
 
 
 class Node:
@@ -278,7 +278,7 @@ class RrtstarCostmapConfigspace():
 
 
 if __name__ == "__main__":
-    from spatial_geometry.mapclass import CostMapLoader, CostMapClass
+    from spatial_geometry.map_class import CostMapLoader, CostMapClass
     np.random.seed(1)
 
     # SECTION - Experiment 1

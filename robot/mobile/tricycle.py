@@ -1,6 +1,3 @@
-"""
-Tricycle Robot
-"""
 import numpy as np
 
 

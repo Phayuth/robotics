@@ -1,11 +1,9 @@
 import os
 import sys
-
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import glob
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage import binary_dilation
 from spatial_geometry.spatial_shape import ShapeRectangle
@@ -92,15 +90,8 @@ class CostMapClass:
         return obj
 
 
-class GeoMapClass:
-
-    def __init__(self, geomap, maprange: list) -> None:
-        self.xmin, self.xmax = maprange[0][0], maprange[0][1]
-        self.ymin, self.ymax = maprange[1][0], maprange[1][1]
-        self.obj = geomap
-
-
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     from spatial_geometry.taskmap_img_format import map_2d_1
 
     # load from numpy array

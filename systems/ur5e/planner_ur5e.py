@@ -6,7 +6,7 @@ sys.path.append(str(wd))
 
 import time
 import numpy as np
-np.random.seed(0)
+np.random.seed(9)
 import matplotlib.pyplot as plt
 
 # planner
@@ -20,13 +20,14 @@ from simulator.sim_ur5e_api import UR5eArmCoppeliaSimAPI
 from datasave.joint_value.pre_record_value import SinglePose, MultiplePoses
 from datasave.joint_value.experiment_paper import URHarvesting
 
+simu = UR5eArmCoppeliaSimAPI()
 
 copsimConfigDualTree = {
     "planner": 5,
     "eta": 0.15,
     "subEta": 0.05,
     "maxIteration": 3000,
-    "simulator": UR5eArmCoppeliaSimAPI,
+    "simulator": simu,
     "nearGoalRadius": None,
     "rewireRadius": None,
     "endIterationID": 1,
@@ -43,9 +44,11 @@ xApp = q.xApp
 xGoal = q.xGoal
 
 pa = PlannerManipulator(xStart, xApp, xGoal, copsimConfigDualTree)
-path = pa.planning()
+pq = pa.planning()
 time.sleep(3)
-pa.planner.simulator.play_back_path(path)
+
+# sss = UR5eArmCoppeliaSimAPI()
+# simu.play_back_path(pq)
 
 fig, ax = plt.subplots()
 RRTPlotter.plot_performance(pa.planner.perfMatrix, ax)

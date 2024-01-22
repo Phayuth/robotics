@@ -1,7 +1,3 @@
-"""
-Threading : https://www.youtube.com/watch?v=IEEhzQoKtQU
-
-"""
 import time
 import concurrent.futures
 

@@ -67,3 +67,27 @@ def fig_of_8(t):
     wRef = ((dxRef * ddyRef) - (dyRef * ddxRef)) / ((dxRef**2) + (dyRef**2))
 
     return xRef, yRef, dxRef, dyRef, ddxRef, ddyRef, vRef, wRef
+
+
+def fig_of_8_with_acceleration(t):
+    freq = 2 * np.pi / 30
+
+    xRef = 1.1 + 0.7 * np.sin(freq * t)
+    yRef = 0.9 + 0.7 * np.sin(2 * freq * t)
+
+    dxRef = freq * 0.7 * np.cos(freq * t)
+    dyRef = 2 * freq * 0.7 * np.cos(2 * freq * t)
+
+    ddxRef = -(freq**2) * 0.7 * np.sin(freq * t)
+    ddyRef = -4 * (freq**2) * 0.7 * np.sin(2 * freq * t)
+
+    dddxRef = -(freq**3) * 0.7 * np.cos(freq * t)
+    dddyRef = -8 * (freq**3) * 0.7 * np.cos(2 * freq * t)
+
+    vRef = np.sqrt((dxRef**2) + (dyRef**2))
+    wRef = ((dxRef*ddyRef) - (dyRef*ddxRef)) / ((dxRef**2) + (dyRef**2))
+
+    dvRef = (dxRef*ddxRef + dyRef*ddyRef) / vRef
+    dwRef = ((dxRef*dddyRef) - (dyRef*dddxRef)) / (vRef**2) - (2*wRef*dvRef) / vRef
+
+    return xRef, yRef, dxRef, dyRef, ddxRef, ddyRef, dddxRef, dddyRef, vRef, wRef, dvRef, dwRef

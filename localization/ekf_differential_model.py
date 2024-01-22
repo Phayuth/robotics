@@ -1,15 +1,12 @@
-"""
-Differential Model for EKF
-
-"""
 import numpy as np
+from scipy.spatial.transform import Rotation as Rot
 
 
 class DifferentialDriveEKFLocalizationModel:
 
     def __init__(self) -> None:
-        self.Q = np.diag([0.1, 0.1, np.deg2rad(1.0)])**2 # variance of location on x-axis, y-axis, yaw angle
-        self.R = np.diag([1.0, 1.0])**2 # Observation x,y position covariance
+        self.Q = np.diag([0.1, 0.1, np.deg2rad(1.0)])**2 # Variance of location on x-axis, y-axis, yaw angle
+        self.R = np.diag([1.0, 1.0])**2                  # Observation x,y position covariance
 
     def jacob_f(self, x, u, Ts):
         yaw = x[2, 0]
@@ -40,9 +37,33 @@ class DifferentialDriveEKFLocalizationModel:
         z = H @ x
         return z
 
+    def plot_covariance_ellipse(xEst, PEst):
+        Pxy = PEst[0:2, 0:2]
+        eigval, eigvec = np.linalg.eig(Pxy)
+
+        if eigval[0] >= eigval[1]:
+            bigind = 0
+            smallind = 1
+        else:
+            bigind = 1
+            smallind = 0
+
+        t = np.arange(0, 2 * np.pi + 0.1, 0.1)
+        a = np.sqrt(eigval[bigind])
+        b = np.sqrt(eigval[smallind])
+        x = a * np.cos(t)
+        y = b * np.sin(t)
+        angle = np.arctan2(eigvec[1, bigind], eigvec[0, bigind])
+        rot = Rot.from_euler('z', angle).as_matrix()[0:2, 0:2]
+        fx = rot @ (np.array([x, y]))
+        px = np.array(fx[0, :] + xEst[0, 0]).flatten()
+        py = np.array(fx[1, :] + xEst[1, 0]).flatten()
+        plt.plot(px, py, "--r")
+
+
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-    from ekf_base import EKFLocalization, plot_covariance_ellipse
+    from ekf_base import EKFLocalization
 
     robot = DifferentialDriveEKFLocalizationModel()
     ekf = EKFLocalization(robot)
@@ -100,7 +121,7 @@ if __name__ == '__main__':
         plt.plot(histxTrue[0, :].flatten(), histxTrue[1, :].flatten(), "-b")
         plt.plot(histxDR[0, :].flatten(), histxDR[1, :].flatten(), "-k")
         plt.plot(histxEst[0, :].flatten(), histxEst[1, :].flatten(), "-r")
-        plot_covariance_ellipse(xEst, ekf.PEst)
+        DifferentialDriveEKFLocalizationModel.plot_covariance_ellipse(xEst, ekf.PEst)
         plt.axis("equal")
         plt.grid(True)
         plt.pause(0.001)

@@ -5,7 +5,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-np.random.seed(0)
+np.random.seed(9)
 import matplotlib.pyplot as plt
 
 # planner
@@ -15,13 +15,14 @@ from planner.sampling_based.rrt_plotter import RRTPlotter
 # environment
 from simulator.sim_planar_rr import RobotArm2DSimulator
 
+sim = RobotArm2DSimulator()
 
 plannarConfig = {
     "planner": 5,
     "eta": 0.3,
     "subEta": 0.05,
     "maxIteration": 2000,
-    "simulator": RobotArm2DSimulator,
+    "simulator": sim,
     "nearGoalRadius": None,
     "rewireRadius": None,
     "endIterationID": 1,

@@ -278,29 +278,35 @@ class RigidBodyTransformation:
 
         return np.array([q0, q1, q2, q3]).reshape(4,1)
 
-    def conv_t_and_quat_to_h(translation, rotation):
-        rot = R.from_quat(rotation)
+    def conv_t_and_quat_to_h(translation, quaternion):
         H = np.eye(4)
-        H[:3, :3] = rot.as_matrix()
+        H[:3, :3] = R.from_quat(quaternion).as_matrix()
         H[:3, 3] = translation
         return H
 
     def conv_h_to_t_and_quat(H):
-        rotation_matrix = H[:3, :3]
-        rotation = R.from_matrix(rotation_matrix)
-        quaternion = rotation.as_quat()
+        quaternion = R.from_matrix(H[:3, :3]).as_quat()
         translation = H[:3, 3]
         return translation, quaternion
+
+    def conv_rotmat_and_t_to_h(rotmat, t):
+        H = np.array([[0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 1.0]])
+        H[:3, :3] = rotmat
+        H[:3, 3] = t
+        return H
 
     def conv_polar_to_cartesian(r, theta, xTarg=0, yTarg=0):
         x = r * np.cos(theta) + xTarg
         y = r * np.sin(theta) + yTarg
         return x, y
 
-    def conv_spherical_to_cartesian(r, theta, phi, xTarg=0, yTarg=0, z_targ=0):
+    def conv_spherical_to_cartesian(r, theta, phi, xTarg=0, yTarg=0, zTarg=0):
         x = r * np.sin(theta) * np.cos(phi) + xTarg
         y = r * np.sin(theta) * np.sin(phi) + yTarg
-        z = r * np.cos(theta) + z_targ
+        z = r * np.cos(theta) + zTarg
         return x, y, z
 
     def conv_ellipse_to_cartesian(a, b, t, xTarg=0, yTarg=0):  # here t variable IS NOT theta https://en.wikipedia.org/wiki/Ellipse#Parametric_representation
@@ -309,9 +315,10 @@ class RigidBodyTransformation:
         return x, y
 
     def vec_to_skew(x):
-        return np.array([[      0,  -x[2,0],  x[1,0]],
-                         [ x[2,0],        0, -x[0,0]],
-                         [-x[1,0],   x[0,0],       0]])
+        x = x.reshape(3,1)
+        return np.array([[     0.0,  -x[2, 0],  x[1, 0]],
+                         [ x[2, 0],       0.0, -x[0, 0]],
+                         [-x[1, 0],   x[0, 0],      0.0]])
 
     def basis_vec(ax):
         if ax == 'x':
@@ -412,31 +419,31 @@ if __name__=="__main__":
 
     def fixang_and_rotvec():
         gamma_beta_alpha = np.random.uniform(-np.pi, np.pi, (3,1))
-        fixed_angle = rbt.rot_fix_ang('xyz', gamma_beta_alpha); print("==>> fixed_angle original: \n", fixed_angle)
+        fixed_angle = rbt.rot_fix_ang('xyz', gamma_beta_alpha); print("fixed_angle original: \n", fixed_angle)
         ang = rbt.conv_fixang_to_rotvec(fixed_angle)
-        fixed_angle_again = rbt.rot_fix_ang('xyz', ang); print("==>> fixed_angle inverse problem: \n", fixed_angle_again)
+        fixed_angle_again = rbt.rot_fix_ang('xyz', ang); print("fixed_angle inverse problem: \n", fixed_angle_again)
 
 
     def axang_and_rotmat():
         # equivalent axis angle rotation
-        theta = np.random.uniform(-np.pi, np.pi); print("==>> theta original: \n", theta)
-        k = np.random.uniform(0,1,(3,1)); print("==>> k original: \n", k)
+        theta = np.random.uniform(-np.pi, np.pi); print("theta original: \n", theta)
+        k = np.random.uniform(0,1,(3,1)); print("k original: \n", k)
         axangRot = rbt.conv_axang_to_rotmat(theta, k)
-        thet, kk = rbt.conv_rotmat_to_axang(axangRot); print("==>> theta inverse problem: \n", thet); print("==>> k inverse problem: \n", kk)
+        thet, kk = rbt.conv_rotmat_to_axang(axangRot); print("theta inverse problem: \n", thet); print("k inverse problem: \n", kk)
 
 
     def rotmat_and_quat():
         quatt = np.random.uniform(0,1,(4,1))
-        quatt = quatt / np.linalg.norm(quatt); print("==>> quaternion original: \n", quatt)
+        quatt = quatt / np.linalg.norm(quatt); print("quaternion original: \n", quatt)
         rotfromqt = rbt.conv_quat_to_rotmat(quatt)
-        qttt = rbt.conv_rotmat_to_quat(rotfromqt); print("==>> quaternion inverse problem: \n", qttt)
+        qttt = rbt.conv_rotmat_to_quat(rotfromqt); print("quaternion inverse problem: \n", qttt)
 
 
     def axang_and_quat():
-        theta = np.random.uniform(-np.pi, np.pi); print("==>> theta original: \n", theta)
-        k = np.random.uniform(0,1,(3,1)); print("==>> k original: \n", k)
-        q = rbt.conv_axang_to_quat(theta, k); print(f"==>> q: {q}")
-        theta_ori, n_ori = rbt.conv_quat_to_axang(q); print("==>> theta_ori: \n", theta_ori); print("==>> n_ori: \n", n_ori)
+        theta = np.random.uniform(-np.pi, np.pi); print("theta original: \n", theta)
+        k = np.random.uniform(0,1,(3,1)); print("k original: \n", k)
+        q = rbt.conv_axang_to_quat(theta, k); print(f"q: {q}")
+        theta_ori, n_ori = rbt.conv_quat_to_axang(q); print("theta_ori: \n", theta_ori); print("n_ori: \n", n_ori)
     axang_and_quat()
 
 
@@ -447,5 +454,5 @@ if __name__=="__main__":
         rot = rotz_p90 @ roty_n90
         r = R.from_matrix(rot)
         rq = r.as_quat()
-        print(f"==>> rq: \n{rq}")  # xyzw
+        print(f"rq: \n{rq}")  # xyzw
     # transform_tool0_to_camlink()

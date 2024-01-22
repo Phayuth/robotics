@@ -1,8 +1,3 @@
-"""
-Bicycle Robot
-Reference : WMR book P20
-
-"""
 import os
 import sys
 wd = os.path.abspath(os.getcwd())

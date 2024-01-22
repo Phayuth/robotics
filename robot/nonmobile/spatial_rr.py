@@ -1,3 +1,8 @@
+import os
+import sys
+wd = os.path.abspath(os.getcwd())
+sys.path.append(str(wd))
+
 import numpy as np
 from spatial_geometry.spatial_transformation import RigidBodyTransformation as rbt
 

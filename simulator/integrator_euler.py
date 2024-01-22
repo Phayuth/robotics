@@ -1,11 +1,12 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import inspect
 
 
 class EulerNumericalIntegrator:
     """
-    Numerical Integrator Based On Euler Method
+    [Summary] : Numerical Integrator Based On Euler Method
+
+    [Method] :
 
         - `dynamicFunction(previousState, systemInput)` : callable function for system dynamic update. It must accept 2 argument.
         - `controlFunction(previousState, desiredState)` : callable function for controller calculation for systemInput. It must accept 2 argument.
@@ -14,7 +15,7 @@ class EulerNumericalIntegrator:
         - tSpan : simulation time span given as tuple of (0, endTime).
         - dt : time step, typically given as 0.01s.
 
-    StateIndex
+        StateIndex
 
         - state [0] + time [1]    -> desired [1]
         - state [0] + desired [1] -> control [1]
@@ -65,6 +66,8 @@ class EulerNumericalIntegrator:
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
     # Simulation parameters
     initialState = np.array([0.0, 0.0, 0.0]).reshape(3, 1)
     tSpan = (0, 10)  # Simulation time span
@@ -84,17 +87,15 @@ if __name__ == "__main__":
 
     intg = EulerNumericalIntegrator(dynamic_system, control, desired_setpoint, initialState, tSpan, dt)
     timeSteps, states, desired, controls = intg.simulation()
-    print(f"==>> timeSteps.shape: {timeSteps.shape}")
-    print(f"==>> states.shape: {states.shape}")
-    print(f"==>> desired.shape: {desired.shape}")
-    print(f"==>> controls.shape: {controls.shape}")
+    print(f"> timeSteps.shape: {timeSteps.shape}")
+    print(f"> states.shape: {states.shape}")
+    print(f"> desired.shape: {desired.shape}")
+    print(f"> controls.shape: {controls.shape}")
 
     # Plot the results
     plt.plot(states[0, :], states[1, :])
     plt.plot(timeSteps, states[0, :], label='x')
     plt.plot(timeSteps, states[1, :], label='y')
-    plt.plot(timeSteps, states[2, :], label='$\theta$')
-    # plt.xlabel('Time')
-    # plt.ylabel('State')
+    plt.plot(timeSteps, states[2, :], label=r'$\theta$')
     plt.legend()
     plt.show()

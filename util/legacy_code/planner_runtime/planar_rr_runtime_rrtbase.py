@@ -1,6 +1,3 @@
-""" Path Planning for Planar RR with RRT at runtime
-"""
-
 import os
 import sys
 

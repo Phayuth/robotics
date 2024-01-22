@@ -18,7 +18,7 @@ class RRTComponent:
 
     def __init__(self, baseConfigFile):
         # simulator
-        self.simulator = baseConfigFile["simulator"]()
+        self.simulator = baseConfigFile["simulator"] # simulator class
         self.configLimit = self.simulator.configLimit
         self.configDoF = self.simulator.configDoF
 
@@ -603,12 +603,6 @@ class RRTComponent:
         prunedPath.extend([initialPath[-2], initialPath[-1]])  # add back xApp and xGoal to path from the back
         return prunedPath
 
-    def postprocess_mid_node_prune_path(self, path):  # remove an middle node (even index)
-        prunedPath = path.copy()  # create copy of list, not optimized but just to save the original for later used maybe
-        for i in range(len(prunedPath) - 3, -1, -2):
-            prunedPath.pop(i)
-        return prunedPath
-
     def cbest_single_tree(self, treeVertices, nodeToward, iteration): # search in treeGoalRegion for the current best cost
         self.iterationNow = iteration
         if len(treeVertices) == 0:
@@ -689,8 +683,12 @@ class RRTComponent:
     def start(self):
         raise NotImplementedError("Individual planner must implement its own start() method")
 
-    def get_path(self):
+    def get_path(self): # list of nodes sequence
         raise NotImplementedError("Individual planner must implement its own get_path() method")
+
+    def get_path_array(self, pathNodesSeq):
+        pathTemp = [node.config for node in pathNodesSeq]
+        return np.hstack(pathTemp) # shape=(numDoF, numSeq)
 
     def begin_planner(self):
         timeStart = time.perf_counter_ns()
@@ -698,4 +696,4 @@ class RRTComponent:
         path = self.get_path()
         timeEnd = time.perf_counter_ns()
         self.update_perf(timeStart, timeEnd)
-        return path
+        return self.get_path_array(path)

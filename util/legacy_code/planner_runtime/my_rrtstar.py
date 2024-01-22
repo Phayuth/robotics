@@ -199,7 +199,7 @@ class Rrtstar:
 if __name__ == "__main__":
     from spatial_geometry.taskmap_geo_format import task_rectangle_obs_7
     from spatial_geometry.taskmap_img_format import bmap
-    from spatial_geometry.mapclass import CostMapLoader, CostMapClass
+    from spatial_geometry.map_class import CostMapLoader, CostMapClass
     np.random.seed(9)
 
     # SECTION - Experiment 1

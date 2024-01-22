@@ -1,19 +1,5 @@
-"""
-Robot Class for PUMA 560
-
-Reference :
-- DH parameters:
-    1.DH parameter is from introduction to robotics mechanic and control by J.J. Craig for modified dh version
-    2.Numerical parameter is from Software for control and dynamic simulation of unimate puma 560 robot by Sandeep Anand
-
-- Modified DH Matrix: is from craig
-
-"""
-
-
 import os
 import sys
-
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
@@ -22,6 +8,10 @@ from spatial_geometry.spatial_transformation import RigidBodyTransformation as r
 
 
 class Puma560:
+    """
+    Puma560 - 6DOF Robitic Manipulator. Utilize Modified DH Parameter by J.J. Craig.
+
+    """
 
     def __init__(self) -> None:
         self.alpha = np.array([[0], [-np.pi / 2], [0], [-np.pi / 2], [np.pi / 2], [-np.pi / 2]])
@@ -141,11 +131,11 @@ class Puma560:
 if __name__ == "__main__":
     robot = Puma560()
     thetaOriginal = np.array([2, 1, 0.5, 2, 1, 0]).reshape(6, 1)
-    TForwardOriginal = robot.forward_kinematic(thetaOriginal, return_full_H=True); print("==>> TForwardOriginal: \n", TForwardOriginal)
-    thetaIk = robot.inverse_kinematic_geometry(TForwardOriginal); print("==>> thetaIk: \n", thetaIk)
+    TForwardOriginal = robot.forward_kinematic(thetaOriginal, return_full_H=True); print("> TForwardOriginal: \n", TForwardOriginal)
+    thetaIk = robot.inverse_kinematic_geometry(TForwardOriginal); print("> thetaIk: \n", thetaIk)
 
     for i in range(8):
         possibleTheta = thetaIk[:, i].reshape(6, 1)
         TAfterIk = robot.forward_kinematic(possibleTheta, return_full_H=True)
-        print(f"==>> Solution Number {i+1}: {thetaIk[:,i]}",)
+        print(f"> Solution Number {i+1}: {thetaIk[:,i]}",)
         print(TAfterIk)

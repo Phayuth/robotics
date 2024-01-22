@@ -1,7 +1,3 @@
-"""
-Mecanum 4 Wheels Robot
-Reference : WMR book P30
-"""
 import os
 import sys
 wd = os.path.abspath(os.getcwd())
@@ -106,6 +102,7 @@ class MecanumDrive:
         axis.plot([v2[0, 0], w2[0, 0]], [v2[1, 0], w1[1, 0]], c='red')
         axis.plot([v3[0, 0], w3[0, 0]], [v3[1, 0], w3[1, 0]], c='red')
         axis.plot([v4[0, 0], w4[0, 0]], [v4[1, 0], w4[1, 0]], c='red')
+
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt

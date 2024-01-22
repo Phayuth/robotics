@@ -6,7 +6,7 @@ sys.path.append(str(wd))
 
 import numpy as np
 from spatial_geometry.spatial_shape import ShapeRectangle, ShapeCollision
-from spatial_geometry.mapclass import CostMapClass, CostMapLoader
+from spatial_geometry.map_class import CostMapClass, CostMapLoader
 
 
 class TaskSpace2DSimulator:

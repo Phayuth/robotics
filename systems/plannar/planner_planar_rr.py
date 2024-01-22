@@ -5,7 +5,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
-np.random.seed(0)
+np.random.seed(9)
 import matplotlib.pyplot as plt
 
 # planner
@@ -18,13 +18,14 @@ from simulator.sim_planar_rr import RobotArm2DSimulator
 # joint value
 from datasave.joint_value.experiment_paper import Experiment2DArm
 
+sim = RobotArm2DSimulator()
 
 plannarConfigDualTreea = {
     "planner": 5,
     "eta": 0.3,
     "subEta": 0.05,
     "maxIteration": 2000,
-    "simulator": RobotArm2DSimulator,
+    "simulator": sim,
     "nearGoalRadius": None,
     "rewireRadius": None,
     "endIterationID": 1,

@@ -294,7 +294,7 @@ class InfmrrtstarCostmapUnisampling:
 
 
 if __name__ == "__main__":
-    from spatial_geometry.mapclass import CostMapLoader, CostMapClass
+    from spatial_geometry.map_class import CostMapLoader, CostMapClass
     np.random.seed(0)
 
     # SECTION - Experiment 1

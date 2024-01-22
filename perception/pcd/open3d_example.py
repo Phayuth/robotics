@@ -6,11 +6,7 @@ ply_point_cloud = o3d.data.PLYPointCloud()
 pcd = o3d.io.read_point_cloud(ply_point_cloud.path)
 print(pcd)
 print(np.asarray(pcd.points))
-o3d.visualization.draw_geometries([pcd],
-                                  zoom=0.3412,
-                                  front=[0.4257, -0.2125, -0.8795],
-                                  lookat=[2.6172, 2.0475, 1.532],
-                                  up=[-0.0694, -0.9768, 0.2024])
+o3d.visualization.draw_geometries([pcd])
 
 
 # Crop
@@ -23,11 +19,7 @@ dists = pcd.compute_point_cloud_distance(chair)
 dists = np.asarray(dists)
 ind = np.where(dists > 0.01)[0]
 pcd_without_chair = pcd.select_by_index(ind)
-o3d.visualization.draw_geometries([pcd_without_chair],
-                                  zoom=0.3412,
-                                  front=[0.4257, -0.2125, -0.8795],
-                                  lookat=[2.6172, 2.0475, 1.532],
-                                  up=[-0.0694, -0.9768, 0.2024])
+o3d.visualization.draw_geometries([pcd_without_chair])
 
 
 # Create AABB and BB
@@ -35,11 +27,7 @@ aabb = chair.get_axis_aligned_bounding_box()
 aabb.color = (1, 0, 0)
 obb = chair.get_oriented_bounding_box()
 obb.color = (0, 1, 0)
-o3d.visualization.draw_geometries([chair, aabb, obb],
-                                  zoom=0.7,
-                                  front=[0.5439, -0.2333, -0.8060],
-                                  lookat=[2.4615, 2.1331, 1.338],
-                                  up=[-0.1781, -0.9708, 0.1608])
+o3d.visualization.draw_geometries([chair, aabb, obb])
 
 
 # Create Convex hull

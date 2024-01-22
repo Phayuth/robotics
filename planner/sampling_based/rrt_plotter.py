@@ -64,7 +64,7 @@ class RRTPlotter:
             axis.plot(xGoal.config[0], xGoal.config[1], color="blue", linewidth=0, marker='o', markerfacecolor='red')
 
     def plot_2d_path(path, axis):
-        axis.plot([node.config[0] for node in path], [node.config[1] for node in path], color='blue', linewidth=2, marker='o', markerfacecolor='plum', markersize=5)
+        axis.plot(path[0,:], path[1,:], color='blue', linewidth=2, marker='o', markerfacecolor='plum', markersize=5)
 
     def plot_performance(perfMatrix, axis):
         costGraph = perfMatrix["Cost Graph"]

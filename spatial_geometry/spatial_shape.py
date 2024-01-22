@@ -322,7 +322,7 @@ if __name__ == "__main__":
         c = ShapePoint2D(5, 5)
         trig = ShapeTriangle([0, 0], [10, 0], [0, 10])
         collision = ShapeCollision.intersect_triangle_v_point(trig, c)
-        print(f"==>> collision: {collision}")
+        print(f"> collision: {collision}")
 
 
     def line_and_circle():
@@ -331,21 +331,21 @@ if __name__ == "__main__":
         P = np.array([[-6], [-6]])
         Q = np.array([[-6], [6]])
         collision = ShapeCollision.intersect_line_v_circle(r, O, P, Q)
-        print(f"==>> collision: {collision}")
+        print(f"> collision: {collision}")
 
 
     def rectangle_and_rectangle():
         rec1 = ShapeRectangle(0, 0, 5, 5)
         rec2 = ShapeRectangle(10, 10, 5, 5)
         collision = ShapeCollision.intersect_rectangle_v_rectangle(rec1, rec2)
-        print(f"==>> collision: {collision}")
+        print(f"> collision: {collision}")
 
 
     def line_and_rectangle():
         recWithAngle = ShapeRectangle(1,1,1,5,angle=2)
         line = ShapeLine2D(-1,1,0,5)
         collision = ShapeCollision.intersect_line_v_rectangle(line, recWithAngle)
-        print(f"==>> collision: {collision}")
+        print(f"> collision: {collision}")
         line.plot()
         recWithAngle.plot()
         plt.show()
@@ -365,10 +365,10 @@ if __name__ == "__main__":
         p2 = ShapePoint2D(0.0, 0.0)
         p3 = ShapePoint2D(4.0, 3.8)
         p4 = ShapePoint2D(-2.5, 6.4)
-        state1 = ShapeCollision.intersect_ellipse_v_point(ellipse,p1); print(f"==>> state1: \n{state1}")
-        state2 = ShapeCollision.intersect_ellipse_v_point(ellipse,p2); print(f"==>> state2: \n{state2}")
-        state3 = ShapeCollision.intersect_ellipse_v_point(ellipse,p3); print(f"==>> state3: \n{state3}")
-        state4 = ShapeCollision.intersect_ellipse_v_point(ellipse,p4); print(f"==>> state4: \n{state4}")
+        state1 = ShapeCollision.intersect_ellipse_v_point(ellipse,p1); print(f"> state1: \n{state1}")
+        state2 = ShapeCollision.intersect_ellipse_v_point(ellipse,p2); print(f"> state2: \n{state2}")
+        state3 = ShapeCollision.intersect_ellipse_v_point(ellipse,p3); print(f"> state3: \n{state3}")
+        state4 = ShapeCollision.intersect_ellipse_v_point(ellipse,p4); print(f"> state4: \n{state4}")
 
         ellipse.plot()
         p1.plot()

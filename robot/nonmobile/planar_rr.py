@@ -1,6 +1,11 @@
+import os
+import sys
+wd = os.path.abspath(os.getcwd())
+sys.path.append(str(wd))
+
 import numpy as np
-import matplotlib.pyplot as plt
 from spatial_geometry.spatial_transformation import RigidBodyTransformation as rbt
+
 
 class PlanarRR:
 
@@ -109,28 +114,9 @@ class PlanarRR:
 
         return J
 
-    def plot_arm(self, theta, plt_basis=False, plt_show=False):
-        theta1 = theta[0, 0]
-        theta2 = theta[1, 0]
-
-        shoulder = np.array([0, 0])
-        elbow = shoulder + np.array([self.a1 * np.cos(theta1), self.a1 * np.sin(theta1)])
-        wrist = elbow + np.array([self.a2 * np.cos(theta1 + theta2), self.a2 * np.sin(theta1 + theta2)])
-
-        if plt_basis:
-            plt.axes().set_aspect('equal')
-            plt.axvline(x=0, c="green")
-            plt.axhline(y=0, c="green")
-
-        plt.plot([shoulder[0], elbow[0]], [shoulder[1], elbow[1]], color='indigo', linewidth=5, marker='o', markerfacecolor='r')
-        plt.plot([elbow[0], wrist[0]], [elbow[1], wrist[1]], color='indigo', linewidth=5, marker='o', markerfacecolor='r')
-
-        # plt.plot(shoulder[0], shoulder[1], 'ro')
-        # plt.plot(elbow[0], elbow[1], 'ro')
-        # plt.plot(wrist[0], wrist[1], 'ro')
-
-        if plt_show:
-            plt.show()
+    def plot_arm(self, theta, axis):
+        link = self.forward_kinematic(theta, return_link_pos=True)
+        axis.plot([link[0][0], link[1][0], link[2][0]], [link[0][1], link[1][1], link[2][1]], color='indigo', linewidth=5, marker='o', markerfacecolor='r')
 
 
 class PlanarRRVoxel(object):
@@ -162,11 +148,13 @@ class PlanarRRVoxel(object):
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
     robot = PlanarRR()
     desiredPose = np.array([[-0.15], [4-0.2590]])
-    thetaUp = robot.inverse_kinematic_geometry(desiredPose, elbow_option=0); print(f"==>> thetaUp: \n{thetaUp}")
-    thetaDown = robot.inverse_kinematic_geometry(desiredPose, elbow_option=1); print(f"==>> thetaDown: \n{thetaDown}")
-    robot.plot_arm(thetaUp)
+    thetaUp = robot.inverse_kinematic_geometry(desiredPose, elbow_option=0); print(f"> thetaUp: \n{thetaUp}")
+    thetaDown = robot.inverse_kinematic_geometry(desiredPose, elbow_option=1); print(f"> thetaDown: \n{thetaDown}")
+    robot.plot_arm(thetaUp, plt)
     plt.show()
 
 

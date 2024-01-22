@@ -1,12 +1,3 @@
-"""Robot Class for Planar RRR
-
-Reference:
-- Inverse Kinematic :
-    1. https://www.youtube.com/watch?v=NjAAKruKiQM
-    2. https://github.com/AymenHakim99/Forward-and-Inverse-Kinematics-for-3-DOF-Robotic-arm
-
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -96,10 +87,10 @@ class PlanarRRR:
         if plt_show:
             plt.show()
 
-    def inverse_kinematic_geometry(self, desired_config, elbow_option=0):
-        x = desired_config[0, 0]
-        y = desired_config[1, 0]
-        phi = desired_config[2, 0]
+    def inverse_kinematic_geometry(self, desiredConfig, elbow_option=0):
+        x = desiredConfig[0, 0]
+        y = desiredConfig[1, 0]
+        phi = desiredConfig[2, 0]
 
         x2 = x - self.a3 * np.cos(phi)
         y2 = y - self.a3 * np.sin(phi)
@@ -124,8 +115,8 @@ class PlanarRRR:
 if __name__ == "__main__":
     robot = PlanarRRR()
     desiredPose = np.array([[1], [1], [0.2]])
-    thetaUp = robot.inverse_kinematic_geometry(desiredPose, elbow_option=0); print(f"==>> thetaUp: {thetaUp}")
-    thetaDown = robot.inverse_kinematic_geometry(desiredPose, elbow_option=1); print(f"==>> thetaDown: {thetaDown}")
+    thetaUp = robot.inverse_kinematic_geometry(desiredPose, elbow_option=0); print(f"> thetaUp: {thetaUp}")
+    thetaDown = robot.inverse_kinematic_geometry(desiredPose, elbow_option=1); print(f"> thetaDown: {thetaDown}")
     robot.plot_arm(thetaUp)
     robot.plot_arm(thetaDown)
     plt.show()

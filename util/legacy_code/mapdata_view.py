@@ -5,17 +5,10 @@ import matplotlib.pyplot as plt
 
 # SECTION - view 2D map in config space folder
 map_list = glob.glob('./datasave/config_space_data_2d/*.npy')
-fig, axs = plt.subplots(2, 3)
-axs[0, 0].imshow(np.load(map_list[0]))
-axs[0, 0].set_title('Axis [0, 0]')
-axs[0, 1].imshow(np.load(map_list[1]))
-axs[0, 1].set_title('Axis [0, 1]')
-axs[0, 2].imshow(np.load(map_list[2]))
-axs[1, 0].set_title('Axis [1, 0]')
-axs[1, 0].imshow(np.load(map_list[3]))
-axs[1, 1].set_title('Axis [1, 1]')
-axs[1, 1].imshow(np.load(map_list[4]))
-axs[1, 1].set_title('Axis [1, 1]')
+fig, axs = plt.subplots(1, len(map_list))
+for i in range(len(map_list)):
+    axs[i].imshow(np.load(map_list[i]))
+    axs[i].set_title(f'ID : {i}')
 plt.show()
 
 

@@ -6,7 +6,7 @@ sys.path.append(str(wd))
 
 import time
 import numpy as np
-from spatial_geometry.mapclass import map_val
+from spatial_geometry.map_class import map_val
 
 
 class Node:

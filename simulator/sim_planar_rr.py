@@ -5,6 +5,7 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
+import matplotlib.pyplot as plt
 from spatial_geometry.spatial_shape import ShapeLine2D, ShapeCollision
 from robot.nonmobile.planar_rr import PlanarRR
 from spatial_geometry.taskmap_geo_format import NonMobileTaskMap
@@ -62,8 +63,7 @@ class RobotArm2DSimulator:
 
         return 1 - gridMap
 
-    def plot_taskspace(self, theta):
-        self.robot.plot_arm(theta, plt_basis=True)
+    def plot_taskspace(self):
         for obs in self.taskMapObs:
             obs.plot()
 
@@ -80,17 +80,35 @@ class RobotArm2DSimulator:
         collisionPoint = np.array(collisionPoint)
         axis.plot(collisionPoint[:, 0], collisionPoint[:, 1], color='darkcyan', linewidth=0, marker='o', markerfacecolor='darkcyan', markersize=1.5)
 
-    def play_back_path(self, path, axis):
-        raise NotImplementedError
+    def play_back_path(self, path, animation):  # path format (2,n)
+        # plot task space
+        fig, ax = plt.subplots()
+        ax.grid(True)
+        ax.set_aspect("equal")
+        self.plot_taskspace()
+
+        # plot animation link
+        robotLinks, = ax.plot([], [], color='indigo', linewidth=5, marker='o', markerfacecolor='r')
+
+        def update(frame):
+            link = self.robot.forward_kinematic(path[:, frame].reshape(2,1), return_link_pos=True)
+            robotLinks.set_data([link[0][0], link[1][0], link[2][0]], [link[0][1], link[1][1], link[2][1]])
+
+        animation = animation.FuncAnimation(fig, update, frames=(path.shape[1]), interval=1)
+        plt.show()
 
 
 if __name__ == "__main__":
+    from matplotlib import animation
     import matplotlib.pyplot as plt
 
     env = RobotArm2DSimulator()
-    env.plot_cspace()
-    plt.show()
 
-    # gridNp = env.generate_cspace()
-    # plt.imshow(gridNp)
+    # fig, ax = plt.subplots(1,1)
+    # env.plot_cspace(ax)
     # plt.show()
+
+    t1 = np.deg2rad(np.arange(0,90,1))
+    t2 = np.deg2rad(np.arange(0,90,1))
+    tt = np.vstack((t1,t2))
+    env.play_back_path(tt, animation)

@@ -1,6 +1,3 @@
-""" Path Planning for Planar RRR with Informed RRT star at runtime
-"""
-
 import os
 import sys
 

@@ -46,7 +46,7 @@ def detect_stamp_in_circle(imgRGB, minRadius=100, maxRadius=200, zoom=0, thresho
 
 if __name__ == "__main__":
     # Read image.
-    imgBGR = cv.imread('/home/yuth/Downloads/testcir.jpg', cv.IMREAD_COLOR)
+    imgBGR = cv.imread('/home/yuth/experiment/Resources/testcir.jpg', cv.IMREAD_COLOR)
     imgRGB = cv.cvtColor(imgBGR, cv.COLOR_BGR2RGB)
 
     plt.imshow(imgRGB)
@@ -65,26 +65,9 @@ if __name__ == "__main__":
     plt.imshow(imgRGB)
     plt.show()
 
-    fig, axs = plt.subplots(2, 5)
-    axs[0, 0].imshow(cirRGB[0])
-    axs[0, 0].set_title(f'{state[0]}')
-
-    axs[0, 1].imshow(cirRGB[1])
-    axs[0, 1].set_title(f'{state[1]}')
-
-    axs[0, 2].imshow(cirRGB[2])
-    axs[0, 2].set_title(f'{state[2]}')
-
-    axs[0, 3].imshow(cirRGB[3])
-    axs[0, 3].set_title(f'{state[3]}')
-
-    axs[0, 4].imshow(cirRGB[4])
-    axs[0, 4].set_title(f'{state[4]}')
-
-    axs[1, 0].imshow(cirRGB[5])
-    axs[1, 0].set_title(f'{state[5]}')
-
-    axs[1, 1].imshow(cirRGB[6])
-    axs[1, 1].set_title(f'{state[6]}')
-
+    numpic = len(state)
+    fig, axs = plt.subplots(1, numpic)
+    for i in range(numpic):
+        axs[i].imshow(cirRGB[i])
+        axs[i].set_title(f'{state[i]}')
     plt.show()

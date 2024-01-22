@@ -1,14 +1,5 @@
-""" Robot Class for UR5 and UR5e
-
-Reference:
-- DH Parameter
-    1. DH parameter, Forward and Inverse Kinematic is from : http://rasmusan.dk/wp-content/uploads/ur5_kinematics.pdf
-
-"""
-
 import os
 import sys
-
 wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
@@ -284,8 +275,8 @@ class UR5e:
 if __name__ == "__main__":
     robot = UR5e()
     jointOriginal = np.array([0.5, 0.5, -0.5, 0, 0, 0]).reshape(6, 1)
-    TOriginal = robot.forward_kinematic(jointOriginal, return_full_H=True); print("==>> TOriginal: \n", TOriginal)  # T06
-    thetaIk = robot.inverse_kinematic_geometry(TOriginal); print("==>> thetaIk: \n", thetaIk.T)
+    TOriginal = robot.forward_kinematic(jointOriginal, return_full_H=True); print("> TOriginal: \n", TOriginal)  # T06
+    thetaIk = robot.inverse_kinematic_geometry(TOriginal); print("> thetaIk: \n", thetaIk.T)
     for i in range(8):
-        possibleTheta = thetaIk[:, i].reshape(6, 1); print(f"==>> possibleTheta {i + 1}possibleTheta: \n", possibleTheta.T)
-        TAfterIk = robot.forward_kinematic(possibleTheta, return_full_H=True); print("==>> TAfterIk: \n", TAfterIk)
+        possibleTheta = thetaIk[:, i].reshape(6, 1); print(f"> possibleTheta {i + 1}possibleTheta: \n", possibleTheta.T)
+        TAfterIk = robot.forward_kinematic(possibleTheta, return_full_H=True); print("> TAfterIk: \n", TAfterIk)
