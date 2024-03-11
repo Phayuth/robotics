@@ -26,7 +26,7 @@ copsimConfigDualTree = {
     "planner": 5,
     "eta": 0.15,
     "subEta": 0.05,
-    "maxIteration": 3000,
+    "maxIteration": 200,
     "simulator": simu,
     "nearGoalRadius": None,
     "rewireRadius": None,
@@ -45,10 +45,11 @@ xGoal = q.xGoal
 
 pa = PlannerManipulator(xStart, xApp, xGoal, copsimConfigDualTree)
 pq = pa.planning()
+print(f"> pq: {pq}")
 time.sleep(3)
 
-# sss = UR5eArmCoppeliaSimAPI()
-# simu.play_back_path(pq)
+# sss = UR5eArmCoppeliaSimAPI() # must create new instance. problem with zmq (deadlock) probably with collision check request. (If I let planning run out of iteration. It worked fine)
+simu.play_back_path(pq)
 
 fig, ax = plt.subplots()
 RRTPlotter.plot_performance(pa.planner.perfMatrix, ax)

@@ -25,11 +25,26 @@ def print_dict(dict):
         print(sub, ':', dict[sub])
 
 
-def write_dict_to_file(dictionary, file_path):
-    with open(file_path, 'w') as file:
+def write_dict_to_file(dictionary, filePath):
+    with open(filePath, 'w') as file:
         json.dump(dictionary, file, indent=4)
 
-    print("Dictionary saved to", file_path)
+    print("Dictionary saved to", filePath)
+
+
+def path_opt():
+    import os
+    import pathlib
+    import sys
+
+    filePath = os.path.realpath(__file__)  # get the file path of the current script
+    print(filePath)
+
+    path = pathlib.Path('./')  # add path
+    print(path)
+
+    # add path so python script can back up one level and go to another different dir to find another file
+    sys.path.append(str(pathlib.Path(__file__).parent.parent))
 
 
 if __name__ == "__main__":
@@ -47,10 +62,6 @@ if __name__ == "__main__":
         "numberOfIterationUsed": 0,
         "searchPathTime": 0.0,
         "numberOfPath": 0,
-        "numberOfPathPruned": 0}
+        "numberOfPathPruned": 0
+    }
     print_dict(perfMatrix)
-
-
-    path = './open3d/depthcloud.yaml'
-    read_json(path)
-

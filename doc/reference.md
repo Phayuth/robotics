@@ -53,7 +53,6 @@
 - Collision
     - https://developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection
     - http://www.jeffreythompson.org/collision-detection/table_of_contents.php
-    - https://www.baeldung.com/cs/circle-line-segment-collision-detection
     - https://yal.cc/rectangle-circle-intersection-test/
 
 # Systems

@@ -43,7 +43,7 @@ class DifferentialDrivePoseBasicController:
 
 class DifferentialDrivePositionForwardController:
     """
-    Position Basic Controller provide only control input toward desired position until distance.
+    [Summary] : Position Basic Controller provide only control input toward desired position until distance.
 
     """
     def __init__(self, robot) -> None:

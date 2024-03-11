@@ -20,6 +20,7 @@ class EulerNumericalIntegrator:
         - state [0] + time [1]    -> desired [1]
         - state [0] + desired [1] -> control [1]
         - state [0] + control [1] -> state [1]
+
     """
 
     def __init__(self, dynamicFunction, controlFunction, desiredFunction, initialState, tSpan, dt) -> None:

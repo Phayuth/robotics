@@ -279,7 +279,10 @@ class RigidBodyTransformation:
         return np.array([q0, q1, q2, q3]).reshape(4,1)
 
     def conv_t_and_quat_to_h(translation, quaternion):
-        H = np.eye(4)
+        H = np.array([[0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 0.0],
+                      [0.0, 0.0, 0.0, 1.0]])
         H[:3, :3] = R.from_quat(quaternion).as_matrix()
         H[:3, 3] = translation
         return H
@@ -289,13 +292,13 @@ class RigidBodyTransformation:
         translation = H[:3, 3]
         return translation, quaternion
 
-    def conv_rotmat_and_t_to_h(rotmat, t):
+    def conv_rotmat_and_t_to_h(rotmat, translation):
         H = np.array([[0.0, 0.0, 0.0, 0.0],
                       [0.0, 0.0, 0.0, 0.0],
                       [0.0, 0.0, 0.0, 0.0],
                       [0.0, 0.0, 0.0, 1.0]])
         H[:3, :3] = rotmat
-        H[:3, 3] = t
+        H[:3, 3] = translation
         return H
 
     def conv_polar_to_cartesian(r, theta, xTarg=0, yTarg=0):
@@ -345,91 +348,14 @@ class RigidBodyTransformation:
             return RigidBodyTransformation.vec_to_skew(thetaDot*RigidBodyTransformation.basis_vec(rotAx)) @ RigidBodyTransformation.rotz(theta)
 
 
-class PlotTransformation:
-
-    def plot_frame_2d(rot2d, translation, ax, plt_basis=False):
-
-        r1 = np.array([[0],[0]])
-        r2 = np.array([[1],[0]])
-        r4 = np.array([[0],[1]])
-
-        dx = translation[0,0]
-        dy = translation[1,0]
-
-        d1 = np.array([[dx],[dy]])
-        d2 = np.array([[dx],[dy]])
-        d4 = np.array([[dx],[dy]])
-
-        # rnew = Rotation @ rold + d
-        r1new = rot2d @ r1 + d1
-        r2new = rot2d @ r2 + d2
-        r4new = rot2d @ r4 + d4
-
-        ax.set_aspect('equal')
-        if plt_basis:
-            # plot basic axis
-            ax.axvline(x=0, c="black")
-            ax.axhline(y=0, c="black")
-
-        # plot frame
-        ax.plot([r1new[0,0], r2new[0,0]],[r1new[1,0], r2new[1,0]],"blue", linewidth=4) # x axis
-        ax.plot([r1new[0,0], r4new[0,0]],[r1new[1,0], r4new[1,0]],"red", linewidth=4)  # y axis
-
-
-    def plot_frame_3d(H, ax, plt_basis=False): # input 4x4 transform matrix. use ax = plt.axes(projection='3d')
-        rotation = H[0:3, 0:3]
-        d = H[0:3, 3, np.newaxis]
-
-        r1 = np.array([[1],[0],[0]])
-        r2 = np.array([[0],[1],[0]])
-        r3 = np.array([[0],[0],[1]])
-        r4 = np.array([[0],[0],[0]])
-
-        r1new = rotation @ r1 + d
-        r2new = rotation @ r2 + d
-        r3new = rotation @ r3 + d
-        r4new = rotation @ r4 + d
-
-        if plt_basis:
-            # plot basic axis
-            ax.plot3D([0, 2], [0, 0], [0, 0], 'red', linewidth=4)
-            ax.plot3D([0, 0], [0, 2], [0, 0], 'purple', linewidth=4)
-            ax.plot3D([0, 0], [0, 0], [0, 2], 'green', linewidth=4)
-
-        # plot frame
-        ax.plot3D([r4new[0,0], r1new[0,0]], [r4new[1,0], r1new[1,0]], [r4new[2,0], r1new[2,0]], 'gray', linewidth=4, label="gray is x")
-        ax.plot3D([r4new[0,0], r2new[0,0]], [r4new[1,0], r2new[1,0]], [r4new[2,0], r2new[2,0]], 'blue', linewidth=4, label="blue is y")
-        ax.plot3D([r4new[0,0], r3new[0,0]], [r4new[1,0], r3new[1,0]], [r4new[2,0], r3new[2,0]], 'yellow', linewidth=4, label="yellow is z")
-        ax.legend()
-
-
 if __name__=="__main__":
-    import matplotlib.pyplot as plt
     rbt = RigidBodyTransformation
-    pltt = PlotTransformation
-
-    def plot_2d_frame():
-        theta = np.pi / 4
-        rot = rbt.rot2d(theta)
-        tran = np.array([[1],[1]])
-        fig, ax = plt.subplots()
-        pltt.plot_frame_2d(rot, tran, ax, plt_basis=True)
-        plt.show()
-
 
     def fixang_and_rotvec():
         gamma_beta_alpha = np.random.uniform(-np.pi, np.pi, (3,1))
         fixed_angle = rbt.rot_fix_ang('xyz', gamma_beta_alpha); print("fixed_angle original: \n", fixed_angle)
         ang = rbt.conv_fixang_to_rotvec(fixed_angle)
         fixed_angle_again = rbt.rot_fix_ang('xyz', ang); print("fixed_angle inverse problem: \n", fixed_angle_again)
-
-
-    def axang_and_rotmat():
-        # equivalent axis angle rotation
-        theta = np.random.uniform(-np.pi, np.pi); print("theta original: \n", theta)
-        k = np.random.uniform(0,1,(3,1)); print("k original: \n", k)
-        axangRot = rbt.conv_axang_to_rotmat(theta, k)
-        thet, kk = rbt.conv_rotmat_to_axang(axangRot); print("theta inverse problem: \n", thet); print("k inverse problem: \n", kk)
 
 
     def rotmat_and_quat():
@@ -439,20 +365,33 @@ if __name__=="__main__":
         qttt = rbt.conv_rotmat_to_quat(rotfromqt); print("quaternion inverse problem: \n", qttt)
 
 
-    def axang_and_quat():
-        theta = np.random.uniform(-np.pi, np.pi); print("theta original: \n", theta)
-        k = np.random.uniform(0,1,(3,1)); print("k original: \n", k)
-        q = rbt.conv_axang_to_quat(theta, k); print(f"q: {q}")
-        theta_ori, n_ori = rbt.conv_quat_to_axang(q); print("theta_ori: \n", theta_ori); print("n_ori: \n", n_ori)
-    axang_and_quat()
-
-
     def transform_tool0_to_camlink():
         # tool0 to camera_link
-        roty_n90 = rbt.roty(-np.pi / 2)
+        roty_n90 = rbt.roty(np.pi / 2)
         rotz_p90 = rbt.rotz(np.pi / 2)
         rot = rotz_p90 @ roty_n90
         r = R.from_matrix(rot)
         rq = r.as_quat()
         print(f"rq: \n{rq}")  # xyzw
-    # transform_tool0_to_camlink()
+
+    def transform_pose():
+        pose = [4,5,71,0,0,0,1]
+        translation=pose[0:3]
+        quaternion=pose[3:7]
+        Hgrasptocam = rbt.conv_t_and_quat_to_h(translation, quaternion)
+        print(f"> Hgrasptocam: {Hgrasptocam}")
+
+        tqg = rbt.conv_h_to_t_and_quat(Hgrasptocam)
+        poserecover = np.hstack(tqg).tolist()
+        print(f"> poserecover: {poserecover}")
+    transform_pose()
+
+    def transform_tool0_to_camlink():
+        # tool0 to camera_link
+        roty_p90 = rbt.roty(np.pi / 2)
+        rotx_n90 = rbt.rotz(-np.pi / 2)
+        rot = rotx_n90 @ roty_p90
+        r = R.from_matrix(rot)
+        rq = r.as_quat()
+        print(f"rq: \n{rq}")  # xyzw
+    transform_tool0_to_camlink()

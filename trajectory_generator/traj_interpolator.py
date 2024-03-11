@@ -9,7 +9,7 @@ import scipy.interpolate
 
 class CubicSplineInterpolationIndependant:
     """
-    [Summay] : Extact Pass Through Interpolator using piecewise natural cubic polynomial with C2 continuous.
+    [Summay] : Exact Pass Through Interpolator using piecewise natural cubic polynomial with C2 continuous.
 
     [Method] :
 
@@ -39,7 +39,9 @@ class CubicSplineInterpolationIndependant:
 
 class MonotoneSplineInterpolationIndependant:
     """
-    Prevent Overshooting as Natural Cubic Spline
+    [Summay] : Exact Pass Through Interpolator with prevention of Overshooting unlike Natural Cubic Spline.
+    (Runge's Phenomenon) a problem of oscillation at the edges of an interval that occurs when using polynomial interpolation
+    with polynomials of high degree over a set of equispaced interpolation points.
 
     """
 
@@ -67,6 +69,10 @@ class MonotoneSplineInterpolationIndependant:
 
 
 class BSplineInterpolationIndependant:
+    """
+    [Summay] : B-Spline (Basis Spline) does not necessary pass through all
+
+    """
 
     def __init__(self, s, pathArray, degree) -> None:
         self.pathArray = pathArray

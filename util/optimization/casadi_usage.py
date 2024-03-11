@@ -77,6 +77,7 @@ def simple_problem3():
 
 
 if __name__ == "__main__":
+    # building_block()
     # simple_problem1()
     # simple_problem2()
     simple_problem3()
