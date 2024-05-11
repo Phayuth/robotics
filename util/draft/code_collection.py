@@ -37,9 +37,9 @@ def elapsed_time_check():  # calculate elapsed time
 
 
 def dictionary_config():
-    config = {'param1': 'dfdf', 'param2': 'ssss', 'param3': 'fdae'}
-    param1 = config.get('param1', 'default_value1')
-    param2 = config.get('param2', 'default_value2')
+    config = {"param1": "dfdf", "param2": "ssss", "param3": "fdae"}
+    param1 = config.get("param1", "default_value1")
+    param2 = config.get("param2", "default_value2")
     ic(param1, param2)
     config.pop("param1")
     ic(config)
@@ -62,7 +62,7 @@ def node_operation():
             self.cost = cost
 
         def __repr__(self) -> str:
-            return f'\nconfig = {self.config}, hasParent = {True if self.parent != None else False}, NumChild = {len(self.child)}'
+            return f"\nconfig = {self.config}, hasParent = {True if self.parent != None else False}, NumChild = {len(self.child)}"
 
     # root
     node1 = Node(config=[1, 1], parent=None)
@@ -184,7 +184,9 @@ def function_decorate():
                     mainFunction(*args, **kwargs)
                 except KeyboardInterrupt:
                     sideFunction()
+
             return wrapper
+
         return decorator
 
     def sideFunc():
@@ -226,9 +228,38 @@ def memory_address_test():
 
 
 def format_string():
-    a = [0.321,4.213,421.4132]
+    a = [0.321, 4.213, 421.4132]
     print(f"{a[2]:.3f}")
 
 
-if __name__=="__main__":
+def get_interval():
+
+    i = list(range(0, 38))
+    knot = [12, 23, 31, 34, 37]
+
+    intervals = []
+
+    for val in i:
+        if val < knot[0]:
+            interval = (-float("inf"), knot[0])
+            intervals.append(interval)
+        else:
+            break
+
+    for val in i[len(intervals) :]:
+        for j in range(len(knot) - 1):
+            if knot[j] <= val < knot[j + 1]:
+                interval = (knot[j], knot[j + 1])
+                intervals.append(interval)
+                break
+        else:
+            interval = (knot[-1], float("inf"))
+            intervals.append(interval)
+
+    print("Intervals for each i value:")
+    for i, interval in zip(i, intervals):
+        print(f"i={i}: {interval}")
+
+
+if __name__ == "__main__":
     format_string()

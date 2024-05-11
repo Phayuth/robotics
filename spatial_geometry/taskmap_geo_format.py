@@ -60,6 +60,11 @@ class NonMobileTaskMap:
             ShapeRectangle(x=-1, y=0, h=1, w=0.5, p=1),
             ShapeRectangle(x=-0.5, y=-0.5, h=0.4, w=3, p=1)]
 
+    def thesis_exp():
+        return [
+            ShapeRectangle(x=-2.75, y=1, h=2, w=1),
+            ShapeRectangle(x=1.5, y=2, h=2, w=1)]
+
 
 class MobileTaskMap:
 
@@ -112,8 +117,14 @@ if __name__ == "__main__":
     plt.axvline(x=0, c="green")
     plt.axhline(y=0, c="green")
 
-    # listTask = [task_rectangle_obs_6()]
     listTask = [MobileTaskMap.warehouse_map()]
+
+    for task in listTask:
+        for obs in task:
+            obs.plot()
+    plt.show()
+
+    listTask = [NonMobileTaskMap.task_rectangle_obs_1()]
 
     for task in listTask:
         for obs in task:

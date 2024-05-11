@@ -46,30 +46,31 @@ def ik_selectivly_dls():
 # ik_selectivly_dls()
 
 
-import json
+# import json
 
-matrixsamples = np.random.uniform(0, 1, (4, 40)).tolist()
-jointsamples = np.random.uniform(-np.pi, np.pi, (10, 6)).tolist()
-matrix = np.random.uniform(0, 1, (4, 4)).tolist()
-pose = np.random.uniform(0, 1, (1, 7)).tolist()
+# matrixsamples = np.random.uniform(0, 1, (4, 40)).tolist()
+# jointsamples = np.random.uniform(-np.pi, np.pi, (10, 6)).tolist()
+# matrix = np.random.uniform(0, 1, (4, 4)).tolist()
+# pose = np.random.uniform(0, 1, (1, 7)).tolist()
 
-data = {"Title":"Handeye Calibration Program",
-        "Camera Mount Type": "Fixed",
-        "Camera Frame": "Camera_color_optical_frame",
-        "Object Frame": "calib_board",
-        "Robot Base": "base",
-        "End Effector Frame": "too0",
-        "Matrix Dataset": matrixsamples,
-        "Joint Dataset": jointsamples,
-        "Result Transformation": "Camera_color_optical_frame to base",
-        "Result Matrix": matrix,
-        "Result Pose": pose}
+# data = {"Title":"Handeye Calibration Program",
+#         "Camera Mount Type": "Fixed",
+#         "Camera Frame": "Camera_color_optical_frame",
+#         "Object Frame": "calib_board",
+#         "Robot Base": "base",
+#         "End Effector Frame": "too0",
+#         "Matrix Dataset": matrixsamples,
+#         "Joint Dataset": jointsamples,
+#         "Result Transformation": "Camera_color_optical_frame to base",
+#         "Result Matrix": matrix,
+#         "Result Pose": pose}
 
 
-with open("/home/yuth/jointsample.json", "w") as f:
-    json.dump(data, f, indent=4)
+# with open("/home/yuth/jointsample.json", "w") as f:
+#     json.dump(data, f, indent=4)
 
-with open("/home/yuth/jointsample.json", "r") as f:
-    a = json.load(f)
+# with open("/home/yuth/jointsample.json", "r") as f:
+#     a = json.load(f)
 
-print(a)
+# print(a)
+

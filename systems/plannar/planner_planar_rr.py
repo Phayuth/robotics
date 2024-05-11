@@ -30,7 +30,7 @@ plannarConfigDualTreea = {
     "rewireRadius": None,
     "endIterationID": 1,
     "printDebug": True,
-    "localOptEnable": True
+    "localOptEnable": False
 }
 
 

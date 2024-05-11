@@ -25,6 +25,11 @@ class ICRABarnMap:
         xApp = np.array([[2.30], [-1.85]])
         xGoal = np.array([[2.30], [-2.30]])
 
+    class PoseSingleDuplicateGoal:
+        xStart = np.array([[-2.70], [2.20]])
+        xApp = np.array([[2.30], [-1.85]])
+        xGoal = np.array([[2.30], [-1.85]])
+
     class PoseMulti: # one pre-grasp per one grasp pair
         xStart = np.array([[-2.70], [2.20]])
         xApp = [np.array([[2.30], [-1.85]]),
@@ -51,6 +56,15 @@ class ICRABarnMap:
         xGoal = [np.array([[2.30], [-2.30]]),
                  np.array([[2.30], [-2.30]]),
                  np.array([[2.30], [-2.30]])]
+
+    class PoseMulti3DuplicateGoal: # 3 pre-grasp per one grasp, [used in paper] view only
+        xStart = np.array([[-2.70], [2.20]])
+        xApp = [np.array([[2.30], [-1.85]]),
+                np.array([[2.50], [-0.37]]),
+                np.array([[0.05], [-2.33]])]
+        xGoal = [np.array([[2.30], [-1.85]]),
+                np.array([[2.50], [-0.37]]),
+                np.array([[0.05], [-2.33]])]
 
 
 class URHarvesting:

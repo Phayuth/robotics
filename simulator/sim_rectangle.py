@@ -33,7 +33,7 @@ class TaskSpace2DSimulator:
         gridRow = []
         for i in sample:
             for j in sample:
-                recMoving = ShapeRectangle(i, j, h=2, w=2)
+                recMoving = ShapeRectangle(i, j, h=0.1, w=0.1)
                 col = []
                 for k in self.taskMapObs:
                     collision = ShapeCollision.intersect_rectangle_v_rectangle(recMoving, k)

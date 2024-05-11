@@ -15,11 +15,17 @@ class RobotArm2DSimulator:
 
     def __init__(self):
         # required for planner
-        self.configLimit = [[-2*np.pi, 2*np.pi], [-2*np.pi, 2*np.pi]]
+        self.torusspace = False #True
+        if self.torusspace:
+            self.configLimit = [[-2*np.pi, 2*np.pi], [-2*np.pi, 2*np.pi]]
+        else:
+            self.configLimit = [[-np.pi, np.pi], [-np.pi, np.pi]]
+
         self.configDoF = len(self.configLimit)
 
         self.robot = PlanarRR()
-        self.taskMapObs = NonMobileTaskMap.task_rectangle_obs_1()
+        # self.taskMapObs = NonMobileTaskMap.task_rectangle_obs_1()
+        self.taskMapObs = NonMobileTaskMap.thesis_exp()
 
     def collision_check(self, xNewConfig):
         linkPose = self.robot.forward_kinematic(xNewConfig, return_link_pos=True)
@@ -35,9 +41,14 @@ class RobotArm2DSimulator:
         return False
 
     def get_cspace_grid(self): #generate into 2d array plot by imshow
-        gridSize = 720
-        theta1 = np.linspace(-2*np.pi, 2*np.pi, gridSize)
-        theta2 = np.linspace(-2*np.pi, 2*np.pi, gridSize)
+        if self.torusspace:
+            gridSize = 720
+            theta1 = np.linspace(-2*np.pi, 2*np.pi, gridSize)
+            theta2 = np.linspace(-2*np.pi, 2*np.pi, gridSize)
+        else:
+            gridSize = 360
+            theta1 = np.linspace(-np.pi, np.pi, gridSize)
+            theta2 = np.linspace(-np.pi, np.pi, gridSize)
 
         gridMap = np.zeros((gridSize, gridSize))
 
@@ -68,7 +79,11 @@ class RobotArm2DSimulator:
             obs.plot()
 
     def plot_cspace(self, axis):
-        jointRange = np.linspace(-2*np.pi, 2*np.pi, 720)
+        if self.torusspace:
+            jointRange = np.linspace(-2*np.pi, 2*np.pi, 720)
+        else:
+            jointRange = np.linspace(-np.pi, np.pi, 360)
+
         collisionPoint = []
         for theta1 in jointRange:
             for theta2 in jointRange:
@@ -85,6 +100,8 @@ class RobotArm2DSimulator:
         fig, ax = plt.subplots()
         ax.grid(True)
         ax.set_aspect("equal")
+        ax.set_xlim(-5, 5)
+        ax.set_ylim(-5, 5)
         self.plot_taskspace()
 
         # plot animation link
@@ -97,6 +114,19 @@ class RobotArm2DSimulator:
         animation = animation.FuncAnimation(fig, update, frames=(path.shape[1]), interval=1)
         plt.show()
 
+    def plot_view(self, thetas):
+        # plot task space
+        fig, ax = plt.subplots()
+        ax.grid(True)
+        ax.set_aspect("equal")
+        ax.set_xlim(-3, 4)
+        ax.set_ylim(-0.5, 5)
+        self.plot_taskspace()
+
+        for the in thetas:
+            self.robot.plot_arm(the.reshape(2,1), ax)
+        return ax
+
 
 if __name__ == "__main__":
     from matplotlib import animation
@@ -108,7 +138,12 @@ if __name__ == "__main__":
     # env.plot_cspace(ax)
     # plt.show()
 
-    t1 = np.deg2rad(np.arange(0,90,1))
-    t2 = np.deg2rad(np.arange(0,90,1))
-    tt = np.vstack((t1,t2))
-    env.play_back_path(tt, animation)
+    # t1 = np.deg2rad(np.arange(0,90,1))
+    # t2 = np.deg2rad(np.arange(0,90,1))
+    # tt = np.vstack((t1,t2))
+    # env.play_back_path(tt, animation)
+
+    thetas = np.array([[0,0], [2.1, 1.5], [2, 1.5], [2.2, 1.5]])
+    print(f"> thetas.shape: {thetas.shape}")
+    print(f"> thetas: {thetas}")
+    env.plot_view(thetas)

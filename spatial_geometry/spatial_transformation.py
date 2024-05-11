@@ -351,29 +351,6 @@ class RigidBodyTransformation:
 if __name__=="__main__":
     rbt = RigidBodyTransformation
 
-    def fixang_and_rotvec():
-        gamma_beta_alpha = np.random.uniform(-np.pi, np.pi, (3,1))
-        fixed_angle = rbt.rot_fix_ang('xyz', gamma_beta_alpha); print("fixed_angle original: \n", fixed_angle)
-        ang = rbt.conv_fixang_to_rotvec(fixed_angle)
-        fixed_angle_again = rbt.rot_fix_ang('xyz', ang); print("fixed_angle inverse problem: \n", fixed_angle_again)
-
-
-    def rotmat_and_quat():
-        quatt = np.random.uniform(0,1,(4,1))
-        quatt = quatt / np.linalg.norm(quatt); print("quaternion original: \n", quatt)
-        rotfromqt = rbt.conv_quat_to_rotmat(quatt)
-        qttt = rbt.conv_rotmat_to_quat(rotfromqt); print("quaternion inverse problem: \n", qttt)
-
-
-    def transform_tool0_to_camlink():
-        # tool0 to camera_link
-        roty_n90 = rbt.roty(np.pi / 2)
-        rotz_p90 = rbt.rotz(np.pi / 2)
-        rot = rotz_p90 @ roty_n90
-        r = R.from_matrix(rot)
-        rq = r.as_quat()
-        print(f"rq: \n{rq}")  # xyzw
-
     def transform_pose():
         pose = [4,5,71,0,0,0,1]
         translation=pose[0:3]
@@ -385,13 +362,3 @@ if __name__=="__main__":
         poserecover = np.hstack(tqg).tolist()
         print(f"> poserecover: {poserecover}")
     transform_pose()
-
-    def transform_tool0_to_camlink():
-        # tool0 to camera_link
-        roty_p90 = rbt.roty(np.pi / 2)
-        rotx_n90 = rbt.rotz(-np.pi / 2)
-        rot = rotx_n90 @ roty_p90
-        r = R.from_matrix(rot)
-        rq = r.as_quat()
-        print(f"rq: \n{rq}")  # xyzw
-    transform_tool0_to_camlink()

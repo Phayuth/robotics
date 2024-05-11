@@ -76,10 +76,10 @@ class TrialRun:
             # planner.simulator.stop_sim()
 
             data = [pm.planner.perfMatrix["Number of Node"],
-                    pm.planner.perfMatrix["Cost Graph"][0][1] if len(pm.planner.perfMatrix["Cost Graph"])==0 else None,
-                    pm.planner.perfMatrix["Cost Graph"][0][0] if len(pm.planner.perfMatrix["Cost Graph"])==0 else None,
-                    pm.planner.perfMatrix["Cost Graph"][-1][1] if len(pm.planner.perfMatrix["Cost Graph"])==0 else None,
-                    pm.planner.perfMatrix["Cost Graph"][-1][0] if len(pm.planner.perfMatrix["Cost Graph"])==0 else None,
+                    pm.planner.perfMatrix["Cost Graph"][0][1] if len(pm.planner.perfMatrix["Cost Graph"])!=0 else None,
+                    pm.planner.perfMatrix["Cost Graph"][0][0] if len(pm.planner.perfMatrix["Cost Graph"])!=0 else None,
+                    pm.planner.perfMatrix["Cost Graph"][-1][1] if len(pm.planner.perfMatrix["Cost Graph"])!=0 else None,
+                    pm.planner.perfMatrix["Cost Graph"][-1][0] if len(pm.planner.perfMatrix["Cost Graph"])!=0 else None,
                     pm.planner.perfMatrix["Total Planning Time"],
                     pm.planner.perfMatrix["Planning Time Only"],
                     pm.planner.perfMatrix["KCD Time Spend"],

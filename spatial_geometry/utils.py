@@ -31,6 +31,7 @@ if __name__ == "__main__":
     from datasave.joint_value.pre_record_value import SinglePose
 
     qA = Experiment2DArm.PoseSingle.xApp
+    print(f"> qA: {qA}")
     a = Utilities.find_shifted_value(qA)
     ic(a)
     ic(a.shape)

@@ -34,8 +34,8 @@ plannarConfigSingleTree = {
 }
 
 
-q = ICRABarnMap.PoseSingle()
-# q = ICRABarnMap.PoseMulti3()
+q = ICRABarnMap.PoseSingleDuplicateGoal()
+# q = ICRABarnMap.PoseMulti3DuplicateGoal()
 xStart = q.xStart
 xApp = q.xApp
 xGoal = q.xGoal

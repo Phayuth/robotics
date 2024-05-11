@@ -611,6 +611,7 @@ class RRTComponent:
         else:
             xSolnCost = [xSoln.cost + self.cost_line(xSoln, nodeToward) for xSoln in treeVertices]
             cBest = min(xSolnCost)
+            # self.perfMatrix["Cost Graph"].append((iteration, cBest))
             if cBest < self.cBestPrevious : # this has nothing to do with planning itself, just for record performance data only
                 self.perfMatrix["Cost Graph"].append((iteration, cBest))
                 self.cBestPrevious = cBest
@@ -627,6 +628,7 @@ class RRTComponent:
         else:
             xSolnCost = [vertexA.cost + vertexB.cost + self.cost_line(vertexA, vertexB) for vertexA, vertexB in connectNodePair]
             cBest = min(xSolnCost)
+            # self.perfMatrix["Cost Graph"].append((iteration, cBest))
             if cBest < self.cBestPrevious:
                 self.perfMatrix["Cost Graph"].append((iteration, cBest))
                 self.cBestPrevious = cBest
@@ -649,6 +651,7 @@ class RRTComponent:
                 xGoalBestIndex = index
 
         if xGoalBestIndex is not None:
+            # self.perfMatrix["Cost Graph"].append((iteration, cBest))
             if cBest < self.cBestPrevious:
                 self.perfMatrix["Cost Graph"].append((iteration, cBest))
                 self.cBestPrevious = cBest
@@ -696,4 +699,8 @@ class RRTComponent:
         path = self.get_path()
         timeEnd = time.perf_counter_ns()
         self.update_perf(timeStart, timeEnd)
-        return self.get_path_array(path)
+
+        if path is not None: # there are solutions
+            return self.get_path_array(path)
+        else: # no solution
+            return None

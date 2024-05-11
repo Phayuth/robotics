@@ -15,9 +15,10 @@ def funy(y, x):
 
 
 x = threading.Thread(target=funx, args=[2, "Hi"])
-x.start()
 
 y = threading.Thread(target=funy, args=[2, "Hello"])
+
+x.start()
 y.start()
 
 x.join()

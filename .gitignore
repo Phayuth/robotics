@@ -33,3 +33,6 @@ dist/
 
 # neural net weight
 *.pt
+
+# new data for experiement
+new_data/
