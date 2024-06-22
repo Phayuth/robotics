@@ -5,41 +5,35 @@ wd = os.path.abspath(os.getcwd())
 sys.path.append(str(wd))
 
 import numpy as np
+
 np.random.seed(9)
 
 # planner
 from planner.sampling_based.rrt_plannerapi import RRTPlannerAPI
 
 # environment
-from simulator.sim_planar_rr import RobotArm2DSimulator
+from simulator.sim_planar_6r import RobotArm6RSimulator
 
-# joint value
-from datasave.joint_value.experiment_paper import Experiment2DArm
-
-sim = RobotArm2DSimulator()
+sim = RobotArm6RSimulator()
 
 plannarConfigDualTreea = {
-    "planner": 25,
+    "planner": 5,
     "eta": 0.3,
     "subEta": 0.05,
-    "maxIteration": 10000,
+    "maxIteration": 2000,
     "simulator": sim,
     "nearGoalRadius": None,
     "rewireRadius": None,
     "endIterationID": 1,
     "printDebug": True,
-    "localOptEnable": False
+    "localOptEnable": False,
 }
 
-
-q = Experiment2DArm.PoseSingle()
-# q = Experiment2DArm.PoseMulti()
-xStart = q.xStart
-xApp = q.xApp
-xGoal = q.xGoal
+xStart = np.array([0, 0, 0, 0, 0, 0]).reshape(6,1)
+xApp = np.array([np.pi, 0, 0, 0, 0, 0]).reshape(6,1)
+xGoal = np.array([np.pi, 0, 0, 0, 0, 0]).reshape(6,1)
 
 pm = RRTPlannerAPI.init_normal(xStart, xApp, xGoal, plannarConfigDualTreea)
 patha = pm.begin_planner()
 
-pm.plot_2d_config_tree()
 pm.plot_performance()

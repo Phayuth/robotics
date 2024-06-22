@@ -96,7 +96,8 @@ class RRTPlotter:
     def plot_2d_config_single_tree(plannerClass, path, ax):
         RRTPlotter.plot_2d_obstacle(plannerClass.simulator, ax)
         RRTPlotter.plot_2d_single_tree(plannerClass.treeVertex, ax)
-        RRTPlotter.plot_2d_path(path, ax)
+        if path is not None:
+            RRTPlotter.plot_2d_path(path, ax)
         try:
             RRTPlotter.plot_2d_state_configuration(plannerClass.xStart, plannerClass.xApp, plannerClass.xGoal, ax)
         except:
@@ -105,7 +106,8 @@ class RRTPlotter:
     def plot_2d_config_dual_tree(plannerClass, path, ax):
         RRTPlotter.plot_2d_obstacle(plannerClass.simulator, ax)
         RRTPlotter.plot_2d_dual_tree(plannerClass.treeVertexStart, plannerClass.treeVertexGoal, ax)
-        RRTPlotter.plot_2d_path(path, ax)
+        if path is not None:
+            RRTPlotter.plot_2d_path(path, ax)
         try:
             RRTPlotter.plot_2d_state_configuration(plannerClass.xStart, plannerClass.xApp, plannerClass.xGoal, ax)
         except:

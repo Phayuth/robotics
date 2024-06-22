@@ -13,7 +13,7 @@ import numpy as np
 from matplotlib import animation
 np.random.seed(1010)
 from controllers.differential.path_purepursuit import DifferentialDrivePurePursuitController
-from planner.planner_mobilerobot import PlannerMobileRobot
+from planner.sampling_based.rrt_plannerapi import RRTPlannerAPI
 from simulator.sim_diffdrive import DiffDrive2DSimulator
 from simulator.integrator_euler import EulerNumericalIntegrator
 
@@ -38,8 +38,8 @@ plannarConfigDualTreea = {
     "localOptEnable": True
 }
 
-planner = PlannerMobileRobot(qStart, qAux, qGoal, plannarConfigDualTreea)
-path = planner.planning()
+planner = RRTPlannerAPI.init_k_element_q(qStart, qAux, qGoal, plannarConfigDualTreea, 2)
+path = planner.begin_planner()
 path = path.T
 
 # controller

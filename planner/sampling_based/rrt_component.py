@@ -19,7 +19,7 @@ class RRTComponent:
     def __init__(self, baseConfigFile):
         # simulator
         self.simulator = baseConfigFile["simulator"] # simulator class
-        self.configLimit = self.simulator.configLimit
+        self.configLimit = np.array(self.simulator.configLimit)
         self.configDoF = self.simulator.configDoF
 
         # planner properties : general, some parameter must be set and some are optinal with default value
@@ -75,7 +75,7 @@ class RRTComponent:
         self.printDebug = baseConfigFile.get("printDebug", False)
 
     def uni_sampling(self) -> Node:
-        config = np.array([[np.random.uniform(low=j[0], high=j[1])] for j in self.configLimit])
+        config = np.random.uniform(low=self.configLimit[:, 0], high=self.configLimit[:, 1]).reshape(-1, 1)
         xRand = Node(config)
         return xRand
 
@@ -281,19 +281,19 @@ class RRTComponent:
         return False
 
     def is_config_in_joint_limit(self, xCheck):
-        for j in self.jointIndex:
-            if not self.configLimit[j][0] < xCheck.config[j] < self.configLimit[j][1]:
-                return False
-        return True
-
-    def is_goal_candidate_dismissable(self, xGoal):
-        if self.cBestNow < self.distance_between_config(self.xStart, xGoal) and self.cBestNow < self.current_cost_to_goal_node(xGoal):
+        if np.all(self.configLimit[:, 0] < xCheck.config < self.configLimit[:, 1]):
             return True
         else:
             return False
 
-    def current_cost_to_goal_node(self, xGoal):
-        raise NotImplementedError
+    # def is_goal_candidate_dismissable(self, xGoal):
+    #     if self.cBestNow < self.distance_between_config(self.xStart, xGoal) and self.cBestNow < self.current_cost_to_goal_node(xGoal):
+    #         return True
+    #     else:
+    #         return False
+
+    # def current_cost_to_goal_node(self, xGoal):
+    #     raise NotImplementedError
 
     def distance_between_config(self, xFrom, xTo):
         return np.linalg.norm(self.distance_each_component_between_config(xFrom, xTo))
@@ -342,6 +342,21 @@ class RRTComponent:
                     xNear.cost = cNew
                     xNew.child.append(xNear)
                     self.update_child_cost(xNear)
+
+    def get_children_until_depth(self, depth=1):
+        children = []
+        def get_children_recursive(node, depth):
+            if depth is None:
+                if len(node.child) != 0:
+                    for nc in node.child:
+                        children.append(nc)
+                        get_children_recursive(nc, depth)
+            elif depth is not None:
+                if len(node.child) != 0 and depth!=0:
+                    depth = -1
+                    for nc in node.child:
+                        children.append(node.child)
+                        get_children_recursive(node.child, depth)
 
     def get_ancestor_until_depth(self, node, depth=1): # if depth is None : go all the ways to the root, otherwise : go until specific depth. depth = 0 is empty list, use depth = 1 in general
         ancestor = []
@@ -704,3 +719,18 @@ class RRTComponent:
             return self.get_path_array(path)
         else: # no solution
             return None
+
+    # experimental
+    def uni_sampling_pseudo(self, tree):
+        # no k-nn is calculated, the actual approach would mostly get extend fast at early iteration since it will mostly over eta
+        # not working as expected
+        gRand = np.random.randint(0, len(tree))
+        vRand = np.random.uniform(-1, 1, (self.configDoF, 1))
+        dRand = (vRand/np.linalg.norm(vRand))*self.eta
+        xGrowFrom = tree[gRand]
+        newI = xGrowFrom.config + dRand
+        xNew = Node(newI)
+        return xNew, xGrowFrom
+
+    def nearest_pseudo(self, tree):
+        pass

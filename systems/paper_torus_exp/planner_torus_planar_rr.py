@@ -13,16 +13,13 @@ from planner.sampling_based.rrt_plannerapi import RRTPlannerAPI
 # environment
 from simulator.sim_planar_rr import RobotArm2DSimulator
 
-# joint value
-from datasave.joint_value.experiment_paper import Experiment2DArm
+sim = RobotArm2DSimulator(torusspace=True)
 
-sim = RobotArm2DSimulator()
-
-plannarConfigDualTreea = {
-    "planner": 25,
+plannarConfig = {
+    "planner": 9,
     "eta": 0.3,
     "subEta": 0.05,
-    "maxIteration": 10000,
+    "maxIteration": 2000,
     "simulator": sim,
     "nearGoalRadius": None,
     "rewireRadius": None,
@@ -31,15 +28,12 @@ plannarConfigDualTreea = {
     "localOptEnable": False
 }
 
+xStart = np.array([0.0, 0.0]).reshape(2,1)
+xApp = np.array([4.6, -5.77]).reshape(2,1)
+xGoal = np.array([4.6, -5.77]).reshape(2,1)
 
-q = Experiment2DArm.PoseSingle()
-# q = Experiment2DArm.PoseMulti()
-xStart = q.xStart
-xApp = q.xApp
-xGoal = q.xGoal
+pa = RRTPlannerAPI.init_alt_q_torus(xStart, xApp, xGoal, plannarConfig, None)
+patha = pa.begin_planner()
 
-pm = RRTPlannerAPI.init_normal(xStart, xApp, xGoal, plannarConfigDualTreea)
-patha = pm.begin_planner()
-
-pm.plot_2d_config_tree()
-pm.plot_performance()
+pa.plot_2d_config_tree()
+pa.plot_performance()

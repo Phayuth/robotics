@@ -13,7 +13,8 @@ class UR5eArmCoppeliaSimAPI:
 
     def __init__(self, isVisual=False):
         # physical properties, limit joint, dof
-        self.configLimit = [[-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi]]
+        # self.configLimit = [[-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi]]
+        self.configLimit = [[-2*np.pi, 2*np.pi], [-2*np.pi, 2*np.pi], [-np.pi, np.pi], [-2*np.pi, 2*np.pi], [-2*np.pi, 2*np.pi], [-2*np.pi, 2*np.pi]]
         self.configDoF = len(self.configLimit)
 
         # joint max
@@ -289,11 +290,12 @@ if __name__ == "__main__":
 
     ur = UR5eArmCoppeliaSimAPI()
 
-    ur.start_sim()
+    # ur.start_sim()
     try:
         while True:
-            jj = np.array([-2.4307362897230953, -1.9950339217373045, -0.0010261435935210133, -0.6685270374364699, 0.9877321445181428, 1.2663907399297298]).reshape(6,1)
-            ur.set_joint_position(ur.jointDynamicHandles, jj)
+            # jj = np.array([-2.4307362897230953, -1.9950339217373045, -0.0010261435935210133, -0.6685270374364699, 0.9877321445181428, 1.2663907399297298]).reshape(6,1)
+            jg = np.array([-0.0027387777911584976, -1.9624139271178187, -1.4210033416748047, -2.6216727695860804, -1.4972699324237269, -3.134235207234518]).reshape(6,1)
+            ur.set_joint_position(ur.jointDynamicHandles, jg)
             # # set joint visualize
             # q = URHarvesting.PoseSingle1()
             # qS = q.xStart
@@ -310,3 +312,5 @@ if __name__ == "__main__":
 
     finally:
         ur.stop_sim()
+
+

@@ -10,8 +10,7 @@ np.random.seed(9)
 import matplotlib.pyplot as plt
 
 # planner
-from planner.planner_manipulator import PlannerManipulator
-from planner.sampling_based.rrt_plotter import RRTPlotter
+from planner.sampling_based.rrt_plannerapi import RRTPlannerAPI
 
 # environment
 from simulator.sim_ur5e_api import UR5eArmCoppeliaSimAPI
@@ -45,14 +44,12 @@ xStart = q.xStart
 xApp = q.xApp
 xGoal = q.xGoal
 
-pa = PlannerManipulator(xStart, xApp, xGoal, copsimConfigDualTree)
-pq = pa.planning()
+pa = RRTPlannerAPI.init_warp_q_to_pi(xStart, xApp, xGoal, copsimConfigDualTree)
+pq = pa.begin_planner()
 print(f"> pq: {pq}")
 time.sleep(3)
 
 # sss = UR5eArmCoppeliaSimAPI() # must create new instance. problem with zmq (deadlock) probably with collision check request. (If I let planning run out of iteration. It worked fine)
 simu.play_back_path(pq)
 
-fig, ax = plt.subplots()
-RRTPlotter.plot_performance(pa.planner.perfMatrix, ax)
-plt.show()
+pa.plot_performance()

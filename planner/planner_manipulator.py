@@ -43,15 +43,16 @@ class PlannerManipulator:
     16. RRTConnectNoneAgressiveMulti - baseline
 
     """
-    def __init__(self, xStart, xApp, xGoal, config):
+    def __init__(self, xStart, xApp, xGoal, config, wrap=True):
         # process joint
-        xStart = Utilities.wrap_to_pi(xStart)
-        if isinstance(xApp, list):
-            xApp = [Utilities.wrap_to_pi(x) for x in xApp]
-            xGoal = [Utilities.wrap_to_pi(x) for x in xGoal]
-        else:
-            xApp = Utilities.wrap_to_pi(xApp)
-            xGoal = Utilities.wrap_to_pi(xGoal)
+        if wrap:
+            xStart = Utilities.wrap_to_pi(xStart)
+            if isinstance(xApp, list):
+                xApp = [Utilities.wrap_to_pi(x) for x in xApp]
+                xGoal = [Utilities.wrap_to_pi(x) for x in xGoal]
+            else:
+                xApp = Utilities.wrap_to_pi(xApp)
+                xGoal = Utilities.wrap_to_pi(xGoal)
 
         self.planningAlg = [ # single tree, single goal
                             RRTBase,                 # 0

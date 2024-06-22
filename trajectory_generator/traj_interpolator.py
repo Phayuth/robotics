@@ -94,6 +94,35 @@ class BSplineInterpolationIndependant:
         return self.splddd(snew)
 
 
+class SmoothSpline:
+    """
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.make_smoothing_spline.html#scipy.interpolate.make_smoothing_spline
+
+    """
+
+    def __init__(self, s, pathArray, lam) -> None:
+        self.pathArray = pathArray
+        w = np.ones(pathArray.shape[1]) # force first and last point to always the same
+        w[0] = 100
+        w[-1] = 100
+        self.spl = [scipy.interpolate.make_smoothing_spline(s, pathArray[i], w=w, lam=lam) for i in range(pathArray.shape[0])]
+        self.spld = [bspl.derivative(1) for bspl in self.spl]
+        self.spldd = [bspld.derivative(1) for bspld in self.spld]
+        self.splddd = [bspldd.derivative(1) for bspldd in self.spldd]
+
+    def eval_pose(self, snew):
+        return [spl(snew) for spl in self.spl]
+
+    def eval_velo(self, snew):
+        return [spld(snew) for spld in self.spld]
+
+    def eval_accel(self, snew):
+        return [spldd(snew) for spldd in self.spldd]
+
+    def eval_jerk(self, snew):
+        return [splddd(snew) for splddd in self.splddd]
+
+
 class BSplineSmoothingUnivariant:
     """
     Find a smooth approximating spline curve
@@ -102,7 +131,10 @@ class BSplineSmoothingUnivariant:
 
     def __init__(self, s, pathArray, smoothc, degree=None) -> None:
         self.pathArray = pathArray
-        self.bspl = [scipy.interpolate.UnivariateSpline(s, pathArray[i], s=smoothc, k=degree if degree is not None else 3) for i in range(pathArray.shape[0])] # default degree k = 3
+        w = np.ones(pathArray.shape[1]) # force first and last point to always the same
+        w[0] = 100
+        w[-1] = 100
+        self.bspl = [scipy.interpolate.UnivariateSpline(s, pathArray[i], w=w, s=smoothc, k=degree if degree is not None else 3) for i in range(pathArray.shape[0])]  # default degree k = 3
         self.bspld = [bspl.derivative(1) for bspl in self.bspl]
         self.bspldd = [bspld.derivative(1) for bspld in self.bspld]
         self.bsplddd = [bspldd.derivative(1) for bspldd in self.bspldd]
@@ -145,33 +177,32 @@ if __name__ == "__main__":
     v = cb.eval_velo(snew)
     a = cb.eval_accel(snew)
 
-    plt.plot(pathArray[0], pathArray[1], '*')
-    plt.plot(p[0], p[1], '--')
+    plt.plot(pathArray[0], pathArray[1], "*")
+    plt.plot(p[0], p[1], "--")
     plt.show()
 
     fig, axs = plt.subplots(3, 2)
-    axs[0, 0].plot(s, pathArray[0], '*')
-    axs[0, 0].plot(snew, p[0], '--')
+    axs[0, 0].plot(s, pathArray[0], "*")
+    axs[0, 0].plot(snew, p[0], "--")
     axs[1, 0].plot(snew, v[0])
     axs[2, 0].plot(snew, a[0])
 
-    axs[0, 1].plot(s, pathArray[1], '*')
-    axs[0, 1].plot(snew, p[1], '--')
+    axs[0, 1].plot(s, pathArray[1], "*")
+    axs[0, 1].plot(snew, p[1], "--")
     axs[1, 1].plot(snew, v[1])
     axs[2, 1].plot(snew, a[1])
 
     plt.show()
 
-
     # cubic spline 1D interplate
     x = np.array([0, 6, -1, 6, 0, 6, 0, 6, 0, 6, 0, 6, 0])
     time = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
-    timenew = np.arange(0,12,0.01)
+    timenew = np.arange(0, 12, 0.01)
     cv = CubicSplineInterpolationIndependant(time, x)
     pv = cv.eval_pose(timenew)
     vv = cv.eval_velo(timenew)
     av = cv.eval_accel(timenew)
-    plt.plot(time, x, '*')
+    plt.plot(time, x, "*")
     plt.plot(timenew, pv)
     plt.plot(timenew, vv)
     plt.plot(timenew, av)

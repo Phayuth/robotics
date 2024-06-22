@@ -13,9 +13,9 @@ from spatial_geometry.taskmap_geo_format import NonMobileTaskMap
 
 class RobotArm2DSimulator:
 
-    def __init__(self):
+    def __init__(self, torusspace=False):
         # required for planner
-        self.torusspace = False #True
+        self.torusspace = torusspace
         if self.torusspace:
             self.configLimit = [[-2*np.pi, 2*np.pi], [-2*np.pi, 2*np.pi]]
         else:
@@ -25,7 +25,8 @@ class RobotArm2DSimulator:
 
         self.robot = PlanarRR()
         # self.taskMapObs = NonMobileTaskMap.task_rectangle_obs_1()
-        self.taskMapObs = NonMobileTaskMap.thesis_exp()
+        self.taskMapObs = NonMobileTaskMap.paper_torus_exp()
+        # self.taskMapObs = NonMobileTaskMap.thesis_exp()
 
     def collision_check(self, xNewConfig):
         linkPose = self.robot.forward_kinematic(xNewConfig, return_link_pos=True)
@@ -119,8 +120,10 @@ class RobotArm2DSimulator:
         fig, ax = plt.subplots()
         ax.grid(True)
         ax.set_aspect("equal")
-        ax.set_xlim(-3, 4)
-        ax.set_ylim(-0.5, 5)
+        # ax.set_xlim(-3, 4)
+        # ax.set_ylim(-0.5, 5)
+        ax.set_xlim(-4, 4)
+        ax.set_ylim(-4, 4)
         self.plot_taskspace()
 
         for the in thetas:
@@ -132,7 +135,7 @@ if __name__ == "__main__":
     from matplotlib import animation
     import matplotlib.pyplot as plt
 
-    env = RobotArm2DSimulator()
+    env = RobotArm2DSimulator(torusspace=True)
 
     # fig, ax = plt.subplots(1,1)
     # env.plot_cspace(ax)
@@ -147,3 +150,4 @@ if __name__ == "__main__":
     print(f"> thetas.shape: {thetas.shape}")
     print(f"> thetas: {thetas}")
     env.plot_view(thetas)
+    plt.show()
