@@ -1,38 +1,13 @@
 import os
 import sys
 
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import time
 import numpy as np
+from planner.graph_based.graph import Node, save_graph, load_graph
 from planner.graph_based.dijkstra import Dijkstra
 from planner.graph_based.astar import AStar
-
-
-class Node:
-
-    def __init__(self, config=None, name=None) -> None:
-        self.config = config
-        self.name = name
-        self.cost = np.inf
-        self.pathvia = None
-        self.edgeNodes = []
-        self.edgeCosts = []
-
-    def __repr__(self) -> str:
-        return f"config : {self.config.T}, #edges : {len(self.edgeNodes)}"
-
-
-class Edge:
-
-    def __init__(self, nodeA: Node, nodeB: Node) -> None:
-        self.nodeA = nodeA
-        self.nodeB = nodeB
-        self.cost = None
-
-    def __repr__(self) -> str:
-        return f"AConfig = {self.nodeA.config.T}, BConfig = {self.nodeB.config.T}, Cost = {self.cost}"
 
 
 class PRMComponent:
@@ -46,19 +21,21 @@ class PRMComponent:
         # planner properties : general, some parameter must be set and some are optinal with default value
         self.eta = kwargs["eta"]
         self.subEta = kwargs["subEta"]
-        self.kNNTopNearest = kwargs.get("kNNTopNearest", 10)  # search all neighbour but only return top nearest nighbour during near neighbour search, if None, return all
         self.discreteLimitNumSeg = kwargs.get("discreteLimitNumSeg", 10)  # limited number of segment divide for collision check and in goal region check
 
-    def build_roadmap(self):
+        # graph
+        self.nodes = []
+
+    def build_graph(self):
         raise NotImplementedError
 
-    def save_roadmap(self):
-        pass
+    def save_graph(self, path):
+        save_graph(self.nodes, path)
 
-    def load_roadmap(self):
-        pass
+    def load_graph(self, path):
+        self.nodes = load_graph(path)
 
-    def query(self, xStart: Node, xGoal: Node, nodes, searcher="dij"):
+    def query(self, xStart, xGoal, nodes, searcher="dij"):
         xStart = Node(xStart)
         xGoal = Node(xGoal)
 
@@ -81,6 +58,30 @@ class PRMComponent:
 
         return path
 
+    def query_multiple_goal(self, xStart, xGoals: list, nodes, searcher="dij"):
+        xStart = Node(xStart)
+        xGoals = [Node(xi) for xi in xGoals]
+
+        # find nearest node of start and goal to nodes in roadmap
+        # check if query nodes is too far or in collision
+        xNearestStart = self.nearest_node(nodes, xStart)
+        xNearestGoals = [self.nearest_node(nodes, xi) for xi in xGoals]
+
+        # do the search between nearest start and goal
+        if searcher == "dij":
+            schr = Dijkstra(nodes)
+        if searcher == "ast":
+            schr = AStar(nodes)
+        path = schr.search_multiple_goal(xNearestStart, xNearestGoals)
+        path.reverse()
+        xNearestGoalID = xNearestGoals.index(path[-1])
+
+        # add start and goal to each end
+        path.insert(0, xStart)
+        path.append(xGoals[xNearestGoalID])
+
+        return path
+
     def uni_sampling(self) -> Node:
         config = np.random.uniform(low=self.configLimit[:, 0], high=self.configLimit[:, 1]).reshape(-1, 1)
         xRand = Node(config)
@@ -95,27 +96,29 @@ class PRMComponent:
         else:
             return xNearest
 
-    def near(self, treeVertices, xCheck, searchRadius=None, distListToxCheck=None):
+    def near(self, treeVertices, xCheck, searchRadius=None):
         if searchRadius is None:
             searchRadius = self.eta
 
-        if distListToxCheck:
-            distListToxCheck = np.array(distListToxCheck)
-        else:
-            distListToxCheck = np.array([self.distance_between_config(xCheck, vertex) for vertex in treeVertices])
-
+        distListToxCheck = np.array([self.distance_between_config(xCheck, vertex) for vertex in treeVertices])
         nearIndices = np.where(distListToxCheck <= searchRadius)[0]
+        return [treeVertices[item] for item in nearIndices], distListToxCheck[nearIndices]
 
-        if self.kNNTopNearest:
-            if len(nearIndices) < self.kNNTopNearest:
-                return [treeVertices[item] for item in nearIndices], distListToxCheck[nearIndices]
-            else:
-                nearDistList = distListToxCheck[nearIndices]
-                sortedIndicesDist = np.argsort(nearDistList)
-                topNearIndices = nearIndices[sortedIndicesDist[: self.kNNTopNearest]]
-                return [treeVertices[item] for item in topNearIndices], distListToxCheck[topNearIndices]
+    def steer(self, xFrom, xTo, distance, returnIsReached=False):
+        distI = xTo.config - xFrom.config
+        dist = np.linalg.norm(distI)
+        isReached = False
+        if dist <= distance:
+            xNew = Node(xTo.config)
+            isReached = True
         else:
-            return [treeVertices[item] for item in nearIndices], distListToxCheck[nearIndices]
+            dI = (distI / dist) * distance
+            newI = xFrom.config + dI
+            xNew = Node(newI)
+        if returnIsReached:
+            return xNew, isReached
+        else:
+            return xNew
 
     def cost_line(self, xFrom, xTo):
         return self.distance_between_config(xFrom, xTo)
@@ -154,3 +157,47 @@ class PRMComponent:
 
     def distance_each_component_between_config(self, xFrom, xTo):
         return xTo.config - xFrom.config
+
+
+class PRMPlotter:
+
+    def plot_2d_obstacle(simulator, axis):
+        joint1Range = np.linspace(simulator.configLimit[0][0], simulator.configLimit[0][1], 360)
+        joint2Range = np.linspace(simulator.configLimit[1][0], simulator.configLimit[1][1], 360)
+        collisionPoint = []
+        for theta1 in joint1Range:
+            for theta2 in joint2Range:
+                config = np.array([[theta1], [theta2]])
+                result = simulator.collision_check(config)
+                if result is True:
+                    collisionPoint.append([theta1, theta2])
+
+        collisionPoint = np.array(collisionPoint)
+        axis.plot(collisionPoint[:, 0], collisionPoint[:, 1], color="darkcyan", linewidth=0, marker="o", markerfacecolor="darkcyan", markersize=1.5)
+
+    def plot_2d_roadmap(nodes, axis):
+        for ns in nodes:
+            for nc in ns.edgeNodes:
+                axis.plot([ns.config[0], nc.config[0]], [ns.config[1], nc.config[1]], color="darkgray")
+
+    def plot_2d_state(xStart, xGoal, axis):
+        axis.plot(xStart.config[0], xStart.config[1], color="blue", linewidth=0, marker="o", markerfacecolor="yellow")
+
+        if isinstance(xGoal, list):
+            for xG in xGoal:
+                axis.plot(xG.config[0], xG.config[1], color="blue", linewidth=0, marker="o", markerfacecolor="red")
+        else:
+            axis.plot(xGoal.config[0], xGoal.config[1], color="blue", linewidth=0, marker="o", markerfacecolor="red")
+
+    def plot_2d_path(path, axis):
+        axis.plot([p.config[0] for p in path], [p.config[1] for p in path], color="blue", linewidth=2, marker="o", markerfacecolor="plum", markersize=5)
+
+    def plot_2d_complete(path=None, plannerClass=None, ax=None):
+        PRMPlotter.plot_2d_obstacle(plannerClass.simulator, ax)
+        PRMPlotter.plot_2d_roadmap(plannerClass.nodes, ax)
+        if path:
+            PRMPlotter.plot_2d_path(path, ax)
+            PRMPlotter.plot_2d_state(path[0], path[-1], ax)
+
+    def plot_performance():
+        pass

@@ -1,7 +1,6 @@
 import os
 import sys
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+sys.path.append(str(os.path.abspath(os.getcwd())))
 sys.path.append("/home/yuth/coppelia/programming/zmqRemoteApi/clients/python")
 
 from zmqRemoteApi import RemoteAPIClient

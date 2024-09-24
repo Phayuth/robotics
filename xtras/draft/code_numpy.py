@@ -103,8 +103,8 @@ def np_polynomial():
 
     xm = np.linspace(0.0, 5.0, 100)
     ym = poly(xm)
-    plt.plot(x, y, 'o', label="Original Datapoint")
-    plt.plot(xm, ym, 'r--', label="Fitted Data")
+    plt.plot(x, y, "o", label="Original Datapoint")
+    plt.plot(xm, ym, "r--", label="Fitted Data")
     plt.legend()
     plt.show()
 
@@ -122,21 +122,23 @@ def np_time_measurement_creation():
 
 
 def np_daily_random():
-    lunch = ["mcdonald",
-            "burgerking",
-            "momtouch",
-            "vietnam food",
-            "pasta",
-            "yam yam",
-            "japanese eel shop",
-            "japanese shop 2nd floor",
-            "ramen",
-            "chicken spicy + rice",
-            "korean pork belly and bean",
-            "tobokki",
-            "taco",
-            "pork culet",
-            "japanese curry"]
+    lunch = [
+        "mcdonald",
+        "burgerking",
+        "momtouch",
+        "vietnam food",
+        "pasta",
+        "yam yam",
+        "japanese eel shop",
+        "japanese shop 2nd floor",
+        "ramen",
+        "chicken spicy + rice",
+        "korean pork belly and bean",
+        "tobokki",
+        "taco",
+        "pork culet",
+        "japanese curry",
+    ]
     a = np.random.choice(lunch)
     print(f"> a: {a}")
 
@@ -146,13 +148,10 @@ def np_daily_random():
 
 
 def np_logic():
-    a = np.array([[1,0,0],
-                  [2,0,0]])
-    b = np.array([[0,1,1],
-                  [1,0,0]])
-    c = np.array([[0,0,0],
-                  [0,1,1]])
-    d = np.logical_or(a,b)
+    a = np.array([[1, 0, 0], [2, 0, 0]])
+    b = np.array([[0, 1, 1], [1, 0, 0]])
+    c = np.array([[0, 0, 0], [0, 1, 1]])
+    d = np.logical_or(a, b)
     print(f"> d: {d}")
 
     e = a | b | c
@@ -164,21 +163,19 @@ def np_clip():
     vel = np.linspace(0.013, 0.100, 10)
     force = np.linspace(5, 220, 10)
 
-    posr = np.clip((3.-230.)/0.085 * pos + 230., 0, 255)
+    posr = np.clip((3.0 - 230.0) / 0.085 * pos + 230.0, 0, 255)
     print(f"> posr: {posr}")
 
-    velr = np.clip(255./(0.1-0.013) * vel - 0.013, 0, 255)
+    velr = np.clip(255.0 / (0.1 - 0.013) * vel - 0.013, 0, 255)
     print(f"> velr: {velr}")
 
-    forcer = np.clip(255./(220.-5.) * force - 5., 0, 255)
+    forcer = np.clip(255.0 / (220.0 - 5.0) * force - 5.0, 0, 255)
     print(f"> forcer: {forcer}")
 
 
 def np_exist_vector():
-    vector = np.array([[1],
-                       [2]])
-    matrix = np.array([[1, 2, 3, 4, 5, 1, 1, 2, 3, 4],
-                       [2, 3, 4, 5, 6, 2, 2, 3, 4, 5]])
+    vector = np.array([[1], [2]])
+    matrix = np.array([[1, 2, 3, 4, 5, 1, 1, 2, 3, 4], [2, 3, 4, 5, 6, 2, 2, 3, 4, 5]])
     exists = np.all(matrix == vector, axis=0)
     print(f"> exists: {exists}")
 
@@ -187,23 +184,58 @@ def np_exist_vector():
 
 
 def np_check_column_limit():
-    matrix = np.array([[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                       [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]])
+    matrix = np.array([[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]])
 
-    left_limit = np.array([[1],
-                           [2]])
+    left_limit = np.array([[1], [2]])
 
-    right_limit = np.array([[5],
-                            [6]])
+    right_limit = np.array([[5], [6]])
 
-    ll = (matrix >= left_limit)
+    ll = matrix >= left_limit
     print(f"> ll: {ll}")
-    rr = (matrix <= right_limit)
+    rr = matrix <= right_limit
     print(f"> rr: {rr}")
 
     within_limits = np.all(ll & rr, axis=0)
     print(f"> within_limits: {within_limits}")
 
 
+def np_meshgrid():
+    # it's like cartesian product
+    a = np.array([1, 2])
+    b = np.array([4, 5])
+    X, Y = np.meshgrid(a, b)
+    print(f"> X: {X}")
+    print(f"> Y: {Y}")
+
+    for i in range(X.shape[0]):
+        for j in range(X.shape[1]):
+            print(f"f({X[i, j]}, {Y[i, j]})")
+
+    print("---")
+    for i, j in np.ndindex(X.shape):
+        print(f"f({X[i, j]}, {Y[i, j]})")
+
+    print("---")
+    x = np.array([1, 2])
+    y = np.array([3, 4])
+    z = np.array([5, 6])
+    X, Y, Z = np.meshgrid(x, y, z, indexing="ij")
+
+    for i in range(X.shape[0]):
+        for j in range(X.shape[1]):
+            for k in range(X.shape[2]):
+                print(f"f({X[i, j, k]}, {Y[i, j, k]}, {Z[i, j, k]})")
+
+
 if __name__ == "__main__":
-    np_exist_vector()
+    # np_exist_vector()
+    np_meshgrid()
+
+    # a = np.random.uniform(0,1,(6,1000000))
+    # b = np.random.uniform(0,1,(6,1))
+    # d = a - b
+    # d = np.linalg.norm(d,axis=0)
+    # print(f"> d.shape: {d.shape}")
+
+    # for i in range(1000000):
+    #     np.random.uniform(0,1,(6,1))

@@ -1,10 +1,10 @@
 import os
 import sys
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
-from spatial_geometry.utils import Utilities
+from spatial_geometry.utils import Utils
 
 
 class AckermanTrajectoryBasicController:
@@ -29,18 +29,18 @@ class AckermanTrajectoryBasicController:
 
     def kinematic_control(self, currentPose, referencePose):
         e = referencePose - currentPose
-        e[2, 0] = Utilities.wrap_to_pi(e[2, 0])
+        e[2, 0] = Utils.wrap_to_pi(e[2, 0])
 
         # control basic
-        v = np.sqrt(e[0, 0]**2 + e[1, 0]**2) * self.Kv
+        v = np.sqrt(e[0, 0] ** 2 + e[1, 0] ** 2) * self.Kv
         alpha = e[2, 0] * self.Kphi
 
         if self.upgradedControl:
             # If e[2, 0] is not on the [-pi/2, pi/2], +/- pi should be added
             # to e[2, 0], and negative velocity should be commanded
-            v = v * np.sign(np.cos(e[2, 0]))      # Changing sign of v if necessary
+            v = v * np.sign(np.cos(e[2, 0]))  # Changing sign of v if necessary
             e[2, 0] = np.arctan(np.tan(e[2, 0]))  # Mapped to the [-pi/2, pi/2] interval
-            alpha = e[2, 0] * self.Kphi           # Orientation control (upgraded)
+            alpha = e[2, 0] * self.Kphi  # Orientation control (upgraded)
 
         return np.array([[v], [alpha]])
 

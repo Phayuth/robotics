@@ -1,8 +1,7 @@
 import os
 import sys
 
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 from planner.sampling_based.rrt_component import Node, RRTComponent
 

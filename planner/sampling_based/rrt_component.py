@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import matplotlib.patches as mpatches
 
 
 class Node:
@@ -11,14 +12,14 @@ class Node:
         self.cost = cost
 
     def __repr__(self) -> str:
-        return f'\nconfig = {self.config.T}, hasParent = {True if self.parent != None else False}, NumChild = {len(self.child)}'
+        return f"\nconfig = {self.config.T}, hasParent = {True if self.parent != None else False}, NumChild = {len(self.child)}"
 
 
 class RRTComponent:
 
     def __init__(self, baseConfigFile):
         # simulator
-        self.simulator = baseConfigFile["simulator"] # simulator class
+        self.simulator = baseConfigFile["simulator"]  # simulator class
         self.configLimit = np.array(self.simulator.configLimit)
         self.configDoF = self.simulator.configDoF
 
@@ -26,18 +27,18 @@ class RRTComponent:
         self.eta = baseConfigFile["eta"]
         self.subEta = baseConfigFile["subEta"]
         self.maxIteration = baseConfigFile["maxIteration"]
-        self.nearGoalRadius = nR if (nR:=baseConfigFile["nearGoalRadius"]) is not None else self.eta # if given as the value then use it, otherwise equal to eta
+        self.nearGoalRadius = nR if (nR := baseConfigFile["nearGoalRadius"]) is not None else self.eta  # if given as the value then use it, otherwise equal to eta
         self.rewireRadius = baseConfigFile["rewireRadius"]
-        self.probabilityGoalBias = baseConfigFile.get("probabilityGoalBias", 0.05)    # When close to goal select goal, with this probability? default: 0.05, must modify my code
-        self.maxGoalSample = baseConfigFile.get("maxGoalSample", 10)                  # Goal samples are only sampled until maxSampleCount() goals are in the tree, to prohibit duplicate goal states.
-        self.kNNTopNearest = baseConfigFile.get("kNNTopNearest", 10)                  # search all neighbour but only return top nearest nighbour during near neighbour search, if None, return all
-        self.discreteLimitNumSeg = baseConfigFile.get("discreteLimitNumSeg", 10)      # limited number of segment divide for collision check and in goal region check
+        self.probabilityGoalBias = baseConfigFile.get("probabilityGoalBias", 0.05)  # When close to goal select goal, with this probability? default: 0.05, must modify my code
+        self.maxGoalSample = baseConfigFile.get("maxGoalSample", 10)  # Goal samples are only sampled until maxSampleCount() goals are in the tree, to prohibit duplicate goal states.
+        self.kNNTopNearest = baseConfigFile.get("kNNTopNearest", 10)  # search all neighbour but only return top nearest nighbour during near neighbour search, if None, return all
+        self.discreteLimitNumSeg = baseConfigFile.get("discreteLimitNumSeg", 10)  # limited number of segment divide for collision check and in goal region check
 
         # planner properties : termination
-        self.endIterationID = baseConfigFile.get("endIterationID", 1)                 # break condition 1:maxIteration exceeded, 2: first solution found, 3:cost drop different is low
-        self.terminateNumSolutions = baseConfigFile.get("terminateNumSolutions", 5)   # terminate planning when number of solution found is equal to it
-        self.iterationDiffConstant = baseConfigFile.get("iterationDiffConstant", 100) # if iteration different is lower than this constant, terminate loop
-        self.costDiffConstant = baseConfigFile.get("costDiffConstant", 0.001)         # if cost different is lower than this constant, terminate loop
+        self.endIterationID = baseConfigFile.get("endIterationID", 1)  # break condition 1:maxIteration exceeded, 2: first solution found, 3:cost drop different is low
+        self.terminateNumSolutions = baseConfigFile.get("terminateNumSolutions", 5)  # terminate planning when number of solution found is equal to it
+        self.iterationDiffConstant = baseConfigFile.get("iterationDiffConstant", 100)  # if iteration different is lower than this constant, terminate loop
+        self.costDiffConstant = baseConfigFile.get("costDiffConstant", 0.001)  # if cost different is lower than this constant, terminate loop
 
         # collision database
         self.configSearched = []
@@ -46,19 +47,14 @@ class RRTComponent:
         # performance matrix
         self.perfMatrix = {
             "Planner Name": "",
-            "Parameters": {
-                "eta": self.eta,
-                "subEta": self.subEta,
-                "Max Iteration": self.maxIteration,
-                "Rewire Radius": self.rewireRadius
-            },
+            "Parameters": {"eta": self.eta, "subEta": self.subEta, "Max Iteration": self.maxIteration, "Rewire Radius": self.rewireRadius},
             "Number of Node": 0,
             "Total Planning Time": 0.0,  # include KCD
             "KCD Time Spend": 0.0,
             "Planning Time Only": 0.0,
             "Number of Collision Check": 0,
             "Average KCD Time": 0.0,
-            "Cost Graph": []
+            "Cost Graph": [],
         }
 
         # keep track cost and iteration
@@ -90,7 +86,7 @@ class RRTComponent:
         L = self.hyperellipsoid_axis_length(cMax, cMin)
         while True:
             xBall = self.unit_ball_sampling()
-            xRand = (rotationAxisC@L@xBall) + xCenter
+            xRand = (rotationAxisC @ L @ xBall) + xCenter
             xRand = Node(xRand)
             if self.is_config_in_joint_limit(xRand):
                 break
@@ -107,9 +103,9 @@ class RRTComponent:
         u = np.random.normal(0.0, 1.0, (self.configDoF + 2, 1))
         norm = np.linalg.norm(u)
         u = u / norm
-        return u[:self.configDoF,:] #The first N coordinates are uniform in a unit N ball
+        return u[: self.configDoF, :]  # The first N coordinates are uniform in a unit N ball
 
-    def rotation_to_world(self, xStart, xGoal): # C
+    def rotation_to_world(self, xStart, xGoal):  # C
         cMin = self.distance_between_config(xStart, xGoal)
         a1 = (xGoal.config - xStart.config) / cMin
         I1 = np.array([1.0] + [0.0] * (self.configDoF - 1)).reshape(1, -1)
@@ -124,7 +120,7 @@ class RRTComponent:
         diagTerm = [r1] + [ri] * (self.configDoF - 1)
         return np.diag(diagTerm)
 
-    def local_path_sampling(self, anchorPath, localPath, NumSeg):  #expected given path [xinit, x1, x2, ..., xcandidateToxApp, xApp]
+    def local_path_sampling(self, anchorPath, localPath, NumSeg):  # expected given path [xinit, x1, x2, ..., xcandidateToxApp, xApp]
         gRand = np.random.randint(low=0, high=NumSeg)
         randDownPercentage = np.random.uniform(low=0.0, high=1.0)
         randAlongPercentage = np.random.uniform(low=0.0, high=1.0)
@@ -142,10 +138,10 @@ class RRTComponent:
 
         return xRand
 
-    def unit_nball_volume_measure(self): # The Lebesgue measure (i.e., "volume") of an n-dimensional ball with a unit radius.
-        return (np.pi**(self.configDoF / 2)) / self.gammaFunction[(self.configDoF / 2) + 1]  # ziD
+    def unit_nball_volume_measure(self):  # The Lebesgue measure (i.e., "volume") of an n-dimensional ball with a unit radius.
+        return (np.pi ** (self.configDoF / 2)) / self.gammaFunction[(self.configDoF / 2) + 1]  # ziD
 
-    def prolate_hyperspheroid_measure(self): # The Lebesgue measure (i.e., "volume") of an n-dimensional prolate hyperspheroid (a symmetric hyperellipse) given as the distance between the foci and the transverse diameter.
+    def prolate_hyperspheroid_measure(self):  # The Lebesgue measure (i.e., "volume") of an n-dimensional prolate hyperspheroid (a symmetric hyperellipse) given as the distance between the foci and the transverse diameter.
         pass
 
     def lebesgue_obstacle_free_measure(self):
@@ -154,8 +150,8 @@ class RRTComponent:
 
     def calculate_rewire_radius(self, numVertex, rewireFactor=1.1):
         inverseDoF = 1.0 / self.configDoF
-        gammaRRG = rewireFactor * 2.0 * ((1.0+inverseDoF) * (self.lebesgue_obstacle_free_measure() / self.unit_nball_volume_measure()))**(inverseDoF)
-        return np.min([self.eta, gammaRRG * (np.log(numVertex) / numVertex)**(inverseDoF)])
+        gammaRRG = rewireFactor * 2.0 * ((1.0 + inverseDoF) * (self.lebesgue_obstacle_free_measure() / self.unit_nball_volume_measure())) ** (inverseDoF)
+        return np.min([self.eta, gammaRRG * (np.log(numVertex) / numVertex) ** (inverseDoF)])
 
     def nearest_node(self, treeVertices, xCheck, returnDistList=False):
         distListToxCheck = [self.distance_between_config(xCheck, x) for x in treeVertices]
@@ -168,7 +164,7 @@ class RRTComponent:
 
     def steer_rand_percentage(self, xFrom, xTo, percentage):  # percentage only between [0.0 - 1.0]
         distI = self.distance_each_component_between_config(xFrom, xTo)
-        newI = xFrom.config + percentage*distI
+        newI = xFrom.config + percentage * distI
         xNew = Node(newI)
         return xNew
 
@@ -180,7 +176,7 @@ class RRTComponent:
             xNew = Node(xTo.config)
             isReached = True
         else:
-            dI = (distI/dist) * distance
+            dI = (distI / dist) * distance
             newI = xFrom.config + dI
             xNew = Node(newI)
         if returnIsReached:
@@ -197,7 +193,7 @@ class RRTComponent:
         else:
             distListToxCheck = np.array([self.distance_between_config(xCheck, vertex) for vertex in treeVertices])
 
-        nearIndices = np.where(distListToxCheck<=searchRadius)[0]
+        nearIndices = np.where(distListToxCheck <= searchRadius)[0]
 
         if self.kNNTopNearest:
             if len(nearIndices) < self.kNNTopNearest:
@@ -205,7 +201,7 @@ class RRTComponent:
             else:
                 nearDistList = distListToxCheck[nearIndices]
                 sortedIndicesDist = np.argsort(nearDistList)
-                topNearIndices = nearIndices[sortedIndicesDist[:self.kNNTopNearest]]
+                topNearIndices = nearIndices[sortedIndicesDist[: self.kNNTopNearest]]
                 return [treeVertices[item] for item in topNearIndices], distListToxCheck[topNearIndices]
         else:
             return [treeVertices[item] for item in nearIndices], distListToxCheck[nearIndices]
@@ -249,7 +245,7 @@ class RRTComponent:
                 NumSeg = self.discreteLimitNumSeg
         rateI = distI / NumSeg
         for i in range(1, NumSeg):
-            newI = xCheckFrom.config + rateI*i
+            newI = xCheckFrom.config + rateI * i
             xNew = Node(newI)
             if self.is_config_in_region_of_config(xNew, xCenter, radius):
                 return True
@@ -274,14 +270,14 @@ class RRTComponent:
                 NumSeg = self.discreteLimitNumSeg
         rateI = distI / NumSeg
         for i in range(1, NumSeg):
-            newI = xFrom.config + rateI*i
+            newI = xFrom.config + rateI * i
             xTo = Node(newI)
             if self.is_config_in_collision(xTo):
                 return True
         return False
 
     def is_config_in_joint_limit(self, xCheck):
-        if np.all(self.configLimit[:, 0] < xCheck.config < self.configLimit[:, 1]):
+        if np.all((self.configLimit[:, 0] < xCheck) & (xCheck < self.configLimit[:, 1])):
             return True
         else:
             return False
@@ -345,6 +341,7 @@ class RRTComponent:
 
     def get_children_until_depth(self, depth=1):
         children = []
+
         def get_children_recursive(node, depth):
             if depth is None:
                 if len(node.child) != 0:
@@ -352,21 +349,22 @@ class RRTComponent:
                         children.append(nc)
                         get_children_recursive(nc, depth)
             elif depth is not None:
-                if len(node.child) != 0 and depth!=0:
+                if len(node.child) != 0 and depth != 0:
                     depth = -1
                     for nc in node.child:
                         children.append(node.child)
                         get_children_recursive(node.child, depth)
 
-    def get_ancestor_until_depth(self, node, depth=1): # if depth is None : go all the ways to the root, otherwise : go until specific depth. depth = 0 is empty list, use depth = 1 in general
+    def get_ancestor_until_depth(self, node, depth=1):  # if depth is None : go all the ways to the root, otherwise : go until specific depth. depth = 0 is empty list, use depth = 1 in general
         ancestor = []
+
         def get_ancestor_recursive(node, depth):
-            if depth is None: # go all the ways to the root
+            if depth is None:  # go all the ways to the root
                 if node.parent is not None:
                     ancestor.append(node.parent)
                     get_ancestor_recursive(node.parent, depth)
-            elif depth is not None: # go until specific depth
-                if node.parent is not None and depth!=0:
+            elif depth is not None:  # go until specific depth
+                if node.parent is not None and depth != 0:
                     depth -= 1
                     ancestor.append(node.parent)
                     get_ancestor_recursive(node.parent, depth)
@@ -378,7 +376,7 @@ class RRTComponent:
         nearAncestor = []
         for xNear in XNear:
             nearAncestor.extend(self.get_ancestor_until_depth(xNear, depth))
-        nearAncestor = set(nearAncestor) # remove duplicate, ordered is lost
+        nearAncestor = set(nearAncestor)  # remove duplicate, ordered is lost
         nearAncestor = list(nearAncestor)
         return nearAncestor
 
@@ -458,7 +456,7 @@ class RRTComponent:
             xTobeParent = xNow
             xNow = xParentSave
 
-    def update_child_cost(self, xCheck, treeToAdd=None): # recursively updates the cost of the children of this node if the cost up to this node has changed.
+    def update_child_cost(self, xCheck, treeToAdd=None):  # recursively updates the cost of the children of this node if the cost up to this node has changed.
         for child in xCheck.child:
             child.cost = child.parent.cost + self.cost_line(child.parent, child)
             if treeToAdd:
@@ -466,16 +464,16 @@ class RRTComponent:
             self.update_child_cost(child)
 
     def termination_check(self, solutionList):
-        if self.endIterationID == 1: # maxIteration exceeded
+        if self.endIterationID == 1:  # maxIteration exceeded
             return self.termination_on_max_iteration()
-        elif self.endIterationID == 2: # first solution found
+        elif self.endIterationID == 2:  # first solution found
             return self.termination_on_first_k_solution(solutionList)
-        elif self.endIterationID == 3: # cost drop different is low
+        elif self.endIterationID == 3:  # cost drop different is low
             return self.termination_on_cost_drop_different()
-        elif self.endIterationID == 4: # cost and iteration drop different is low
+        elif self.endIterationID == 4:  # cost and iteration drop different is low
             return self.termination_on_cost_iteration_drop_different()
 
-    def termination_on_max_iteration(self): # already in for loop, no break is needed
+    def termination_on_max_iteration(self):  # already in for loop, no break is needed
         return False
 
     def termination_on_first_k_solution(self, solutionList):
@@ -583,7 +581,7 @@ class RRTComponent:
         distI = self.distance_each_component_between_config(xStart, xEnd)
         rateI = distI / NumSeg
         for i in range(1, NumSeg):
-            newI = xStart.config + rateI*i
+            newI = xStart.config + rateI * i
             xMid = Node(newI)
             anchorPath.append(xMid)
         anchorPath.append(xEnd)
@@ -599,7 +597,7 @@ class RRTComponent:
             distI = self.distance_each_component_between_config(path[currentIndex], path[nextIndex])
             rateI = distI / numSeg
             for i in range(1, numSeg):
-                newI = path[currentIndex].config + (rateI*i)
+                newI = path[currentIndex].config + (rateI * i)
                 xNew = Node(newI)
                 segmentedPath.append(xNew)
             currentIndex += 1
@@ -618,7 +616,7 @@ class RRTComponent:
         prunedPath.extend([initialPath[-2], initialPath[-1]])  # add back xApp and xGoal to path from the back
         return prunedPath
 
-    def cbest_single_tree(self, treeVertices, nodeToward, iteration): # search in treeGoalRegion for the current best cost
+    def cbest_single_tree(self, treeVertices, nodeToward, iteration):  # search in treeGoalRegion for the current best cost
         self.iterationNow = iteration
         if len(treeVertices) == 0:
             cBest = np.inf
@@ -627,15 +625,15 @@ class RRTComponent:
             xSolnCost = [xSoln.cost + self.cost_line(xSoln, nodeToward) for xSoln in treeVertices]
             cBest = min(xSolnCost)
             # self.perfMatrix["Cost Graph"].append((iteration, cBest))
-            if cBest < self.cBestPrevious : # this has nothing to do with planning itself, just for record performance data only
+            if cBest < self.cBestPrevious:  # this has nothing to do with planning itself, just for record performance data only
                 self.perfMatrix["Cost Graph"].append((iteration, cBest))
                 self.cBestPrevious = cBest
                 self.cBestPreviousIteration = iteration
         if self.printDebug:
-            print(f"Iteration : [{iteration}] - Best Cost : [{cBest}]", end='\r', flush=True)
+            print(f"Iteration : [{iteration}] - Best Cost : [{cBest}]", end="\r", flush=True)
         return cBest
 
-    def cbest_dual_tree(self, connectNodePair, iteration): # search in connectNodePairList for the current best cost
+    def cbest_dual_tree(self, connectNodePair, iteration):  # search in connectNodePairList for the current best cost
         self.iterationNow = iteration
         if len(connectNodePair) == 0:
             cBest = np.inf
@@ -649,7 +647,7 @@ class RRTComponent:
                 self.cBestPrevious = cBest
                 self.cBestPreviousIteration = iteration
         if self.printDebug:
-            print(f"Iteration : [{iteration}] - Best Cost : [{cBest}]", end='\r', flush=True)
+            print(f"Iteration : [{iteration}] - Best Cost : [{cBest}]", end="\r", flush=True)
         return cBest
 
     def cbest_single_tree_multi(self, treeVerticesList, nodeTowardList, iteration):
@@ -672,18 +670,18 @@ class RRTComponent:
                 self.cBestPrevious = cBest
                 self.cBestPreviousIteration = iteration
             if self.printDebug:
-                print(f"Iteration : [{iteration}] - Best Cost : [{cBest}]", end='\r', flush=True)
+                print(f"Iteration : [{iteration}] - Best Cost : [{cBest}]", end="\r", flush=True)
             return cBest, xGoalBestIndex
         else:
             return np.inf, None
 
-    def update_perf(self, timePlanningStart=0, timePlanningEnd=0): # time arg is in nanosec
+    def update_perf(self, timePlanningStart=0, timePlanningEnd=0):  # time arg is in nanosec
         self.perfMatrix["Planner Name"] = f"{self.__class__.__name__}"
         if hasattr(self, "treeVertex"):
-            self.perfMatrix["Number of Node"] = len(getattr(self, "treeVertex")) # list
+            self.perfMatrix["Number of Node"] = len(getattr(self, "treeVertex"))  # list
         elif hasattr(self, "treeVertexStart") and hasattr(self, "treeVertexGoal"):
             self.perfMatrix["Number of Node"] = len(getattr(self, "treeVertexStart")) + len(getattr(self, "treeVertexGoal"))
-        self.perfMatrix["Total Planning Time"] = (timePlanningEnd-timePlanningStart) * 1e-9
+        self.perfMatrix["Total Planning Time"] = (timePlanningEnd - timePlanningStart) * 1e-9
         self.perfMatrix["KCD Time Spend"] = self.perfMatrix["KCD Time Spend"] * 1e-9
         self.perfMatrix["Planning Time Only"] = self.perfMatrix["Total Planning Time"] - self.perfMatrix["KCD Time Spend"]
         self.perfMatrix["Average KCD Time"] = self.perfMatrix["KCD Time Spend"] / self.perfMatrix["Number of Collision Check"]
@@ -696,17 +694,18 @@ class RRTComponent:
                 print("Done")
             except KeyboardInterrupt:
                 print("User End Process")
+
         return wrapper
 
     def start(self):
         raise NotImplementedError("Individual planner must implement its own start() method")
 
-    def get_path(self): # list of nodes sequence
+    def get_path(self):  # list of nodes sequence
         raise NotImplementedError("Individual planner must implement its own get_path() method")
 
     def get_path_array(self, pathNodesSeq):
         pathTemp = [node.config for node in pathNodesSeq]
-        return np.hstack(pathTemp) # shape=(numDoF, numSeq)
+        return np.hstack(pathTemp)  # shape=(numDoF, numSeq)
 
     def begin_planner(self):
         timeStart = time.perf_counter_ns()
@@ -715,22 +714,170 @@ class RRTComponent:
         timeEnd = time.perf_counter_ns()
         self.update_perf(timeStart, timeEnd)
 
-        if path is not None: # there are solutions
+        if path is not None:  # there are solutions
             return self.get_path_array(path)
-        else: # no solution
+        else:  # no solution
             return None
 
-    # experimental
-    def uni_sampling_pseudo(self, tree):
-        # no k-nn is calculated, the actual approach would mostly get extend fast at early iteration since it will mostly over eta
-        # not working as expected
-        gRand = np.random.randint(0, len(tree))
-        vRand = np.random.uniform(-1, 1, (self.configDoF, 1))
-        dRand = (vRand/np.linalg.norm(vRand))*self.eta
-        xGrowFrom = tree[gRand]
-        newI = xGrowFrom.config + dRand
-        xNew = Node(newI)
-        return xNew, xGrowFrom
 
-    def nearest_pseudo(self, tree):
-        pass
+class RRTPlotter:
+    globalLinewidth = 1
+
+    obstColor = "darkcyan"
+    obstFaceColor = "darkcyan"
+    obstMarker = "o"
+    obstMarkersize = 1.5
+
+    treeColor = "darkgray"
+    treeFaceColor = None
+    treeMarker = None
+    treeMarkersize = None
+
+    stateStartColor = "blue"
+    stateStartFaceColor = "yellow"
+    stateAppColor = "blue"
+    stateAppFaceColor = "green"
+    stateGoalColor = "blue"
+    stateGoalFaceColor = "red"
+    stateMarkersize = 2.5
+    stateMarker = "o"
+
+    pathColor = "blue"
+    pathFaceColor = "plum"
+    pathMarker = "o"
+    pathMarkersize = 2.5
+
+    def plot_2d_obstacle(simulator, axis):
+        joint1Range = np.linspace(simulator.configLimit[0][0], simulator.configLimit[0][1], 360)
+        joint2Range = np.linspace(simulator.configLimit[1][0], simulator.configLimit[1][1], 360)
+        collisionPoint = []
+        for theta1 in joint1Range:
+            for theta2 in joint2Range:
+                config = np.array([[theta1], [theta2]])
+                result = simulator.collision_check(config)
+                if result is True:
+                    collisionPoint.append([theta1, theta2])
+
+        collisionPoint = np.array(collisionPoint)
+        axis.plot(
+            collisionPoint[:, 0],
+            collisionPoint[:, 1],
+            color=RRTPlotter.obstColor,
+            linewidth=0,
+            marker=RRTPlotter.obstMarker,
+            markerfacecolor=RRTPlotter.obstFaceColor,
+            markersize=RRTPlotter.obstMarkersize,
+        )
+
+    def plot_2d_tree(trees, axis):
+        for tree in trees:
+            for vertex in tree:
+                if vertex.parent == None:
+                    pass
+                else:
+                    axis.plot(
+                        [vertex.config[0], vertex.parent.config[0]],
+                        [vertex.config[1], vertex.parent.config[1]],
+                        color=RRTPlotter.treeColor,
+                        linewidth=RRTPlotter.globalLinewidth,
+                        marker=RRTPlotter.treeMarker,
+                        markerfacecolor=RRTPlotter.treeFaceColor,
+                        markersize=RRTPlotter.treeMarkersize,
+                    )
+
+    def plot_2d_state(xStart, xApp, xGoal, axis):
+        if not isinstance(xApp, list):  # put into list
+            xApp = [xApp]
+            xGoal = [xGoal]
+
+        axis.plot(
+            xStart.config[0],
+            xStart.config[1],
+            color=RRTPlotter.stateStartColor,
+            linewidth=0,
+            marker=RRTPlotter.stateMarker,
+            markerfacecolor=RRTPlotter.stateStartFaceColor,
+            markersize=RRTPlotter.stateMarkersize,
+        )
+        for xA in xApp:
+            axis.plot(
+                xA.config[0],
+                xA.config[1],
+                color=RRTPlotter.stateAppColor,
+                linewidth=0,
+                marker=RRTPlotter.stateMarker,
+                markerfacecolor=RRTPlotter.stateAppFaceColor,
+                markersize=RRTPlotter.stateMarkersize,
+            )
+        for xG in xGoal:
+            axis.plot(
+                xG.config[0],
+                xG.config[1],
+                color=RRTPlotter.stateGoalColor,
+                linewidth=0,
+                marker=RRTPlotter.stateMarker,
+                markerfacecolor=RRTPlotter.stateGoalFaceColor,
+                markersize=RRTPlotter.stateMarkersize,
+            )
+
+    def plot_2d_path(path, axis):
+        axis.plot(
+            path[0, :],
+            path[1, :],
+            color=RRTPlotter.pathColor,
+            linewidth=RRTPlotter.globalLinewidth,
+            marker=RRTPlotter.pathMarker,
+            markerfacecolor=RRTPlotter.pathFaceColor,
+            markersize=RRTPlotter.pathMarkersize,
+        )
+
+    def plot_2d_cspace_state(plannerClass, ax):
+        RRTPlotter.plot_2d_obstacle(plannerClass.simulator, ax)
+
+        try:
+            RRTPlotter.plot_2d_state(plannerClass.xStart, plannerClass.xApp, plannerClass.xGoal, ax)
+        except:
+            RRTPlotter.plot_2d_state(plannerClass.xStart, plannerClass.xAppList, plannerClass.xGoalList, ax)
+
+    def plot_2d_complete(plannerClass, path, ax):
+        RRTPlotter.plot_2d_obstacle(plannerClass.simulator, ax)
+
+        try:
+            RRTPlotter.plot_2d_tree([plannerClass.treeVertexStart, plannerClass.treeVertexGoal], ax)
+        except:
+            RRTPlotter.plot_2d_tree([plannerClass.treeVertex], ax)
+
+        if path is not None:
+            RRTPlotter.plot_2d_path(path, ax)
+
+        try:
+            RRTPlotter.plot_2d_state(plannerClass.xStart, plannerClass.xApp, plannerClass.xGoal, ax)
+        except:
+            RRTPlotter.plot_2d_state(plannerClass.xStart, plannerClass.xAppList, plannerClass.xGoalList, ax)
+
+    def plot_performance(perfMatrix, axis):
+        costGraph = perfMatrix["Cost Graph"]
+        iteration, costs = zip(*costGraph)
+
+        legendItems = [
+            mpatches.Patch(color="blue", label=f'Parameters: eta = [{perfMatrix["Parameters"]["eta"]}]'),
+            mpatches.Patch(color="blue", label=f'Parameters: subEta = [{perfMatrix["Parameters"]["subEta"]}]'),
+            mpatches.Patch(color="blue", label=f'Parameters: Max Iteration = [{perfMatrix["Parameters"]["Max Iteration"]}]'),
+            mpatches.Patch(color="blue", label=f'Parameters: Rewire Radius = [{perfMatrix["Parameters"]["Rewire Radius"]}]'),
+            mpatches.Patch(color="red", label=f'# Node = [{perfMatrix["Number of Node"]}]'),
+            mpatches.Patch(color="green", label=f'Initial Path Cost = [{perfMatrix["Cost Graph"][0][1]:.5f}]'),
+            mpatches.Patch(color="yellow", label=f'Initial Path Found on Iteration = [{perfMatrix["Cost Graph"][0][0]}]'),
+            mpatches.Patch(color="pink", label=f'Final Path Cost = [{perfMatrix["Cost Graph"][-1][1]:.5f}]'),
+            mpatches.Patch(color="indigo", label=f'Total Planning Time = [{perfMatrix["Total Planning Time"]:.5f}]'),
+            mpatches.Patch(color="tan", label=f'Planning Time Only = [{perfMatrix["Planning Time Only"]:.5f}]'),
+            mpatches.Patch(color="olive", label=f'KCD Time Spend = [{perfMatrix["KCD Time Spend"]:.5f}]'),
+            mpatches.Patch(color="cyan", label=f'# KCD = [{perfMatrix["Number of Collision Check"]}]'),
+            mpatches.Patch(color="peru", label=f'Avg KCD Time = [{perfMatrix["Average KCD Time"]:.5f}]'),
+        ]
+
+        axis.plot(iteration, costs, color="blue", marker="o", markersize=5)
+        axis.legend(handles=legendItems)
+
+        axis.set_xlabel("Iteration")
+        axis.set_ylabel("Cost")
+        axis.set_title(f'Performance Plot of [{perfMatrix["Planner Name"]}]')

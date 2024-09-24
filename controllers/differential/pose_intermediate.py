@@ -1,13 +1,13 @@
 import os
 import sys
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
-from spatial_geometry.utils import Utilities
+from spatial_geometry.utils import Utils
 
 
-class DifferentialDrivePoseIntermediatePointController:
+class DifferentialDriveIntermediatePoseController:
     """
     [Summary] : Pose Intermediate Controller provide an intermediate point where trajectory is shape in a way desired orientation is obtained.
 
@@ -29,13 +29,13 @@ class DifferentialDrivePoseIntermediatePointController:
         xT = referencePose[0, 0] - self.r * np.cos(referencePose[2, 0])
         yT = referencePose[0, 0] - self.r * np.sin(referencePose[2, 0])
 
-        D = np.sqrt((referencePose[0, 0] - currentPose[0, 0])**2 + (referencePose[1, 0] - currentPose[1, 0])**2)
+        D = np.sqrt((referencePose[0, 0] - currentPose[0, 0]) ** 2 + (referencePose[1, 0] - currentPose[1, 0]) ** 2)
         if D < self.dTol:
             vc = 0
             wc = 0
         else:
             if self.state is False:
-                d = np.sqrt((xT - currentPose[0, 0])**2 + (yT - currentPose[1, 0])**2)
+                d = np.sqrt((xT - currentPose[0, 0]) ** 2 + (yT - currentPose[1, 0]) ** 2)
                 if d < self.dTol:
                     self.state = True
 
@@ -44,7 +44,7 @@ class DifferentialDrivePoseIntermediatePointController:
             else:
                 ePhi = referencePose[2, 0] - currentPose[2, 0]
 
-            ePhi = Utilities.wrap_to_pi(ePhi)
+            ePhi = Utils.wrap_to_pi(ePhi)
 
             vc = self.K1 * D
             wc = self.K2 * ePhi
@@ -59,14 +59,14 @@ if __name__ == "__main__":
 
     # create robot and controller
     robot = DifferentialDrive(wheelRadius=0, baseLength=0.3, baseWidth=0.3)
-    controller = DifferentialDrivePoseIntermediatePointController(robot=robot)
+    controller = DifferentialDriveIntermediatePoseController(robot=robot)
 
     # simulator
     def dynamic(currentPose, input):
-        return robot.forward_external_kinematic(input, currentPose[2,0])
+        return robot.forward_external_kinematic(input, currentPose[2, 0])
 
     def desired(currentPose, time):
-        return np.array([2.0, 2.0, np.pi/2]).reshape(3, 1)
+        return np.array([2.0, 2.0, np.pi / 2]).reshape(3, 1)
 
     def control(currentPose, desiredPose):
         return controller.kinematic_control(currentPose, desiredPose)
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     intg = EulerNumericalIntegrator(dynamic, control, desired, q0, tSpan, dt)
     timeSteps, states, desireds, controls = intg.simulation()
 
-    plt.plot(states[0,:], states[1,:])
+    plt.plot(states[0, :], states[1, :])
     # plt.plot(timeSteps, states[0,:])
     # plt.plot(timeSteps, states[1,:])
     # plt.plot(timeSteps, states[2,:])

@@ -1,10 +1,10 @@
 import os
 import sys
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
-from spatial_geometry.utils import Utilities
+from spatial_geometry.utils import Utils
 
 
 class DifferentialDrivePathSegmentTrackingController:
@@ -15,13 +15,13 @@ class DifferentialDrivePathSegmentTrackingController:
 
         # kinematic controller constants for tuning
         self.cte1 = 0.9  # 0.4 good
-        self.cte2 = 3    # 3 good
+        self.cte2 = 3  # 3 good
 
         # path segment id
         self.i = 0
 
     def kinematic_control(self, currentPose):
-        #Reference segment determination
+        # Reference segment determination
         dx = np.array(self.referenceSegment[self.i + 1] - self.referenceSegment[self.i])[0]  # correct take x each line segment to find dx
         dy = np.array(self.referenceSegment[self.i + 1] - self.referenceSegment[self.i])[1]  # correct take y each line segment to find dy
 
@@ -50,10 +50,10 @@ class DifferentialDrivePathSegmentTrackingController:
         phiLin = np.arctan2(V[1, 0], V[0, 0])
         phiRot = np.arctan(5 * dn)
         phiRef = phiLin + phiRot
-        phiRef = Utilities.wrap_to_pi(phiRef)
+        phiRef = Utils.wrap_to_pi(phiRef)
 
         ephi = phiRef - currentPose[2, 0]
-        ephi = Utilities.wrap_to_pi(ephi)
+        ephi = Utils.wrap_to_pi(ephi)
 
         vc = self.cte1 * np.cos(ephi)
         wc = self.cte2 * ephi
@@ -61,7 +61,7 @@ class DifferentialDrivePathSegmentTrackingController:
         return np.array([vc, wc]).reshape(2, 1)
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from robot.mobile.differential import DifferentialDrive
     from simulator.integrator_euler import EulerNumericalIntegrator
@@ -73,10 +73,10 @@ if __name__=="__main__":
 
     # simulator
     def dynamic(currentPose, input):
-        return robot.forward_external_kinematic(input, currentPose[2,0])
+        return robot.forward_external_kinematic(input, currentPose[2, 0])
 
     def desired(currentPose, time):
-        return np.array([0.0, 0.0, 0]).reshape(3, 1) # isn't needed in this type of control mode
+        return np.array([0.0, 0.0, 0]).reshape(3, 1)  # isn't needed in this type of control mode
 
     def control(currentPose, desiredPose):
         return controller.kinematic_control(currentPose)
@@ -89,7 +89,7 @@ if __name__=="__main__":
 
     plt.grid(True)
     plt.plot(qref[:, 0], qref[:, 1])
-    plt.plot(states[0,:], states[1,:])
+    plt.plot(states[0, :], states[1, :])
     # plt.plot(timeSteps, states[0,:])
     # plt.plot(timeSteps, states[1,:])
     # plt.plot(timeSteps, states[2,:])

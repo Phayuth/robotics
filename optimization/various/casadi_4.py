@@ -1,25 +1,27 @@
 import casadi as ca
 
-# Define the variables
+# Rosenbrock function
 x = ca.SX.sym("x")
 y = ca.SX.sym("y")
 
-# Define the Rosenbrock function
 a = 1
 b = 100
 rosenbrock = (a - x) ** 2 + b * (y - x**2) ** 2
 
 # Create an optimization problem
-nlp = {"x": ca.vertcat(x, y), "f": rosenbrock}
+nlp = {
+    "x": ca.vertcat(x, y),
+    "f": rosenbrock,
+}
 
 # Create an NLP solver
-opts = {"ipopt.print_level": 0, "print_time": 0}
+opts = {
+    "ipopt.print_level": 0,
+    "print_time": 0,
+}
 solver = ca.nlpsol("solver", "ipopt", nlp, opts)
 
-# Solve the problem
 sol = solver(x0=[0, 0], lbg=-ca.inf, ubg=ca.inf)
-
-# Extract the solution
 x_opt = sol["x"].full().flatten()
 
 print(f"Optimal solution: x = {x_opt[0]}, y = {x_opt[1]}")

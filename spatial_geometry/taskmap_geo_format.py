@@ -1,7 +1,6 @@
 import os
 import sys
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 from spatial_geometry.spatial_shape import ShapeRectangle
 
@@ -64,6 +63,12 @@ class NonMobileTaskMap:
         return [
             ShapeRectangle(x=-2.75, y=1, h=2, w=1),
             ShapeRectangle(x=1.5, y=2, h=2, w=1)]
+
+    def ijcas_paper():
+        return [
+            ShapeRectangle(x=-2.75, y=1, h=2, w=1),
+            ShapeRectangle(x=1.5, y=2, h=2, w=1),
+            ShapeRectangle(x=-0.75, y=-2.0, h=0.75, w=4.0)]
 
     def paper_torus_exp():
         return [

@@ -2,8 +2,8 @@ from gekko import GEKKO
 import numpy as np
 import matplotlib.pyplot as plt
 
+# optimal control free terminal time. free terminal time, integral objective and differential equations as constraints
 
-# optimal_control_free_terminal_time():  # Free terminal time, integral objective and differential equations as constraints
 m = GEKKO()
 
 n = 501

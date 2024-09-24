@@ -4,8 +4,7 @@ Devplanner with RRT-Connect assisted Informed-RRT* with reject goal sampling and
 """
 import os
 import sys
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
 from planner.rrt_component import Node, RRTComponent

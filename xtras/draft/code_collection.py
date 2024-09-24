@@ -2,6 +2,8 @@ import numpy as np
 from icecream import ic
 import time
 import timeit
+import matplotlib.pyplot as plt
+from itertools import product
 
 
 def check_min_index_nested_list():  # check for minimum value and index in nested list, and handle empty list
@@ -262,12 +264,56 @@ def get_interval():
 
 
 def cartesian_product():
-    from itertools import product
     confignum = 6
     shiftedComb = list(product([-1, 0, 1], repeat=confignum))
     print(f"> shiftedComb: {shiftedComb}")
     print(f"> len :{len(shiftedComb)}")
 
 
+def find_shifted_value(q, filterOriginalq=False):  # -> Any:  # input must be of shape (n,1)
+    shiftedComb = np.array(list(product([-2.0 * np.pi, 0.0, 2.0 * np.pi], repeat=q.shape[0]))).T
+    shiftedJointValue = shiftedComb + q
+    isInLimitCheck = np.logical_and(shiftedJointValue >= -2 * np.pi, shiftedJointValue <= 2 * np.pi)
+    isInLimitMask = np.all(isInLimitCheck, axis=0)
+    inLimitJointValue = shiftedJointValue[:, isInLimitMask]
+
+    if filterOriginalq:
+        exists = np.all(inLimitJointValue == q, axis=0)
+        filterout = inLimitJointValue[:, ~exists]
+        return filterout
+
+    return inLimitJointValue
+
+
+def sampling_grid():
+    # x = np.linspace(-np.pi, np.pi, 25)
+    # y = np.linspace(-np.pi, np.pi, 25)
+    # xy = [x, y]
+    # X, Y = np.meshgrid(*xy)
+    # data = []
+    # for i, j in np.ndindex(X.shape):
+    #     data.append([X[i, j], Y[i, i]])
+    # data = np.array(data)
+    # print(f"> data: {data}")
+    # plt.plot(data[:, 0], data[:, 1], "*")
+    # plt.show()
+
+    lim = np.array([[-np.pi, np.pi], [-np.pi, np.pi]])
+    q = np.linspace(lim[:, 0], lim[:, 1], 25)
+    print(f"> q: {q}")
+    split_arrays = np.hsplit(q, 2)
+    print(f"> split_arrays: {split_arrays}")
+    u = np.meshgrid(*split_arrays)
+    print(f"> u: {u}")
+
+    data = []
+    for i, j in np.ndindex(u[0].shape):
+        data.append([u[0][i, j], u[1][i, i]])
+    data = np.array(data)
+    print(f"> data: {data}")
+    plt.plot(data[:, 0], data[:, 1], "*")
+    plt.show()
+
+
 if __name__ == "__main__":
-    cartesian_product()
+    sampling_grid()

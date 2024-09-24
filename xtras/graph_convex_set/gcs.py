@@ -505,5 +505,6 @@ print("Constructing overlap regions and conjugate graph")
 gcs_regions, region_points, gcs_regions_idx_dict, conjugate_graph = construct_gcs_regions(overlap_adj_mat, halfspace_reps)
 print("Solving GCS")
 shortest_path = solve_gcs_rounding(gcs_regions, conjugate_graph)
+print(f"> shortest_path: {shortest_path}")
 
 draw_output_gcs(shortest_path, gcs_regions, region_points, conjugate_graph)

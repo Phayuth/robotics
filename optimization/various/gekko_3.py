@@ -2,8 +2,8 @@ from gekko import GEKKO
 import numpy as np
 import matplotlib.pyplot as plt
 
+# optimal control minimum flight time
 
-# optimal_control_minimum_flight_time():
 m = GEKKO()
 
 nt = 101

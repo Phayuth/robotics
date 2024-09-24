@@ -1,15 +1,14 @@
 import os
 import sys
 
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-from spatial_geometry.utils import Utilities
+from spatial_geometry.utils import Utils
 
-from planner.sampling_based.rrt_plotter import RRTPlotter
+from planner.sampling_based.rrt_component import RRTPlotter
 
 from planner.sampling_based.rrt_base import RRTBase, RRTBaseMulti
 
@@ -63,8 +62,8 @@ class RRTPlannerAPI:
     - RRTInformedConnectQuickNoneAgressive,  # 24
     """
 
-    def __init__(self, xStart, xApp, xGoal, config):
-        self.config = config
+    def __init__(self, xStart, xApp, xGoal, cfg):
+        self.cfg = cfg
 
         self.xStart = xStart
         self.xApp = xApp
@@ -98,56 +97,69 @@ class RRTPlannerAPI:
             RRTInformedConnectQuickNoneAgressive,  # 24
         ]
 
-        self.planner = self.planningAlg[self.config["planner"]](xStart, xApp, xGoal, self.config)
+        self.planner = self.planningAlg[self.cfg["planner"]](xStart, xApp, xGoal, self.cfg)
 
     @classmethod
-    def init_normal(cls, xStart, xApp, xGoal, config):
-        return cls(xStart, xApp, xGoal, config)
+    def init_normal(cls, xStart, xApp, xGoal, cfg):
+        return cls(xStart, xApp, xGoal, cfg)
 
     @classmethod
-    def init_warp_q_to_pi(cls, xStart, xApp, xGoal, config):
-        xStart = Utilities.wrap_to_pi(xStart)
+    def init_warp_q_to_pi(cls, xStart, xApp, xGoal, cfg):
+        xStart = Utils.wrap_to_pi(xStart)
         if isinstance(xApp, list):
-            xApp = [Utilities.wrap_to_pi(x) for x in xApp]
-            xGoal = [Utilities.wrap_to_pi(x) for x in xGoal]
+            xApp = [Utils.wrap_to_pi(x) for x in xApp]
+            xGoal = [Utils.wrap_to_pi(x) for x in xGoal]
         else:
-            xApp = Utilities.wrap_to_pi(xApp)
-            xGoal = Utilities.wrap_to_pi(xGoal)
-        return cls(xStart, xApp, xGoal, config)
+            xApp = Utils.wrap_to_pi(xApp)
+            xGoal = Utils.wrap_to_pi(xGoal)
+        return cls(xStart, xApp, xGoal, cfg)
 
     @classmethod
-    def init_k_element_q(cls, xStart, xApp, xGoal, config, k=2):
+    def init_k_element_q(cls, xStart, xApp, xGoal, cfg, k=2):
         # process pose, interest in 2D x,y only. rotation is neglected
         xStart = xStart[0:k]
         xApp = xApp[0:k]
         xGoal = xGoal[0:k]
-        return cls(xStart, xApp, xGoal, config)
+        return cls(xStart, xApp, xGoal, cfg)
 
     @classmethod
-    def init_alt_q_torus(cls, xStart, xApp, xGoal, config, configConstrict):
-        configLimit = np.array(config["simulator"].configLimit)
-        xAppCandidate = Utilities.find_alt_config(xApp, configLimit, configConstrict)
-        xGoalCandidate = Utilities.find_alt_config(xGoal, configLimit, configConstrict)
+    def init_alt_q_torus(cls, xStart, xApp, xGoal, cfg, configConstrict):
+        configLimit = np.array(cfg["simulator"].configLimit)
+        xAppCandidate = Utils.find_alt_config(xApp, configLimit, configConstrict)
+        xGoalCandidate = Utils.find_alt_config(xGoal, configLimit, configConstrict)
         xApp = [xAppCandidate[:, i, np.newaxis] for i in range(xAppCandidate.shape[1])]
         xGoal = [xGoalCandidate[:, i, np.newaxis] for i in range(xGoalCandidate.shape[1])]
-        return cls(xStart, xApp, xGoal, config)
+        return cls(xStart, xApp, xGoal, cfg)
 
     def begin_planner(self):
         self.resultpath = self.planner.begin_planner()
         return self.resultpath
 
-    def plot_2d_config_tree(self):
+    def plot_2d_cspace_state(self):
         fig, ax = plt.subplots()
         s = 2.5
         fig.set_size_inches(w=s * 3.40067, h=s * 3.40067)
         fig.tight_layout()
-        plt.xlim((self.config["simulator"].configLimit[0][0], self.config["simulator"].configLimit[0][1]))
-        plt.ylim((self.config["simulator"].configLimit[1][0], self.config["simulator"].configLimit[1][1]))
-        if self.config["planner"] in [0, 1, 2, 3, 8, 9, 10, 11, 21, 22, 25]:
-            RRTPlotter.plot_2d_config_single_tree(self.planner, self.resultpath, ax)
-        else:
-            RRTPlotter.plot_2d_config_dual_tree(self.planner, self.resultpath, ax)
+        plt.xlim((self.cfg["simulator"].configLimit[0][0], self.cfg["simulator"].configLimit[0][1]))
+        plt.ylim((self.cfg["simulator"].configLimit[1][0], self.cfg["simulator"].configLimit[1][1]))
+        RRTPlotter.plot_2d_cspace_state(self.planner, ax)
         plt.show()
+
+    def plot_2d_cspace_state_external(self, ax):
+        RRTPlotter.plot_2d_cspace_state(self.planner, ax)
+
+    def plot_2d_complete(self):
+        fig, ax = plt.subplots()
+        s = 2.5
+        fig.set_size_inches(w=s * 3.40067, h=s * 3.40067)
+        fig.tight_layout()
+        plt.xlim((self.cfg["simulator"].configLimit[0][0], self.cfg["simulator"].configLimit[0][1]))
+        plt.ylim((self.cfg["simulator"].configLimit[1][0], self.cfg["simulator"].configLimit[1][1]))
+        RRTPlotter.plot_2d_complete(self.planner, self.resultpath, ax)
+        plt.show()
+
+    def plot_2d_complete_external(self, ax):
+        RRTPlotter.plot_2d_complete(self.planner, self.resultpath, ax)
 
     def plot_performance(self):
         fig, ax = plt.subplots()

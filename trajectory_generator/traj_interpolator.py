@@ -1,8 +1,3 @@
-import os
-import sys
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
-
 import numpy as np
 import scipy.interpolate
 
@@ -153,6 +148,11 @@ class BSplineSmoothingUnivariant:
 
 
 if __name__ == "__main__":
+    import os
+    import sys
+    wd = os.path.abspath(os.getcwd())
+    sys.path.append(str(wd))
+
     import matplotlib.pyplot as plt
     from datasave.joint_value.pre_record_value import PreRecordedPathMobileRobot, PreRecordedPath
 

@@ -1,7 +1,7 @@
 import os
 import sys
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
 from planner.sampling_based.rrt_component import Node, RRTComponent
@@ -22,7 +22,7 @@ class RRTConnectAstInformed(RRTComponent):
         self.treeSwapFlag = True
 
         # informed sampling properties
-        self.C = self.rotation_to_world(self.xStart, self.xApp) # hyperellipsoid rotation axis
+        self.C = self.rotation_to_world(self.xStart, self.xApp)  # hyperellipsoid rotation axis
         self.cMin = self.distance_between_config(self.xStart, self.xApp)
         self.xCenter = (self.xStart.config + self.xApp.config) / 2
 
@@ -93,11 +93,11 @@ class RRTConnectAstInformed(RRTComponent):
         # for xTobeInXSoln in self.treeVertexStart:
         #     if self.is_config_in_region_of_config(xTobeInXSoln, self.xApp, radius=self.nearGoalRadius):
         #         self.XSoln.append(xNew)
-        self.XSoln.append(self.xApp.parent) # we know xApp parent is the best node to connect to xApp right now, in case if we cannot find any other, we still have it as parent
+        self.XSoln.append(self.xApp.parent)  # we know xApp parent is the best node to connect to xApp right now, in case if we cannot find any other, we still have it as parent
 
         # start inform sampling
         for remainItera in range(self.maxIteration - itera):
-            cBest = self.cbest_single_tree(self.XSoln, self.xApp, itera+remainItera)
+            cBest = self.cbest_single_tree(self.XSoln, self.xApp, itera + remainItera)
 
             xRand = self.informed_sampling(self.xCenter, cBest, self.cMin, self.C)
             # xRand = self.bias_informed_sampling(self.xCenter, cBest, self.cMin, self.C, self.xApp)

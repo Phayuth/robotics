@@ -1,7 +1,6 @@
 from pyomo.environ import *
 
-
-# def knapsack_problem
+# knapsack problem
 
 A = ["hammer", "wrench", "screwdriver", "towel"]
 earn = {"hammer": 8, "wrench": 3, "screwdriver": 6, "towel": 11}

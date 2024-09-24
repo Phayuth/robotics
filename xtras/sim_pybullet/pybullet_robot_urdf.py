@@ -1,12 +1,8 @@
 import os
 import sys
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import pybullet as p
-import time
-import math
-from datetime import datetime
 import pybullet_data
 
 clid = p.connect(p.SHARED_MEMORY)

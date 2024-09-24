@@ -2,6 +2,7 @@ import numpy as np
 import scipy.optimize as sop
 import matplotlib.pyplot as plt
 
+# linear regression slope and intersect variable
 
 def model(x):
     areal = 3.2

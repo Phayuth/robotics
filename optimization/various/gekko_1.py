@@ -2,8 +2,8 @@ from gekko import GEKKO
 import numpy as np
 import matplotlib.pyplot as plt
 
+# optimal control intergral obj
 
-# optimal_control_intergral_obj
 m = GEKKO()
 
 nt = 101

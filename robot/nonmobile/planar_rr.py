@@ -1,7 +1,7 @@
 import os
 import sys
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
 from spatial_geometry.spatial_transformation import RigidBodyTransformation as rbt
@@ -62,30 +62,22 @@ class PlanarRR:
             sign = 1
 
         D = (x**2 + y**2 - self.a1**2 - self.a2**2) / (2 * self.a1 * self.a2)
-
         theta2 = np.arctan2(sign * np.sqrt(1 - D**2), D)
-
         theta1 = np.arctan2(y, x) - np.arctan2((self.a2 * np.sin(theta2)), (self.a1 + self.a2 * np.cos(theta2)))
-
         return np.array([[theta1], [theta2]])
 
     def jacobian(self, theta):
         theta1 = theta[0, 0]
         theta2 = theta[1, 0]
-
-        J = np.array([[-self.a1 * np.sin(theta1) - self.a2 * np.sin(theta1 + theta2), -self.a2 * np.sin(theta1 + theta2)],
-                      [ self.a1 * np.cos(theta1) + self.a2 * np.cos(theta1 + theta2),  self.a2 * np.cos(theta1 + theta2)]])
+        J = np.array([[-self.a1 * np.sin(theta1) - self.a2 * np.sin(theta1 + theta2), -self.a2 * np.sin(theta1 + theta2)], [self.a1 * np.cos(theta1) + self.a2 * np.cos(theta1 + theta2), self.a2 * np.cos(theta1 + theta2)]])
         return J
 
     def forward_kinematic_dh(self, theta):
         theta1 = theta[0, 0]
         theta2 = theta[1, 0]
-
         A1 = rbt.dh_transformation(theta1, self.alpha1, self.d1, self.a1)
         A2 = rbt.dh_transformation(theta2, self.alpha2, self.d2, self.a2)
-
         T02 = A1 @ A2
-
         return T02
 
     def jacobian_dh(self, theta):
@@ -111,12 +103,26 @@ class PlanarRR:
         J1 = np.append(Jv1, Jw1, axis=0)  # if not use axis = the result is 1x6, axis=0 the result is 6x1, axis=1 the result is 3x2
         J2 = np.append(Jv2, Jw2, axis=0)
         J = np.append(J1, J2, axis=1)  # we want J = [J1 , J2] side by side => use axis = 1
-
         return J
 
-    def plot_arm(self, theta, axis):
+    def _plot_single(self, theta, axis, shadow=False, color="indigo"):
         link = self.forward_kinematic(theta, return_link_pos=True)
-        axis.plot([link[0][0], link[1][0], link[2][0]], [link[0][1], link[1][1], link[2][1]], color='indigo', linewidth=5, marker='o', markerfacecolor='r')
+        axis.plot([link[0][0], link[1][0], link[2][0]], [link[0][1], link[1][1], link[2][1]], color=color, linewidth=1, alpha=0.2 if shadow else 1.0)  # link
+        axis.plot([link[1][0]], [link[1][1]], color="k", linewidth=1, marker="o", markerfacecolor="white", markersize=2, alpha=0.2 if shadow else 1.0)  # elbow dot
+        axis.plot([link[2][0]], [link[2][1]], color="white", linewidth=1, marker="o", markerfacecolor=color, markersize=2, alpha=0.2 if shadow else 1.0)  # ee
+
+    def plot_arm(self, thetas, axis, shadow=False, colors=[]):
+        if thetas.shape == (2, 1):
+            self._plot_single(thetas, axis)
+        else:
+            colors = colors if len(colors) != 0 else ["indigo"] * thetas.shape[1]
+            for i in range(thetas.shape[1]):
+                if i in [0, thetas.shape[1] - 1]:
+                    self._plot_single(thetas[:, i, np.newaxis], axis, shadow=False, color=colors[i])
+                else:
+                    self._plot_single(thetas[:, i, np.newaxis], axis, shadow=shadow, color=colors[i])
+
+        axis.plot([0], [0], color="black", linewidth=1, marker="s", markerfacecolor="white")  # base
 
 
 class PlanarRRVoxel(object):
@@ -151,18 +157,19 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     robot = PlanarRR()
-    desiredPose = np.array([[-0.15], [4-0.2590]])
-    thetaUp = robot.inverse_kinematic_geometry(desiredPose, elbow_option=0); print(f"> thetaUp: \n{thetaUp}")
-    thetaDown = robot.inverse_kinematic_geometry(desiredPose, elbow_option=1); print(f"> thetaDown: \n{thetaDown}")
+    desiredPose = np.array([[-0.15], [4 - 0.2590]])
+    thetaUp = robot.inverse_kinematic_geometry(desiredPose, elbow_option=0)
+    print(f"> thetaUp: \n{thetaUp}")
+    thetaDown = robot.inverse_kinematic_geometry(desiredPose, elbow_option=1)
+    print(f"> thetaDown: \n{thetaDown}")
     robot.plot_arm(thetaUp, plt)
     plt.show()
-
 
     base_position = [15, 15]
     link_lenths = [5, 5]
     robot = PlanarRRVoxel(base_position, link_lenths)
     plt.figure(figsize=(10, 10))
-    plt.axes().set_aspect('equal')
+    plt.axes().set_aspect("equal")
     r1 = robot.robot_position(90, 0)
     plt.plot([robot.base_position[0], r1[0][0]], [robot.base_position[1], r1[0][1]], "b", linewidth=8)
     plt.plot([r1[0][0], r1[1][0]], [r1[0][1], r1[1][1]], "b", linewidth=8)

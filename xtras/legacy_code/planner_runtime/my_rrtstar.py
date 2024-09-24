@@ -9,8 +9,7 @@ Path Searcher : Cosider all nodes in the radius of x_goal. -> Calculate Cost to 
 import os
 import sys
 
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -13,8 +13,7 @@ Reference :
 import os
 import sys
 
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor

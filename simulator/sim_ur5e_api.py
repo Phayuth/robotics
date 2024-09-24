@@ -49,16 +49,21 @@ class UR5eArmCoppeliaSimAPI:
                            "/wrist_2_link_resp/wrist_3_joint"]
 
         self.jointDynamicHandles = [self.sim.getObject(self.robotHeadNames[0] + "".join(self.jointNames[0 : i + 1])) for i in range(len(self.jointNames))]
-        self.jointVirtualHandles = [self.sim.getObject(self.robotHeadNames[1] + "".join(self.jointNames[0 : i + 1])) for i in range(len(self.jointNames))]
+
+        try:
+            self.jointVirtualHandles = [self.sim.getObject(self.robotHeadNames[1] + "".join(self.jointNames[0 : i + 1])) for i in range(len(self.jointNames))]
+
+            # arm collision handle
+            self.robotBase = self.sim.getObject("/UR5e_virtual")
+            self.collection = self.sim.createCollection(0)
+            self.sim.addItemToCollection(self.collection, self.sim.handle_tree, self.robotBase, 0)
+
+        except:
+            print("Virtual robot joint is not found !")
 
         if self.isVisual:
             self.jointGoalHandles = [self.sim.getObject(self.robotHeadNames[2] + "".join(self.jointNames[0 : i + 1])) for i in range(len(self.jointNames))]
             self.jointAuxHandles = [self.sim.getObject(self.robotHeadNames[3] + "".join(self.jointNames[0 : i + 1])) for i in range(len(self.jointNames))]
-
-        # arm collision handle
-        self.robotBase = self.sim.getObject("/UR5e_virtual")
-        self.collection = self.sim.createCollection(0)
-        self.sim.addItemToCollection(self.collection, self.sim.handle_tree, self.robotBase, 0)
 
         # arm IK
         self.simIK = self.client.getObject("simIK")

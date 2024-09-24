@@ -1,19 +1,12 @@
+import os
+import sys
+
+sys.path.append(str(os.path.abspath(os.getcwd())))
+
 import time
 import numpy as np
 
-
-class Node:
-
-    def __init__(self, config=None, name=None) -> None:
-        self.name = name
-        self.config = config
-        self.cost = np.inf
-        self.pathvia = None
-        self.edgeNodes = []
-        self.edgeCosts = []
-
-    def __repr__(self) -> str:
-        return f"Node:{self.name}"
+from planner.graph_based.graph import Node
 
 
 class AStar:
@@ -29,6 +22,17 @@ class AStar:
         ci = np.argsort(costs + coststogo)
         self.heapq = [self.heapq[i] for i in ci]
 
+    def cost_to_go(self, xTo, xFrom):  # euclidean distance
+        return np.linalg.norm(xTo.config - xFrom.config)
+
+    def backtrack(self, node: Node):
+        path = [node]
+        current = node
+        while current.pathvia is not None:
+            path.append(current.pathvia)
+            current = current.pathvia
+        return path
+
     def search(self, start: Node, goal: Node):
         # set start at 0
         start.cost = 0
@@ -42,24 +46,13 @@ class AStar:
             currentNode = self.heapq[0]
 
             if currentNode is goal:
-                return self.backtrack(goal)
+                return self.backtrack(currentNode)
 
             for ei, ed in enumerate(currentNode.edgeNodes):
                 if ed in self.visitedNode:
                     continue
-                if mind := currentNode.cost + currentNode.edgeCosts[ei] < ed.cost:
-                    ed.cost = mind
+                if (pcost := currentNode.cost + currentNode.edgeCosts[ei]) < ed.cost:
+                    ed.cost = pcost
                     ed.pathvia = currentNode
             self.visitedNode.append(currentNode)
             self.heapq.pop(0)
-
-    def cost_to_go(self, xTo, xFrom):  # euclidean distance
-        return np.linalg.norm(xTo.config - xFrom.config)
-
-    def backtrack(self, node: Node):
-        path = [node]
-        current = node
-        while current.pathvia is not None:
-            path.append(current.pathvia)
-            current = current.pathvia
-        return path

@@ -1,8 +1,7 @@
 import os
 import sys
 
-wd = os.path.abspath(os.getcwd())
-sys.path.append(str(wd))
+sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import matplotlib.pyplot as plt
 import numpy as np

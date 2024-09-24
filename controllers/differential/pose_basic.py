@@ -97,6 +97,9 @@ if __name__ == "__main__":
 
 
     plt.plot(states[0,:], states[1,:])
+    plt.grid(True)
+    plt.show()
+
     plt.plot(timeSteps, states[0,:])
     plt.plot(timeSteps, states[1,:])
     plt.plot(timeSteps, states[2,:])
