@@ -24,8 +24,8 @@ class RobotArm2DSimulator:
 
         self.robot = PlanarRR()
         # self.taskMapObs = NonMobileTaskMap.task_rectangle_obs_1()
-        self.taskMapObs = NonMobileTaskMap.paper_torus_exp()
-        # self.taskMapObs = NonMobileTaskMap.thesis_exp()
+        # self.taskMapObs = NonMobileTaskMap.paper_torus_exp()
+        self.taskMapObs = NonMobileTaskMap.thesis_exp()
         # self.taskMapObs = NonMobileTaskMap.ijcas_paper()
 
     def collision_check(self, xNewConfig):
@@ -112,7 +112,7 @@ class RobotArm2DSimulator:
             link = self.robot.forward_kinematic(path[:, frame].reshape(2, 1), return_link_pos=True)
             robotLinks.set_data([link[0][0], link[1][0], link[2][0]], [link[0][1], link[1][1], link[2][1]])
 
-        animation = animation.FuncAnimation(fig, update, frames=(path.shape[1]), interval=1)
+        animation = animation.FuncAnimation(fig, update, frames=(path.shape[1]), interval=100)
         plt.show()
 
     def plot_view(self, thetas, shadowseq=False, colors=[]):
@@ -134,9 +134,19 @@ if __name__ == "__main__":
     from matplotlib import animation
     import matplotlib.pyplot as plt
 
-    env = RobotArm2DSimulator(torusspace=True)
+    # minimal
+    env = RobotArm2DSimulator(torusspace=False)
+    fig, ax = plt.subplots(1,1)
+    ax.set_xlim([-np.pi, np.pi])
+    ax.set_ylim([-np.pi, np.pi])
+    env.plot_cspace(ax)
+    plt.show()
 
+    # torus
+    # env = RobotArm2DSimulator(torusspace=True)
     # fig, ax = plt.subplots(1,1)
+    # ax.set_xlim([-2*np.pi, 2*np.pi])
+    # ax.set_ylim([-2*np.pi, 2*np.pi])
     # env.plot_cspace(ax)
     # plt.show()
 
@@ -145,8 +155,8 @@ if __name__ == "__main__":
     # tt = np.vstack((t1,t2))
     # env.play_back_path(tt, animation)
 
-    thetas = np.array([[0, 0], [2.1, 1.5], [2, 1.5], [2.2, 1.5]])
-    print(f"> thetas.shape: {thetas.shape}")
-    print(f"> thetas: {thetas}")
-    env.plot_view(thetas)
-    plt.show()
+    # thetas = np.array([[0, 0], [2.1, 1.5], [2, 1.5], [2.2, 1.5]])
+    # print(f"> thetas.shape: {thetas.shape}")
+    # print(f"> thetas: {thetas}")
+    # env.plot_view(thetas)
+    # plt.show()

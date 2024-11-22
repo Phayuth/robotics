@@ -1,5 +1,5 @@
 """ Forward Kinematic Model Train using Gaussian Process Regression for Planar RR
-- Input : Theta 1 and theta 2 
+- Input : Theta 1 and theta 2
 - Output : pose x, y for end effector
 
 - X dataset (nx2) : (theta1, theta2)
@@ -18,12 +18,6 @@ sys.path.append(str(os.path.abspath(os.getcwd())))
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
-from robot.planar_rr import PlanarRR
-
-robot = PlanarRR()
-
-# # define dataset
-# X, y = planar_rr_generate_dataset(robot)
 
 
 # Define forward kinematics function
@@ -57,4 +51,4 @@ print("Predicted end effector positions:\n", y_pred)
 print("Uncertainties:\n", sigma)
 
 theta_test = X_test[1].reshape(2, 1)
-robot.plot_arm(theta_test, plt_basis=True, plt_show=True)
+print(f"> theta_test: {theta_test}")

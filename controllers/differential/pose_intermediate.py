@@ -10,6 +10,7 @@ from spatial_geometry.utils import Utils
 class DifferentialDriveIntermediatePoseController:
     """
     [Summary] : Pose Intermediate Controller provide an intermediate point where trajectory is shape in a way desired orientation is obtained.
+    [Page] : 72.
 
     """
 

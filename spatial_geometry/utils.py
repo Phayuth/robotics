@@ -65,9 +65,7 @@ class Utils:
 if __name__ == "__main__":
     import os
     import sys
-
-    wd = os.path.abspath(os.getcwd())
-    sys.path.append(str(wd))
+    sys.path.append(str(os.path.abspath(os.getcwd())))
 
     from icecream import ic
     from datasave.joint_value.experiment_paper import Experiment2DArm
@@ -100,3 +98,11 @@ if __name__ == "__main__":
     qb = np.array([-3.1, 0.0]).reshape(2, 1)
     aa = Utils.minimum_dist_torus(qa, qb)
     print(f"> aa: {aa}")
+
+    np.set_printoptions(linewidth=2000)
+    q6 = SinglePose.Pose6.thetaApp
+    limt6 = np.array([[-2 * np.pi, 2 * np.pi], [-2 * np.pi, 2 * np.pi], [-np.pi, np.pi], [-2 * np.pi, 2 * np.pi], [-2 * np.pi, 2 * np.pi], [-2 * np.pi, 2 * np.pi]])
+    const = [False, False, False, False, False, False]
+    u = Utils.find_alt_config(q6, limt6, const, filterOriginalq=False)
+    ic(u.T.shape)
+    ic(u.T)

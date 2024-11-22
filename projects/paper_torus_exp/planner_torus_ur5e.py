@@ -18,13 +18,13 @@ plantreecfg = {
     "planner": 5,  # 5
     "eta": 0.15,
     "subEta": 0.05,
-    "maxIteration": 500,
+    "maxIteration": 1000,
     "simulator": simu,
     "nearGoalRadius": None,
     "rewireRadius": None,
     "endIterationID": 1,
     "printDebug": True,
-    "localOptEnable": False,
+    "localOptEnable": True,
 }
 
 
@@ -103,4 +103,30 @@ if __name__ == "__main__":
     # demo_redun()
     # plan_individual()
     # plan_one_from_candidate()
-    plan_all_candidate_auto()
+    # plan_all_candidate_auto()
+
+    xStart = np.deg2rad([-100, -70, 100, -120, -90, 0]).reshape(6, 1)
+    xApp = np.deg2rad([-165, -70, 100, -30, 90, 0]).reshape(6, 1)
+    xApplong = np.deg2rad([-165 + 360, -70, 100, -30 + 360, 90, 0]).reshape(6, 1)
+    xGoal = xApplong.copy()
+
+    simu.set_joint_position(simu.jointDynamicHandles, xStart)
+    simu.set_joint_position(simu.jointVirtualHandles, xApp)
+    # simu.play_back_path(pq)
+
+    # a = np.linspace(xStart.flatten(), xApp.flatten(), num=10, endpoint=True).T
+    # print(f"> a.shape: {a.shape}")
+    # print(f"> a: {a}")
+    # simu.play_back_path(a)
+
+    # a = np.linspace(xStart.flatten(), xApplong.flatten(), num=10, endpoint=True).T
+    # print(f"> a.shape: {a.shape}")
+    # print(f"> a: {a}")
+    # simu.play_back_path(a)
+
+    pa = RRTPlannerAPI.init_normal(xStart, xApplong, xGoal, plantreecfg)
+    pq = pa.begin_planner()
+    pa.plot_performance()
+    # np.save("./ssss.npy", pq)
+    # pq = np.load("./ssss.npy")
+    # simu.play_back_path(pq)

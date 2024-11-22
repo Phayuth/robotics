@@ -7,13 +7,15 @@ import time
 def angular_velo_opt():
     # Constants
     linear_velocity = 1.0
+    turn_radius = 1
+
     dt = 0.01  # Time step
     x_initial = 1
     y_initial = 5
+    theta_initial = 0
+
     x_final = 5
     y_final = 10
-    turn_radius = 1
-    theta_initial = 0
 
     def dubins_car_model(state, angular_velocity):
         x, y, theta = state
@@ -81,9 +83,10 @@ def linear_and_angular_velo_opt():
     dt = 0.01  # Time step
     x_initial = 1
     y_initial = 5
+    theta_initial = -np.pi
+
     x_final = 5
     y_final = 10
-    theta_initial = -np.pi
 
     def dubins_car_model(state, linear_velocity, angular_velocity):
         turn_radius = 1
@@ -177,5 +180,5 @@ def linear_and_angular_velo_opt():
 
 
 if __name__=="__main__":
-    angular_velo_opt()
+    # angular_velo_opt()
     linear_and_angular_velo_opt()

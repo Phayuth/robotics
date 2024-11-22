@@ -14,11 +14,3 @@ snake_case = function
 snake_case = function option
 snake_case = script/folder name
 ```
-
-# Dependencies
-- Numpy
-- Scipy
-- [Pytransform3d](https://dfki-ric.github.io/pytransform3d/_auto_examples/index.html)
-- Open3d
-- OpenCV
-- Matplotlib

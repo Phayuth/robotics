@@ -25,9 +25,6 @@ dist/
 .vscode/
 
 # pointcloud and stl
-*.yaml
-*.stl
-*.ply
 *.pcd
 *.bag
 

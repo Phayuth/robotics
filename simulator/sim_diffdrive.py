@@ -12,13 +12,17 @@ from robot.mobile.differential import DifferentialDrive
 
 class DiffDrive2DSimulator:
 
-    def __init__(self) -> None:
+    def __init__(self, env=1) -> None:
         # required for planner
-        self.configLimit = [[0.0, 30.0], [0.0, 17.5]]
-        self.configDoF = len(self.configLimit)
+        if env == 1:
+            self.configLimit = [[0.0, 30.0], [0.0, 17.5]]
+            self.taskMapObs = MobileTaskMap.warehouse_map()
+        elif env == 2:
+            self.configLimit = [[-10.0, 10.0], [-10.0, 10.0]]
+            self.taskMapObs = MobileTaskMap.no_collision_map()
 
-        self.robot = DifferentialDrive(wheelRadius=0.1, baseLength=0.7, baseWidth=1)
-        self.taskMapObs = MobileTaskMap.warehouse_map()
+        self.configDoF = len(self.configLimit)
+        self.robot = DifferentialDrive(wheelRadius=0.33, baseLength=0.7, baseWidth=1) # scout 2.0
 
     def collision_check(self, xNewConfig):
         baseCollison = ShapeCircle(xNewConfig[0, 0], xNewConfig[1, 0], self.robot.collisionR)
@@ -45,7 +49,7 @@ class DiffDrive2DSimulator:
                     collisionPoint.append([x, y])
 
         collisionPoint = np.array(collisionPoint)
-        plt.plot(collisionPoint[:, 0], collisionPoint[:, 1], color='darkcyan', linewidth=0, marker='o', markerfacecolor='darkcyan', markersize=1.5)
+        plt.plot(collisionPoint[:, 0], collisionPoint[:, 1], color="darkcyan", linewidth=0, marker="o", markerfacecolor="darkcyan", markersize=1.5)
 
     def play_back_path(self, path, animation):  # path format (3,n)
         # plot task space
@@ -57,15 +61,15 @@ class DiffDrive2DSimulator:
         self.plot_taskspace()
 
         # plot path
-        ax.plot(path[0, :], path[1, :], '--', color='grey')
+        ax.plot(path[0, :], path[1, :], "--", color="grey")
 
         # plot animation link
-        link1, = ax.plot([], [], 'teal')
-        link2, = ax.plot([], [], 'olive')
-        link3, = ax.plot([], [], 'teal')
-        link4, = ax.plot([], [], 'olive')
-        link5, = ax.plot([], [], 'olive')
-        link6, = ax.plot([], [], 'teal')
+        (link1,) = ax.plot([], [], "teal")
+        (link2,) = ax.plot([], [], "olive")
+        (link3,) = ax.plot([], [], "teal")
+        (link4,) = ax.plot([], [], "olive")
+        (link5,) = ax.plot([], [], "olive")
+        (link6,) = ax.plot([], [], "teal")
 
         def update(frame):
             link = self.robot.robot_link(path[:, frame].reshape(3, 1))
@@ -94,7 +98,7 @@ class DiffDrive2DSimulator:
                     plt.plot([points[-1][0], points[-2][0]], [points[-1][1], points[-2][1]])
                 plt.draw()
 
-        plt.gcf().canvas.mpl_connect('button_press_event', onclick)
+        plt.gcf().canvas.mpl_connect("button_press_event", onclick)
         plt.show()
         return points
 

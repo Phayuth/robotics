@@ -21,7 +21,7 @@ class DifferentialDrivePoseBasicController:
 
     def kinematic_control(self, currentPose, referencePose):
         # controller switch condition
-        if np.linalg.norm([(referencePose[0,0] - currentPose[0,0]),(referencePose[1,0] - currentPose[1,0])]) < self.dTol:
+        if np.linalg.norm([(referencePose[0, 0] - currentPose[0, 0]), (referencePose[1, 0] - currentPose[1, 0])]) < self.dTol:
             self.state = True
 
         # position controller
@@ -29,7 +29,7 @@ class DifferentialDrivePoseBasicController:
             phiref = np.arctan2((referencePose[1, 0] - currentPose[1, 0]), (referencePose[0, 0] - currentPose[0, 0]))
             qRef = np.array([referencePose[0, 0], referencePose[1, 0], phiref]).reshape(3, 1)
             e = qRef - currentPose
-            vc = self.K1 * np.sqrt((e[0, 0]**2) + (e[1, 0]**2))
+            vc = self.K1 * np.sqrt((e[0, 0] ** 2) + (e[1, 0] ** 2))
             wc = self.K2 * e[2, 0]
 
         # orientation controller
@@ -37,6 +37,10 @@ class DifferentialDrivePoseBasicController:
             e = referencePose[2, 0] - currentPose[2, 0]
             vc = 0
             wc = self.Korient * e
+
+        # physical limit
+        if abs(vc) > 0.8:
+            vc = 0.8 * np.sign(vc)
 
         return np.array([[vc], [wc]])
 
@@ -46,6 +50,7 @@ class DifferentialDrivePositionForwardController:
     [Summary] : Position Basic Controller provide only control input toward desired position until distance.
 
     """
+
     def __init__(self, robot) -> None:
         self.robot = robot
 
@@ -56,9 +61,11 @@ class DifferentialDrivePositionForwardController:
     def kinematic_control(self, currentPose, referencePose):
         e = referencePose - currentPose
 
-        vc = self.K1 * np.sqrt((e[0, 0]**2) + (e[1, 0]**2))
+        # position controller
+        vc = self.K1 * np.sqrt((e[0, 0] ** 2) + (e[1, 0] ** 2))
         wc = self.K2 * e[2, 0]
 
+        # physical limit
         if abs(vc) > 0.8:
             vc = 0.8 * np.sign(vc)
 
@@ -68,6 +75,7 @@ class DifferentialDrivePositionForwardController:
 if __name__ == "__main__":
     import os
     import sys
+
     wd = os.path.abspath(os.getcwd())
     sys.path.append(str(wd))
 
@@ -81,7 +89,7 @@ if __name__ == "__main__":
 
     # simulator
     def dynamic(currentPose, input):
-        return robot.forward_external_kinematic(input, currentPose[2,0])
+        return robot.forward_external_kinematic(input, currentPose[2, 0])
 
     def desired(currentPose, time):
         return np.array([4.0, 4.0, 0]).reshape(3, 1)
@@ -95,19 +103,18 @@ if __name__ == "__main__":
     intg = EulerNumericalIntegrator(dynamic, control, desired, q0, tSpan, dt)
     timeSteps, states, desireds, controls = intg.simulation()
 
-
-    plt.plot(states[0,:], states[1,:])
+    plt.plot(states[0, :], states[1, :])
     plt.grid(True)
     plt.show()
 
-    plt.plot(timeSteps, states[0,:])
-    plt.plot(timeSteps, states[1,:])
-    plt.plot(timeSteps, states[2,:])
+    plt.plot(timeSteps, states[0, :])
+    plt.plot(timeSteps, states[1, :])
+    plt.plot(timeSteps, states[2, :])
     plt.grid(True)
     plt.show()
 
-    plt.plot(timeSteps, desireds[0,:])
-    plt.plot(timeSteps, desireds[1,:])
-    plt.plot(timeSteps, desireds[2,:])
+    plt.plot(timeSteps, desireds[0, :])
+    plt.plot(timeSteps, desireds[1, :])
+    plt.plot(timeSteps, desireds[2, :])
     plt.grid(True)
     plt.show()

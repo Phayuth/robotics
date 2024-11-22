@@ -49,6 +49,10 @@ class RRTTorusRedundantStar(RRTTorusRedundantComponent):
     def get_path(self):
         return self.search_best_cost_singledirection_path(backFromNode=self.xApp, treeVertexList=self.XInGoalRegion, attachNode=self.xGoal)
 
+    def get_path_array(self, pathNodesSeq): # this is wrong becuase it doesn't unwrap. but i want to demo it.
+        pathTemp = [node.config for node in pathNodesSeq]
+        return np.hstack(pathTemp)  # shape=(numDoF, numSeq)
+
 
 if __name__=="__main__":
     np.random.seed(9)
@@ -59,7 +63,7 @@ if __name__=="__main__":
     sim = RobotArm2DSimulator()
 
     plannarConfigDualTreea = {
-        "planner": 4,
+        "planner": "does not matter",
         "eta": 0.3,
         "subEta": 0.05,
         "maxIteration": 2000,
@@ -85,4 +89,22 @@ if __name__=="__main__":
     plt.xlim(-np.pi, np.pi)
     plt.ylim(-np.pi, np.pi)
     RRTPlotter.plot_2d_complete(pm, path, ax)
+    plt.show()
+
+
+    patharray = pm.get_path_array(path)
+    time = np.linspace(0, 1, num=patharray.shape[1])
+    print(f"> time.shape: {time.shape}")
+    print(patharray.shape)
+
+    fig, axs = plt.subplots(patharray.shape[0], 1, figsize=(10, 15), sharex=True)
+    for i in range(patharray.shape[0]):
+        axs[i].plot(time, patharray[i, :], color="blue", marker="o", linestyle="dashed", linewidth=2, markersize=12, label=f"Joint Pos {i+1}")
+        axs[i].set_ylabel(f"JPos {i+1}")
+        axs[i].set_xlim(time[0], time[-1])
+        axs[i].legend(loc="upper right")
+        axs[i].grid(True)
+    axs[-1].set_xlabel("Time")
+    fig.suptitle("Joint Position")
+    plt.tight_layout(rect=[0, 0, 1, 0.96])
     plt.show()

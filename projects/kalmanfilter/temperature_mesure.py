@@ -1,23 +1,7 @@
 import numpy as np
-from drawnow import *
 import matplotlib.pyplot as plt
 import math
 import random
-
-
-def makeFig():  # For drawnow function
-    ax1 = plt.subplot(121)
-    ax1.set_ylim(34, 38)
-    ax1.plot(t_store, x_store)
-    ax1.plot(t_store, m_store)
-    ax1.legend(("filtered", "measurement"), loc="upper right", shadow=True)
-    ax1.set_xlabel("time")
-    ax1.set_ylabel("temperature")
-
-    ax2 = plt.subplot(122)
-    ax2.plot(t_store, p_store)
-    ax2.set_xlabel("time")
-    ax2.set_ylabel("P_value")
 
 
 def sign_rand():
@@ -27,9 +11,7 @@ def sign_rand():
 
 def sin_func(t):
     freq = 2 * math.pi / 30
-
     y = 5 * math.sin(freq * t)
-
     return y
 
 
@@ -44,7 +26,7 @@ p_store = np.array([[p]])
 m_store = np.empty([1, 1])
 t = 0
 
-while True:
+while t < 1000:
     # time update
     x = x
     p = p + Q
@@ -69,6 +51,18 @@ while True:
         p_store = np.delete(p_store, 0, 0)
         m_store = np.delete(m_store, 0, 0)
 
-    drawnow(makeFig)
-    plt.pause(0.000001)
     t += 1
+
+ax1 = plt.subplot(121)
+ax1.set_ylim(34, 38)
+ax1.plot(t_store, x_store)
+ax1.plot(t_store, m_store)
+ax1.legend(("filtered", "measurement"), loc="upper right", shadow=True)
+ax1.set_xlabel("time")
+ax1.set_ylabel("temperature")
+
+ax2 = plt.subplot(122)
+ax2.plot(t_store, p_store)
+ax2.set_xlabel("time")
+ax2.set_ylabel("P_value")
+plt.show()

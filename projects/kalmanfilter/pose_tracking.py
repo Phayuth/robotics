@@ -1,12 +1,6 @@
 import numpy as np
-from drawnow import *
 import matplotlib.pyplot as plt
 import math
-
-
-def makeFig():  # For drawnow function
-    plt.plot(x_store, y_store)
-    plt.grid(True)
 
 
 # Covariance for EKF simulation
@@ -79,7 +73,7 @@ y_store = np.empty([1, 1])
 t_store = np.empty([1, 1])
 
 t = 0
-while True:
+while t < 1000:
     u = input()
     z_measure = measure(t)
     x_pred, p_pred = EKF_predict(x_est, u, p_est, Q)
@@ -93,6 +87,9 @@ while True:
         x_store = np.delete(x_store, 0, 0)
         y_store = np.delete(y_store, 0, 0)
         t_store = np.delete(t_store, 0, 0)
-    drawnow(makeFig)
-    plt.pause(0.000001)
+
     t += 1
+
+plt.plot(x_store, y_store)
+plt.grid(True)
+plt.show()
