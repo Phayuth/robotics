@@ -89,31 +89,20 @@ print(f"> mtorq: {mtorq}")
 
 result = p.getLinkState(kukaId, kukaEndEffectorIndex, computeLinkVelocity=1, computeForwardKinematics=1)
 link_trn, link_rot, com_trn, com_rot, frame_pos, frame_rot, link_vt, link_vr = result
-print(f"> link_trn: {link_trn}")
-print(f"> link_rot: {link_rot}")
-print(f"> com_trn: {com_trn}")
-print(f"> com_rot: {com_rot}")
-print(f"> frame_pos: {frame_pos}")
-print(f"> frame_rot: {frame_rot}")
-print(f"> link_vt: {link_vt}")
-print(f"> link_vr: {link_vr}")
 # Get the Jacobians for the CoM of the end-effector link.
 # Note that in this example com_rot = identity, and we would need to use com_rot.T * com_trn.
 # The localPosition is always defined in terms of the link frame coordinates.
 
 zero_vec = [0.0] * len(mpos)
 jac_t, jac_r = p.calculateJacobian(kukaId, kukaEndEffectorIndex, com_trn, mpos, zero_vec, zero_vec)
-print(f"> jac_t: {jac_t}")
-print(f"> jac_r: {jac_r}")
+
+print("Link linear velocity of CoM from getLinkState:")
+print(link_vt)
+print("Link linear velocity of CoM from linearJacobian * q_dot:")
+print(multiplyJacobian(kukaId, jac_t, vel))
 
 
-# print("Link linear velocity of CoM from getLinkState:")
-# print(link_vt)
-# print("Link linear velocity of CoM from linearJacobian * q_dot:")
-# print(multiplyJacobian(kukaId, jac_t, vel))
-
-
-# print("Link angular velocity of CoM from getLinkState:")
-# print(link_vr)
-# print("Link angular velocity of CoM from angularJacobian * q_dot:")
-# print(multiplyJacobian(kukaId, jac_r, vel))
+print("Link angular velocity of CoM from getLinkState:")
+print(link_vr)
+print("Link angular velocity of CoM from angularJacobian * q_dot:")
+print(multiplyJacobian(kukaId, jac_r, vel))

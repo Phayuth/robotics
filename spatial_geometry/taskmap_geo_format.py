@@ -90,6 +90,13 @@ class NonMobileTaskMap:
             ShapeRectangle(x=-4, y=-4, h=2, w=2),
         ]
 
+    def paper_new_torus():
+        return [
+            ShapeRectangle(x=-0.7, y=1.3, h=2, w=2.2),
+            ShapeRectangle(x=2, y=-2.0, h=1, w=4.0),
+            ShapeRectangle(x=-3, y=-3, h=1.25, w=2),
+        ]
+
 
 class MobileTaskMap:
 
@@ -151,7 +158,7 @@ if __name__ == "__main__":
     plt.axvline(x=0, c="green")
     plt.axhline(y=0, c="green")
     plt.xlim(-5, 5)
-    plt.ylim(-2, 5)
+    plt.ylim(-5, 5)
 
     def plot_warehouse():
         listTask = [MobileTaskMap.warehouse_map()]
@@ -162,8 +169,9 @@ if __name__ == "__main__":
         plt.show()
 
     def plot_rect():
-        listTask = [NonMobileTaskMap.thesis_exp()]
-        listTask = [NonMobileTaskMap.ijcas_paper()]
+        # listTask = [NonMobileTaskMap.thesis_exp()]
+        # listTask = [NonMobileTaskMap.ijcas_paper()]
+        listTask = [NonMobileTaskMap.paper_new_torus()]
 
         for task in listTask:
             for obs in task:

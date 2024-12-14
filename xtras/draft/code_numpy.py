@@ -229,7 +229,7 @@ def np_meshgrid():
 
 if __name__ == "__main__":
     # np_exist_vector()
-    np_meshgrid()
+    # np_meshgrid()
 
     # a = np.random.uniform(0,1,(6,1000000))
     # b = np.random.uniform(0,1,(6,1))
@@ -239,3 +239,9 @@ if __name__ == "__main__":
 
     # for i in range(1000000):
     #     np.random.uniform(0,1,(6,1))
+
+    qs = [0.0, -np.pi / 2, np.pi / 2, np.pi / 2, np.pi / 2, 0.0]
+    qg = [-1.12, -1.86, 1.87, 0.0, np.pi / 2, 0.0]
+    n_steps = 10
+    interpolated = np.linspace(qs, qg, n_steps)
+    print(interpolated)
