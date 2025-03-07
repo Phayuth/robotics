@@ -53,25 +53,25 @@ m.Obj(tf)
 m.options.IMODE = 6
 m.solve(disp=True)  # set to True to view solver logs
 
-#Presentation of results
-print('Final Time: ' + str(tf.value[0]))
+# Presentation of results
+print("Final Time: " + str(tf.value[0]))
 
-#Plot solution
+# Plot solution
 tm = np.linspace(0, tf.value[0], nt)
 plt.figure(1)
-plt.plot(tm, x.value, 'k-', label=r'$x$')
-plt.plot(tm, y.value, 'b-', label=r'$y$')
-plt.plot(tm, v.value, 'g-', label=r'$v$')
-plt.plot(tm, th.value, 'm-', label=r'$\theta$')
-plt.plot(tm, av.value, 'r--', label=r'$a_v$')
-plt.plot(tm, phi.value, 'y--', label=r'$\phi$')
-plt.legend(loc='best')
-plt.xlabel('Time')
+plt.plot(tm, x.value, "k-", label=r"$x$")
+plt.plot(tm, y.value, "b-", label=r"$y$")
+plt.plot(tm, v.value, "g-", label=r"$v$")
+plt.plot(tm, th.value, "m-", label=r"$\theta$")
+plt.plot(tm, av.value, "r--", label=r"$a_v$")
+plt.plot(tm, phi.value, "y--", label=r"$\phi$")
+plt.legend(loc="best")
+plt.xlabel("Time")
 plt.show()
 
 plt.figure(1)
-plt.plot(x.value, y.value, 'k-', label=r'vehicle')
-plt.legend(loc='best')
-plt.xlabel('x position')
-plt.ylabel('y position')
+plt.plot(x.value, y.value, "k-", label=r"vehicle")
+plt.legend(loc="best")
+plt.xlabel("x position")
+plt.ylabel("y position")
 plt.show()
