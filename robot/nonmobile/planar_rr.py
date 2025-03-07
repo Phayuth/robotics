@@ -10,12 +10,36 @@ from spatial_geometry.spatial_transformation import RigidBodyTransformation as r
 class PlanarRR:
 
     def __init__(self):
+        # kinematic
         self.alpha1 = 0
         self.alpha2 = 0
         self.d1 = 0
         self.d2 = 0
         self.a1 = 2
         self.a2 = 2
+
+        # visual
+        self.shadowlevel = 0.2
+
+        self.basecolor = "black"
+        self.baselinewidth = 1
+        self.basemarker = "s"
+        self.basemarkerfacecolor = "white"
+
+        self.linkcolor = "indigo"
+        self.linkwidth = 1
+
+        self.jointmarker = "o"
+        self.jointcolor = "k"
+        self.jointlinewidth = 1
+        self.jointmarkersize = 2
+        self.jointmarkerfacecolor = "white"
+
+        self.eemarker = "o"
+        self.eecolor = "white"
+        self.eelinewidth = 1
+        self.eemarkersize = 2
+        self.eemarkerfacecolor = "indigo"
 
     def forward_kinematic(self, theta, return_link_pos=False):
         theta1 = theta[0, 0]
@@ -102,27 +126,65 @@ class PlanarRR:
 
         J1 = np.append(Jv1, Jw1, axis=0)  # if not use axis = the result is 1x6, axis=0 the result is 6x1, axis=1 the result is 3x2
         J2 = np.append(Jv2, Jw2, axis=0)
-        J = np.append(J1, J2, axis=1)  # we want J = [J1 , J2] side by side => use axis = 1
+        J = np.append(J1, J2, axis=1)
         return J
 
-    def _plot_single(self, theta, axis, shadow=False, color="indigo"):
+    def _plot_single(self, theta, axis, color, shadow=False):
         link = self.forward_kinematic(theta, return_link_pos=True)
-        axis.plot([link[0][0], link[1][0], link[2][0]], [link[0][1], link[1][1], link[2][1]], color=color, linewidth=1, alpha=0.2 if shadow else 1.0)  # link
-        axis.plot([link[1][0]], [link[1][1]], color="k", linewidth=1, marker="o", markerfacecolor="white", markersize=2, alpha=0.2 if shadow else 1.0)  # elbow dot
-        axis.plot([link[2][0]], [link[2][1]], color="white", linewidth=1, marker="o", markerfacecolor=color, markersize=2, alpha=0.2 if shadow else 1.0)  # ee
+
+        # link color
+        axis.plot(
+            [link[0][0], link[1][0], link[2][0]],
+            [link[0][1], link[1][1], link[2][1]],
+            color=color,
+            linewidth=self.linkwidth,
+            alpha=self.shadowlevel if shadow else 1.0,
+        )
+
+        # elbow marker
+        axis.plot(
+            [link[1][0]],
+            [link[1][1]],
+            color=self.jointcolor,
+            linewidth=self.jointlinewidth,
+            marker=self.jointmarker,
+            markerfacecolor=self.jointmarkerfacecolor,
+            markersize=self.jointmarkersize,
+            alpha=self.shadowlevel if shadow else 1.0,
+        )
+
+        # end effector marker
+        axis.plot(
+            [link[2][0]],
+            [link[2][1]],
+            color=self.eecolor,
+            linewidth=self.eelinewidth,
+            marker=self.eemarker,
+            markerfacecolor=self.eemarkerfacecolor,
+            markersize=self.eemarkersize,
+            alpha=self.shadowlevel if shadow else 1.0,
+        )
 
     def plot_arm(self, thetas, axis, shadow=False, colors=[]):
         if thetas.shape == (2, 1):
-            self._plot_single(thetas, axis)
+            self._plot_single(thetas, axis, color=self.linkcolor, shadow=shadow)
         else:
-            colors = colors if len(colors) != 0 else ["indigo"] * thetas.shape[1]
+            colors = colors if len(colors) != 0 else [self.linkcolor] * thetas.shape[1]
             for i in range(thetas.shape[1]):
                 if i in [0, thetas.shape[1] - 1]:
-                    self._plot_single(thetas[:, i, np.newaxis], axis, shadow=False, color=colors[i])
+                    self._plot_single(thetas[:, i, np.newaxis], axis, color=colors[i], shadow=False)
                 else:
-                    self._plot_single(thetas[:, i, np.newaxis], axis, shadow=shadow, color=colors[i])
+                    self._plot_single(thetas[:, i, np.newaxis], axis, color=colors[i], shadow=shadow)
 
-        axis.plot([0], [0], color="black", linewidth=1, marker="s", markerfacecolor="white")  # base
+        # base color
+        axis.plot(
+            [0],
+            [0],
+            color=self.basecolor,
+            linewidth=self.baselinewidth,
+            marker=self.basemarker,
+            markerfacecolor=self.basemarkerfacecolor,
+        )
 
 
 class PlanarRRVoxel(object):

@@ -54,7 +54,7 @@ def get_(path):
 
 
 def multi():
-    path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/new_data/"
+    path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/planner_thesis_data/"
 
     i = path + "env_UR5eArmCoppeliaSimAPI_types_Multi_planner_12_withlocgap_False_costgraph.pkl"
     j = path + "env_UR5eArmCoppeliaSimAPI_types_Multi_planner_16_withlocgap_False_costgraph.pkl"
@@ -85,7 +85,7 @@ def multi():
     ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
     ax.tick_params(axis="both", which="major", direction="in", length=5, width=1, colors="black", grid_color="gray", grid_alpha=0.2, labelsize=fontsz)
     ax.tick_params(axis="both", which="minor", direction="in", length=3, width=1, colors="black", grid_color="gray", grid_alpha=0.1, labelsize=fontsz)
-    ax.set_xlim((0, 2025))
+    ax.set_xlim((0, 3025))
 
     fi_cntml = 168
     fi_cntnaml = 240

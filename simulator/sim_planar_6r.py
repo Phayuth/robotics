@@ -23,7 +23,7 @@ class RobotArm6RSimulator:
         self.configDoF = len(self.configLimit)
 
         self.robot = Planar6R()
-        self.taskMapObs = NonMobileTaskMap.paper_torus_exp()
+        self.taskMapObs = NonMobileTaskMap.paper_torus_iccas2024()
 
     def collision_check(self, xNewConfig):
         linkPose = self.robot.forward_kinematic(xNewConfig, return_link_pos=True)

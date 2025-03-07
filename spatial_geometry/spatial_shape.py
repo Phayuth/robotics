@@ -28,11 +28,14 @@ class ShapeRectangle:
         self.angle = angle
         self.p = p  # probability value
 
-    def plot(self):
+    def plot(self, color=None):
         if self.p == 1:
             color = "r"
         else:
-            color = "darkcyan"
+            if color is None:
+                color = "darkcyan"
+            else:
+                color = color
 
         # v1 = np.array([0, 0]).reshape(2, 1)
         # v2 = np.array([self.w, 0]).reshape(2, 1)
@@ -50,7 +53,7 @@ class ShapeRectangle:
         # plt.plot([v4[0, 0], v1[0, 0]], [v4[1, 0], v1[1, 0]], c=color)
 
         # rec = plt.Rectangle((self.x, self.y), self.w, self.h, angle=self.angle, edgecolor=color, fill=False, hatch="x")
-        rec = plt.Rectangle((self.x, self.y), self.w, self.h, angle=self.angle, edgecolor=color, facecolor=color, fill=True)
+        rec = plt.Rectangle((self.x, self.y), self.w, self.h, angle=self.angle, edgecolor="k", facecolor=color, fill=True)
         plt.gca().add_patch(rec)
 
 

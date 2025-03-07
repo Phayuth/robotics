@@ -5,9 +5,7 @@ sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pickle
 import pandas as pd
-import pickle
 
 from case_1_costgraph import load_cost_graph_pkl
 
@@ -17,7 +15,7 @@ from case_1_costgraph import load_cost_graph_pkl
 
 
 def find_iteration_end(data):
-    iterationDiffConstant = 100
+    iterationDiffConstant = 200
     costDiffConstant = 0.1
     cBestPrevious = np.inf
     cBestPreviousIteration = 0
@@ -39,7 +37,7 @@ def plot_(data):
     plt.show()
 
 
-path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/new_paper/"
+path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/planner_ijcas_data/"
 
 i = path + "env_RobotArm2DSimulator_types_Multi_planner_12_withlocgap_False_costgraph.pkl"
 j = path + "env_RobotArm2DSimulator_types_Multi_planner_16_withlocgap_False_costgraph.pkl"

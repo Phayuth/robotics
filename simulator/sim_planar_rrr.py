@@ -4,48 +4,116 @@ import sys
 sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
-from spatial_geometry.spatial_shape import ShapeRectangle
+import matplotlib.pyplot as plt
+from spatial_geometry.spatial_shape import ShapeLine2D, ShapeCollision
 from robot.nonmobile.planar_rrr import PlanarRRR
+from spatial_geometry.taskmap_geo_format import NonMobileTaskMap
 
 
 class RobotArm2DRRRSimulator:
 
-    def __init__(self):
+    def __init__(self, torusspace=False):
         # required for planner
-        self.configLimit = [[-2*np.pi, 2*np.pi], [-2*np.pi, 2*np.pi], [-2*np.pi, 2*np.pi]]
+        self.toruspace = torusspace
+        if self.toruspace:
+            self.configLimit = [[-2 * np.pi, 2 * np.pi], [-2 * np.pi, 2 * np.pi], [-2 * np.pi, 2 * np.pi]]
+        else:
+            self.configLimit = [[-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi]]
+
         self.configDoF = len(self.configLimit)
 
         self.robot = PlanarRRR()
-        xTarg = 1.5
-        yTarg = 0.2
-        alphaTarg = 2  # given from grapse pose candidate
-        hD = 0.25
-        wD = 0.25
-        rCrop = 0.1
-        phiTarg = alphaTarg - np.pi
+        self.taskMapObs = NonMobileTaskMap.paper_ijcas2025()
 
-        xTopStart = (rCrop + hD) * np.cos(alphaTarg - np.pi / 2) + xTarg
-        yTopStart = (rCrop + hD) * np.sin(alphaTarg - np.pi / 2) + yTarg
-        xBotStart = (rCrop) * np.cos(alphaTarg + np.pi / 2) + xTarg
-        yBotStart = (rCrop) * np.sin(alphaTarg + np.pi / 2) + yTarg
-        recTop = ShapeRectangle(xTopStart, yTopStart, hD, wD, angle=alphaTarg)
-        recBot = ShapeRectangle(xBotStart, yBotStart, hD, wD, angle=alphaTarg)
-        self.taskMapObs = [recTop, recBot]
-
-        target = np.array([xTarg, yTarg, phiTarg]).reshape(3, 1)
-        thetaGoal = self.inverse_kinematic_geometry(target, elbow_option=0)
+        # ICROS 2023 confpaper
+        # xTarg = 1.5
+        # yTarg = 0.2
+        # alphaTarg = 2  # given from grapse pose candidate
+        # hD = 0.25
+        # wD = 0.25
+        # rCrop = 0.1
+        # phiTarg = alphaTarg - np.pi
+        # xTopStart = (rCrop + hD) * np.cos(alphaTarg - np.pi / 2) + xTarg
+        # yTopStart = (rCrop + hD) * np.sin(alphaTarg - np.pi / 2) + yTarg
+        # xBotStart = (rCrop) * np.cos(alphaTarg + np.pi / 2) + xTarg
+        # yBotStart = (rCrop) * np.sin(alphaTarg + np.pi / 2) + yTarg
+        # recTop = ShapeRectangle(xTopStart, yTopStart, hD, wD, angle=alphaTarg)
+        # recBot = ShapeRectangle(xBotStart, yBotStart, hD, wD, angle=alphaTarg)
+        # self.taskMapObs = [recTop, recBot]
+        # target = np.array([xTarg, yTarg, phiTarg]).reshape(3, 1)
+        # thetaGoal = self.inverse_kinematic_geometry(target, elbow_option=0)
 
     def collision_check(self, xNewConfig):
-        raise NotImplementedError
+        linkPose = self.robot.forward_kinematic(xNewConfig, return_link_pos=True)
+        linearm1 = ShapeLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
+        linearm2 = ShapeLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
+        linearm3 = ShapeLine2D(linkPose[2][0], linkPose[2][1], linkPose[3][0], linkPose[3][1])
 
-    def get_cspace_grid(self): #generate into 2d array plot by imshow
-        raise NotImplementedError
+        link = [linearm1, linearm2, linearm3]
 
-    def plot_taskspace(self, theta):
-        raise NotImplementedError
+        for obs in self.taskMapObs:
+            for i in range(len(link)):
+                if ShapeCollision.intersect_line_v_rectangle(link[i], obs):
+                    return True
+        return False
+
+    def get_cspace_grid(self):
+        raise NotImplementedError("This robot is 3DOF. It is difficult to view the 3D grid.")
+
+    def plot_taskspace(self):
+        for obs in self.taskMapObs:
+            obs.plot("#2ca08980")
 
     def plot_cspace(self, axis):
-        raise NotImplementedError
+        raise NotImplementedError("This robot is 3DOF. It is difficult to view the 3D grid.")
 
-    def play_back_path(self, path, axis):
-        raise NotImplementedError
+    def play_back_path(self, path, animation):
+        """
+        path shape must be in (3,n)
+        """
+        # plot task space
+        fig, ax = plt.subplots()
+        # ax.grid(True)
+        ax.set_aspect("equal")
+        ax.set_xlim(NonMobileTaskMap.paper_ijcas2025_xlim)
+        ax.set_ylim(NonMobileTaskMap.paper_ijcas2025_ylim)
+        self.plot_taskspace()
+
+        # plot animation link
+        (robotLinks,) = ax.plot([], [], color=self.robot.linkcolor, linewidth=self.robot.linkwidth, marker=self.robot.jointmarker, markerfacecolor="r")
+
+        def update(frame):
+            link = self.robot.forward_kinematic(path[:, frame].reshape(3, 1), return_link_pos=True)
+            robotLinks.set_data([link[0][0], link[1][0], link[2][0], link[3][0]], [link[0][1], link[1][1], link[2][1], link[3][1]])
+
+        animation = animation.FuncAnimation(fig, update, frames=path.shape[1], interval=100, repeat=False)
+        plt.show()
+
+    def plot_view(self, thetas, shadowseq=False, colors=[]):
+        fig, ax = plt.subplots()
+        s = 1
+        fig.set_size_inches(w=s * 3.40067, h=s * 3.40067)
+        fig.tight_layout()
+        ax.set_aspect("equal")
+        ax.set_xlim(NonMobileTaskMap.paper_ijcas2025_xlim)
+        ax.set_ylim(NonMobileTaskMap.paper_ijcas2025_ylim)
+        ax.axhline(color="gray", alpha=0.4)
+        ax.axvline(color="gray", alpha=0.4)
+        self.plot_taskspace()
+        self.robot.plot_arm(thetas, ax, shadow=shadowseq, colors=colors)
+        plt.show()
+
+
+if __name__ == "__main__":
+    from matplotlib import animation
+    import matplotlib.pyplot as plt
+
+    sim = RobotArm2DRRRSimulator()
+
+    # view
+    thetas = np.array([[0, 0, 0], [1, 1, np.pi / 3], [2, 2, np.pi / 2], [3, 3, np.pi]]).T
+    sim.plot_view(thetas)
+
+    # play back
+    path = np.linspace([0,0,0], [2 * np.pi,0,0], 100).T
+    sim.play_back_path(path, animation)

@@ -3,6 +3,7 @@ import sys
 
 sys.path.append(str(os.path.abspath(os.getcwd())))
 
+import numpy as np
 from spatial_geometry.spatial_shape import ShapeRectangle
 
 
@@ -75,14 +76,16 @@ class NonMobileTaskMap:
             ShapeRectangle(x=1.5, y=2, h=2, w=1),
         ]
 
-    def ijcas_paper():
+    paper_ijcas2025_xlim = (-4, 4)
+    paper_ijcas2025_ylim = (-2, 4)
+    def paper_ijcas2025():
         return [
             ShapeRectangle(x=-2.75, y=1, h=2, w=1),
             ShapeRectangle(x=1.5, y=2, h=2, w=1),
             ShapeRectangle(x=-0.75, y=-2.0, h=0.75, w=4.0),
         ]
 
-    def paper_torus_exp():
+    def paper_torus_iccas2024():
         return [
             ShapeRectangle(x=2, y=2, h=2, w=2),
             ShapeRectangle(x=-4, y=2, h=2, w=2),
@@ -90,7 +93,12 @@ class NonMobileTaskMap:
             ShapeRectangle(x=-4, y=-4, h=2, w=2),
         ]
 
-    def paper_new_torus():
+    paper_torus_ifac2025_xlim = (-3, 5)
+    paper_torus_ifac2025_ylim = (-3, 3)
+    paper_torus_ifac2025_thetas = np.array([[2.68, -0.70], [-2.85, 1.73]])
+    paper_torus_ifac2025_qstart_text = [1.3, -1, "$q_s$"]
+    paper_torus_ifac2025_qgoal_text = [-0.9, 0.5, "$q_g$"]
+    def paper_torus_ifac2025():
         return [
             ShapeRectangle(x=-0.7, y=1.3, h=2, w=2.2),
             ShapeRectangle(x=2, y=-2.0, h=1, w=4.0),
@@ -171,7 +179,7 @@ if __name__ == "__main__":
     def plot_rect():
         # listTask = [NonMobileTaskMap.thesis_exp()]
         # listTask = [NonMobileTaskMap.ijcas_paper()]
-        listTask = [NonMobileTaskMap.paper_new_torus()]
+        listTask = [NonMobileTaskMap.paper_torus_ifac2025()]
 
         for task in listTask:
             for obs in task:

@@ -28,9 +28,26 @@ dist/
 *.pcd
 *.bag
 
-# neural net weight
-*.pt
+# Ignore dataset folder
+data/
+dataset/
+build/
+MNIST/
 
-# new data for experiement
-new_data/
-new_paper/
+# pointcloud and stl
+*.stl
+*.ply
+*.pcd
+*.bag
+
+# Ignore Weight file
+*.pt
+*.pth
+*.h5
+
+# Ignore tensorboad folder
+runs/
+
+# experiement data
+planner_thesis_data/
+planner_ijcas_data/

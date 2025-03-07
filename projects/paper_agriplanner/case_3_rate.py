@@ -5,9 +5,7 @@ sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pickle
 import pandas as pd
-import pickle
 
 from case_1_costgraph import load_cost_graph_pkl
 
@@ -39,7 +37,7 @@ def plot_(data):
     plt.show()
 
 
-path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/new_data/"
+path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/planner_thesis_data/"
 
 i = path + "env_UR5eArmCoppeliaSimAPI_types_Multi_planner_12_withlocgap_False_costgraph.pkl"
 j = path + "env_UR5eArmCoppeliaSimAPI_types_Multi_planner_16_withlocgap_False_costgraph.pkl"

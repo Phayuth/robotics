@@ -54,7 +54,7 @@ def get_(path):
 
 
 def single():
-    path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/new_data/"
+    path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/planner_thesis_data/"
 
     a = path + "env_UR5eArmCoppeliaSimAPI_types_Single_planner_2_withlocgap_False_costgraph.pkl"
     b = path + "env_UR5eArmCoppeliaSimAPI_types_Single_planner_4_withlocgap_False_costgraph.pkl"
@@ -110,7 +110,7 @@ def single():
 
 
 def multi():
-    path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/new_data/"
+    path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/planner_thesis_data/"
 
     i = path + "env_UR5eArmCoppeliaSimAPI_types_Multi_planner_12_withlocgap_False_costgraph.pkl"
     j = path + "env_UR5eArmCoppeliaSimAPI_types_Multi_planner_16_withlocgap_False_costgraph.pkl"

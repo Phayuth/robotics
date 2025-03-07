@@ -24,10 +24,10 @@ class RobotArm2DSimulator:
 
         self.robot = PlanarRR()
         # self.taskMapObs = NonMobileTaskMap.task_rectangle_obs_1()
-        # self.taskMapObs = NonMobileTaskMap.paper_torus_exp()
+        # self.taskMapObs = NonMobileTaskMap.paper_torus_iccas2024()
         # self.taskMapObs = NonMobileTaskMap.thesis_exp()
-        # self.taskMapObs = NonMobileTaskMap.ijcas_paper()
-        self.taskMapObs = NonMobileTaskMap.paper_new_torus()
+        self.taskMapObs = NonMobileTaskMap.paper_ijcas2025()
+        # self.taskMapObs = NonMobileTaskMap.paper_torus_ifac2025()
 
     def collision_check(self, xNewConfig):
         linkPose = self.robot.forward_kinematic(xNewConfig, return_link_pos=True)
@@ -78,7 +78,7 @@ class RobotArm2DSimulator:
 
     def plot_taskspace(self):
         for obs in self.taskMapObs:
-            obs.plot()
+            obs.plot("#2ca08980")
 
     def plot_cspace(self, axis):
         if self.torusspace:
@@ -98,17 +98,20 @@ class RobotArm2DSimulator:
         axis.plot(collisionPoint[:, 0], collisionPoint[:, 1], color="darkcyan", linewidth=0, marker="o", markerfacecolor="darkcyan", markersize=1.5)
         return collisionPoint
 
-    def play_back_path(self, path, animation):  # path format (2,n)
+    def play_back_path(self, path, animation):
+        """
+        path shape must be in (2,n)
+        """
         # plot task space
         fig, ax = plt.subplots()
         ax.grid(True)
         ax.set_aspect("equal")
-        ax.set_xlim(-5, 5)
-        ax.set_ylim(-5, 5)
+        ax.set_xlim(NonMobileTaskMap.paper_ijcas2025_xlim)
+        ax.set_ylim(NonMobileTaskMap.paper_ijcas2025_ylim)
         self.plot_taskspace()
 
         # plot animation link
-        (robotLinks,) = ax.plot([], [], color="indigo", linewidth=5, marker="o", markerfacecolor="r")
+        (robotLinks,) = ax.plot([], [], color=self.robot.linkcolor, linewidth=self.robot.linkwidth, marker=self.robot.jointmarker, markerfacecolor="r")
 
         def update(frame):
             link = self.robot.forward_kinematic(path[:, frame].reshape(2, 1), return_link_pos=True)
@@ -123,14 +126,14 @@ class RobotArm2DSimulator:
         fig.set_size_inches(w=s * 3.40067, h=s * 3.40067)
         fig.tight_layout()
         ax.set_aspect("equal")
-        ax.set_xlim(-3, 5)
-        ax.set_ylim(-3, 3)
+        ax.set_xlim(NonMobileTaskMap.paper_ijcas2025_xlim)
+        ax.set_ylim(NonMobileTaskMap.paper_ijcas2025_ylim)
         ax.axhline(color="gray", alpha=0.4)
         ax.axvline(color="gray", alpha=0.4)
         self.plot_taskspace()
         self.robot.plot_arm(thetas, ax, shadow=shadowseq, colors=colors)
-        ax.text(1.3,-1,"$q_s$")
-        ax.text(-0.9,0.5,"$q_g$")
+        # ax.text(*NonMobileTaskMap.paper_torus_ifac2025_qstart_text)
+        # ax.text(*NonMobileTaskMap.paper_torus_ifac2025_qgoal_text)
         plt.show()
 
 
@@ -138,31 +141,16 @@ if __name__ == "__main__":
     from matplotlib import animation
     import matplotlib.pyplot as plt
 
-    # cspace
-    torus=False
-    env = RobotArm2DSimulator(torusspace=torus)
-    fig, ax = plt.subplots(1, 1)
-    colp = env.plot_cspace(ax)
-    if torus:
-        ax.set_xlim([-2*np.pi, 2*np.pi])
-        ax.set_ylim([-2*np.pi, 2*np.pi])
-        ax.axhline(y=np.pi,color="gray", alpha=0.4)
-        ax.axhline(y=-np.pi,color="gray", alpha=0.4)
-        ax.axvline(x=np.pi,color="gray", alpha=0.4)
-        ax.axvline(x=-np.pi,color="gray", alpha=0.4)
-    else:
-        ax.set_xlim([-np.pi, np.pi])
-        ax.set_ylim([-np.pi, np.pi])
-    plt.show()
-    # np.save("./collisionpoint_exts.npy", colp)
-    np.save("./collisionpoint_so2s.npy", colp)
+    torus = False
+    sim = RobotArm2DSimulator(torusspace=torus)
+
+    # view
+    sim.plot_view(NonMobileTaskMap.paper_torus_ifac2025_thetas)
 
     # play back
-    # t1 = np.deg2rad(np.arange(0,90,1))
-    # t2 = np.deg2rad(np.arange(0,90,1))
-    # tt = np.vstack((t1,t2))
-    # env.play_back_path(tt, animation)
+    t1 = np.deg2rad(np.arange(0,90,1))
+    t2 = np.deg2rad(np.arange(0,90,1))
+    tt = np.vstack((t1,t2))
+    sim.play_back_path(tt, animation)
 
-    thetas = np.array([[ 2.68, -0.70],
-                       [-2.85,  1.73]])
-    env.plot_view(thetas)
+

@@ -98,6 +98,7 @@ class RRTPlannerAPI:
         ]
 
         self.planner = self.planningAlg[self.cfg["planner"]](xStart, xApp, xGoal, self.cfg)
+        self.resultpath = None
 
     @classmethod
     def init_normal(cls, xStart, xApp, xGoal, cfg):
@@ -147,6 +148,19 @@ class RRTPlannerAPI:
 
     def plot_2d_cspace_state_external(self, ax):
         RRTPlotter.plot_2d_cspace_state(self.planner, ax)
+
+    def plot_2d_tree_path_state(self):
+        fig, ax = plt.subplots()
+        s = 2.5
+        fig.set_size_inches(w=s * 3.40067, h=s * 3.40067)
+        fig.tight_layout()
+        plt.xlim((self.cfg["simulator"].configLimit[0][0], self.cfg["simulator"].configLimit[0][1]))
+        plt.ylim((self.cfg["simulator"].configLimit[1][0], self.cfg["simulator"].configLimit[1][1]))
+        RRTPlotter.plot_2d_tree_path_state(self.planner, self.resultpath, ax)
+        plt.show()
+
+    def plot_2d_tree_path_state_external(self, ax):
+        RRTPlotter.plot_2d_tree_path_state(self.planner, self.resultpath, ax)
 
     def plot_2d_complete(self):
         fig, ax = plt.subplots()

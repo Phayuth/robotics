@@ -103,7 +103,7 @@ class TrialRun:
         print("Finished Trail Loop")
 
         # save data
-        path = f"./datasave/new_paper/"
+        path = f"./datasave/planner_ijcas_data/"
 
         # table
         df = pd.DataFrame(self.data)

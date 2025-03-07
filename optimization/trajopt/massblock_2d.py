@@ -42,14 +42,14 @@ m.Equation(x4.dt() == u2 * tf)
 # Collision contraint
 circle = [[5, 5, 1], [4, 2, 1], [6, 2, 1], [8, 4, 1]]
 for cir in circle:
-    m.Equation(m.sqrt((x1 - cir[0])**2 + (x2 - cir[1])**2) >= cir[2])
+    m.Equation(m.sqrt((x1 - cir[0]) ** 2 + (x2 - cir[1]) ** 2) >= cir[2])
 
 # Objective to minimize
 m.Minimize(tf)
 m.options.IMODE = 6
 m.solve()
 
-print('Final Time: ' + str(tf.value[0]))
+print("Final Time: " + str(tf.value[0]))
 tm = tm * tf.value[0]
 
 fig, axs = plt.subplots(6, 1)

@@ -739,13 +739,13 @@ class RRTPlotter:
     stateAppFaceColor = "green"
     stateGoalColor = "blue"
     stateGoalFaceColor = "red"
-    stateMarkersize = 2.5
+    stateMarkersize = 5 #2.5
     stateMarker = "o"
 
     pathColor = "blue"
     pathFaceColor = "plum"
     pathMarker = "o"
-    pathMarkersize = 2.5
+    pathMarkersize = 1 #2.5
 
     def plot_2d_obstacle(simulator, axis):
         joint1Range = np.linspace(simulator.configLimit[0][0], simulator.configLimit[0][1], 360)
@@ -833,6 +833,20 @@ class RRTPlotter:
 
     def plot_2d_cspace_state(plannerClass, ax):
         RRTPlotter.plot_2d_obstacle(plannerClass.simulator, ax)
+
+        try:
+            RRTPlotter.plot_2d_state(plannerClass.xStart, plannerClass.xApp, plannerClass.xGoal, ax)
+        except:
+            RRTPlotter.plot_2d_state(plannerClass.xStart, plannerClass.xAppList, plannerClass.xGoalList, ax)
+
+    def plot_2d_tree_path_state(plannerClass, path, ax):
+        try:
+            RRTPlotter.plot_2d_tree([plannerClass.treeVertexStart, plannerClass.treeVertexGoal], ax)
+        except:
+            RRTPlotter.plot_2d_tree([plannerClass.treeVertex], ax)
+
+        if path is not None:
+            RRTPlotter.plot_2d_path(path, ax)
 
         try:
             RRTPlotter.plot_2d_state(plannerClass.xStart, plannerClass.xApp, plannerClass.xGoal, ax)

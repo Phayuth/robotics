@@ -43,7 +43,7 @@ def get_(path):
 
 
 def multi():
-    path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/new_paper/"
+    path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/planner_ijcas_data/"
 
     i = path + "env_RobotArm2DSimulator_types_Multi_planner_12_withlocgap_False_costgraph.pkl"
     j = path + "env_RobotArm2DSimulator_types_Multi_planner_16_withlocgap_False_costgraph.pkl"

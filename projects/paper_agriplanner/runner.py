@@ -4,18 +4,15 @@ import sys
 sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import time
-import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 import pandas as pd
-from spatial_geometry.spatial_transformation import RigidBodyTransformation as rbt
 
-from datasave.joint_value.experiment_paper import URHarvesting
-from datasave.joint_value.experiment_paper import ICRABarnMap
-from spatial_geometry.utils import Utils
+from e2d_parameters import xStart as xS2, xApp as xA2, xGoal as xG2
+from e3d_parameters import xStart as xS3, xApp as xA3, xGoal as xG3
 
 from simulator.sim_planar_rr import RobotArm2DSimulator
-from simulator.sim_rectangle import TaskSpace2DSimulator
+from simulator.sim_planar_rrr import RobotArm2DRRRSimulator
 from simulator.sim_ur5e_api import UR5eArmCoppeliaSimAPI
 
 from planner.sampling_based.rrt_plannerapi import RRTPlannerAPI
@@ -29,7 +26,7 @@ class TrialRun:
         self.xGoal = q.xGoal
         self.numTrial = numTrial
 
-        if simulator.__class__.__name__ == "RobotArm2DSimulator":
+        if simulator.__class__.__name__ in ["RobotArm2DSimulator", "RobotArm2DRRRSimulator"]:
             self.configPlanner = {
                 "planner": plannerid,
                 "eta": 0.3,
@@ -54,7 +51,7 @@ class TrialRun:
                 "rewireRadius": None,
                 "endIterationID": 1,
                 "printDebug": True,
-                "localOptEnable": locgap
+                "localOptEnable": locgap,
             }
 
         self.data = {
@@ -103,44 +100,26 @@ class TrialRun:
         print("Finished Trail Loop")
 
         # save data
-        path = f"./datasave/new_paper/"
+        path = f"./datasave/planner_ijcas_data/"
 
         # table
         df = pd.DataFrame(self.data)
-        df.to_csv(path + self.namefile +"performance.csv", index=True)
+        df.to_csv(path + self.namefile + "performance.csv", index=True)
 
         # graph
-        with open(path + self.namefile +"costgraph.pkl", "wb") as file:
+        with open(path + self.namefile + "costgraph.pkl", "wb") as file:
             pickle.dump(self.costGraph, file)
 
 
-def case_1_multi():
+def case_2dof_multi():
     trailrun = 100
 
     simulator = RobotArm2DSimulator()
 
     class RobotArmPose:
-        rc = 0.8
-        g1 = rbt.conv_polar_to_cartesian(rc, 0.0, -3.0, 0.5)
-        g2 = rbt.conv_polar_to_cartesian(rc, 0.5, -3.0, 0.5)  # intended collision
-        g3 = rbt.conv_polar_to_cartesian(rc, -0.5, -3.0, 0.5)
-
-        robot = simulator.robot
-        q1 = robot.inverse_kinematic_geometry(np.array(g1).reshape(2, 1), elbow_option=1)
-        q2 = robot.inverse_kinematic_geometry(np.array(g2).reshape(2, 1), elbow_option=1)
-        q3 = robot.inverse_kinematic_geometry(np.array(g3).reshape(2, 1), elbow_option=1)
-
-        q1i = robot.inverse_kinematic_geometry(np.array(g1).reshape(2, 1), elbow_option=0)
-        q2i = robot.inverse_kinematic_geometry(np.array(g2).reshape(2, 1), elbow_option=0)
-        q3i = robot.inverse_kinematic_geometry(np.array(g3).reshape(2, 1), elbow_option=0)
-
-        q1i = Utils.wrap_to_pi(q1i)
-        q2i = Utils.wrap_to_pi(q2i)
-        q3i = Utils.wrap_to_pi(q3i)
-
-        xStart = np.array([0, 0]).reshape(2, 1)
-        xApp = [q1, q3, q1i, q2i, q3i]
-        xGoal = [q1, q3, q1i, q2i, q3i]
+        xStart = xS2
+        xApp = xA2
+        xGoal = xG2
 
     q = RobotArmPose()
 
@@ -175,8 +154,53 @@ def case_1_multi():
     trun.run()
 
 
+def case_3dof_multi():
+    trailrun = 100
+
+    simulator = RobotArm2DRRRSimulator()
+
+    class RobotArmPose:
+        xStart = xS3
+        xApp = xA3
+        xGoal = xG3
+
+    q = RobotArmPose()
+
+    # case 1 rrt cnt multi
+    plannerid = 12
+    trun = TrialRun(trailrun, plannerid, simulator, q, locgap=False)
+    trun.run()
+
+    # case 1 rrt cnt na multi
+    plannerid = 16
+    trun = TrialRun(trailrun, plannerid, simulator, q, locgap=False)
+    trun.run()
+
+    # case 1 rrt star cnt multi
+    plannerid = 13
+    trun = TrialRun(trailrun, plannerid, simulator, q, locgap=False)
+    trun.run()
+
+    # case 1 rrt cnt locgap multi
+    plannerid = 12
+    trun = TrialRun(trailrun, plannerid, simulator, q, locgap=True)
+    trun.run()
+
+    # case 1 rrt cnt na locgap multi
+    plannerid = 16
+    trun = TrialRun(trailrun, plannerid, simulator, q, locgap=True)
+    trun.run()
+
+    # case 1 rrt star cnt locgap multi
+    plannerid = 13
+    trun = TrialRun(trailrun, plannerid, simulator, q, locgap=True)
+    trun.run()
+
 
 if __name__ == "__main__":
 
-    # run
-    case_1_multi()
+    # run 2dof
+    # case_2dof_multi()
+
+    # run 3dof
+    case_3dof_multi()

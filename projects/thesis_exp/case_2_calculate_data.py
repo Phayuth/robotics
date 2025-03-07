@@ -11,7 +11,7 @@ import pickle
 import pandas as pd
 
 
-path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/new_data/"
+path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/planner_thesis_data/"
 
 a = path + "env_TaskSpace2DSimulator_types_Single_planner_2_withlocgap_False_costgraph.pkl"
 b = path + "env_TaskSpace2DSimulator_types_Single_planner_4_withlocgap_False_costgraph.pkl"

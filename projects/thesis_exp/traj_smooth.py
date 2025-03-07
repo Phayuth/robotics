@@ -10,8 +10,8 @@ import pickle
 from trajectory_generator.traj_interpolator import CubicSplineInterpolationIndependant, MonotoneSplineInterpolationIndependant, BSplineSmoothingUnivariant, BSplineInterpolationIndependant, SmoothSpline
 
 
-pikf = "./datasave/new_data/initial_to_grasp.pkl"
-# pikf = "./datasave/new_data/pregrasp_to_drop.pkl"
+pikf = "./datasave/planner_thesis_data/initial_to_grasp.pkl"
+# pikf = "./datasave/planner_thesis_data/pregrasp_to_drop.pkl"
 with open(pikf, "rb") as file:
     data = pickle.load(file)
     print(f"> data.shape: {data.shape}")
