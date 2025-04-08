@@ -14,6 +14,7 @@ from datasave.joint_value.experiment_paper import URHarvesting
 from datasave.joint_value.experiment_paper import ICRABarnMap
 from spatial_geometry.utils import Utils
 
+from task_map import Thesis2024
 from simulator.sim_planar_rr import RobotArm2DSimulator
 from simulator.sim_rectangle import TaskSpace2DSimulator
 from simulator.sim_ur5e_api import UR5eArmCoppeliaSimAPI
@@ -165,7 +166,7 @@ def case_2_single():
 def case_1_single():
     trailrun = 100
 
-    simulator = RobotArm2DSimulator()
+    simulator = RobotArm2DSimulator(Thesis2024())
 
     class RobotArmPose:
         rc = 0.8
@@ -228,7 +229,7 @@ def case_1_single():
 def case_1_multi():
     trailrun = 100
 
-    simulator = RobotArm2DSimulator()
+    simulator = RobotArm2DSimulator(Thesis2024())
 
     class RobotArmPose:
         rc = 0.8

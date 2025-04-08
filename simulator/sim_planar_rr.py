@@ -7,12 +7,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from spatial_geometry.spatial_shape import ShapeLine2D, ShapeCollision
 from robot.nonmobile.planar_rr import PlanarRR
-from spatial_geometry.taskmap_geo_format import NonMobileTaskMap
 
 
 class RobotArm2DSimulator:
 
-    def __init__(self, torusspace=False):
+    def __init__(self, taskspace, torusspace=False):
         # required for planner
         self.torusspace = torusspace
         if self.torusspace:
@@ -23,11 +22,8 @@ class RobotArm2DSimulator:
         self.configDoF = len(self.configLimit)
 
         self.robot = PlanarRR()
-        # self.taskMapObs = NonMobileTaskMap.task_rectangle_obs_1()
-        # self.taskMapObs = NonMobileTaskMap.paper_torus_iccas2024()
-        # self.taskMapObs = NonMobileTaskMap.thesis_exp()
-        self.taskMapObs = NonMobileTaskMap.paper_ijcas2025()
-        # self.taskMapObs = NonMobileTaskMap.paper_torus_ifac2025()
+        self.taskspace = taskspace
+        self.taskMapObs = self.taskspace.task_map()
 
     def collision_check(self, xNewConfig):
         linkPose = self.robot.forward_kinematic(xNewConfig, return_link_pos=True)
@@ -106,8 +102,8 @@ class RobotArm2DSimulator:
         fig, ax = plt.subplots()
         ax.grid(True)
         ax.set_aspect("equal")
-        ax.set_xlim(NonMobileTaskMap.paper_ijcas2025_xlim)
-        ax.set_ylim(NonMobileTaskMap.paper_ijcas2025_ylim)
+        ax.set_xlim(self.taskspace.xlim)
+        ax.set_ylim(self.taskspace.ylim)
         self.plot_taskspace()
 
         # plot animation link
@@ -126,31 +122,12 @@ class RobotArm2DSimulator:
         fig.set_size_inches(w=s * 3.40067, h=s * 3.40067)
         fig.tight_layout()
         ax.set_aspect("equal")
-        ax.set_xlim(NonMobileTaskMap.paper_ijcas2025_xlim)
-        ax.set_ylim(NonMobileTaskMap.paper_ijcas2025_ylim)
+        ax.set_xlim(self.taskspace.xlim)
+        ax.set_ylim(self.taskspace.ylim)
         ax.axhline(color="gray", alpha=0.4)
         ax.axvline(color="gray", alpha=0.4)
         self.plot_taskspace()
         self.robot.plot_arm(thetas, ax, shadow=shadowseq, colors=colors)
-        # ax.text(*NonMobileTaskMap.paper_torus_ifac2025_qstart_text)
-        # ax.text(*NonMobileTaskMap.paper_torus_ifac2025_qgoal_text)
+        # ax.text(*self.taskspace.qstart_text)
+        # ax.text(*self.taskspace.qgoal_text)
         plt.show()
-
-
-if __name__ == "__main__":
-    from matplotlib import animation
-    import matplotlib.pyplot as plt
-
-    torus = False
-    sim = RobotArm2DSimulator(torusspace=torus)
-
-    # view
-    sim.plot_view(NonMobileTaskMap.paper_torus_ifac2025_thetas)
-
-    # play back
-    t1 = np.deg2rad(np.arange(0,90,1))
-    t2 = np.deg2rad(np.arange(0,90,1))
-    tt = np.vstack((t1,t2))
-    sim.play_back_path(tt, animation)
-
-

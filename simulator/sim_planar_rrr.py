@@ -7,12 +7,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from spatial_geometry.spatial_shape import ShapeLine2D, ShapeCollision
 from robot.nonmobile.planar_rrr import PlanarRRR
-from spatial_geometry.taskmap_geo_format import NonMobileTaskMap
 
 
 class RobotArm2DRRRSimulator:
 
-    def __init__(self, torusspace=False):
+    def __init__(self, taskspace, torusspace=False):
         # required for planner
         self.toruspace = torusspace
         if self.toruspace:
@@ -23,7 +22,8 @@ class RobotArm2DRRRSimulator:
         self.configDoF = len(self.configLimit)
 
         self.robot = PlanarRRR()
-        self.taskMapObs = NonMobileTaskMap.paper_ijcas2025()
+        self.taskspace = taskspace
+        self.taskMapObs = self.taskspace.task_map()
 
         # ICROS 2023 confpaper
         # xTarg = 1.5
@@ -75,8 +75,8 @@ class RobotArm2DRRRSimulator:
         fig, ax = plt.subplots()
         # ax.grid(True)
         ax.set_aspect("equal")
-        ax.set_xlim(NonMobileTaskMap.paper_ijcas2025_xlim)
-        ax.set_ylim(NonMobileTaskMap.paper_ijcas2025_ylim)
+        ax.set_xlim(self.taskspace.xlim)
+        ax.set_ylim(self.taskspace.ylim)
         self.plot_taskspace()
 
         # plot animation link
@@ -95,25 +95,10 @@ class RobotArm2DRRRSimulator:
         fig.set_size_inches(w=s * 3.40067, h=s * 3.40067)
         fig.tight_layout()
         ax.set_aspect("equal")
-        ax.set_xlim(NonMobileTaskMap.paper_ijcas2025_xlim)
-        ax.set_ylim(NonMobileTaskMap.paper_ijcas2025_ylim)
+        ax.set_xlim(self.taskspace.xlim)
+        ax.set_ylim(self.taskspace.ylim)
         ax.axhline(color="gray", alpha=0.4)
         ax.axvline(color="gray", alpha=0.4)
         self.plot_taskspace()
         self.robot.plot_arm(thetas, ax, shadow=shadowseq, colors=colors)
         plt.show()
-
-
-if __name__ == "__main__":
-    from matplotlib import animation
-    import matplotlib.pyplot as plt
-
-    sim = RobotArm2DRRRSimulator()
-
-    # view
-    thetas = np.array([[0, 0, 0], [1, 1, np.pi / 3], [2, 2, np.pi / 2], [3, 3, np.pi]]).T
-    sim.plot_view(thetas)
-
-    # play back
-    path = np.linspace([0,0,0], [2 * np.pi,0,0], 100).T
-    sim.play_back_path(path, animation)

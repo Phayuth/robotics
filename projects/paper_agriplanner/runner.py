@@ -8,9 +8,10 @@ import numpy as np
 import pickle
 import pandas as pd
 
-from e2d_parameters import xStart as xS2, xApp as xA2, xGoal as xG2
-from e3d_parameters import xStart as xS3, xApp as xA3, xGoal as xG3
+from e2d_params_fig import xStart as xS2, xApp as xA2, xGoal as xG2
+from e3d_params_fig import xStart as xS3, xApp as xA3, xGoal as xG3
 
+from task_map import PaperIJCAS2025
 from simulator.sim_planar_rr import RobotArm2DSimulator
 from simulator.sim_planar_rrr import RobotArm2DRRRSimulator
 from simulator.sim_ur5e_api import UR5eArmCoppeliaSimAPI
@@ -114,7 +115,7 @@ class TrialRun:
 def case_2dof_multi():
     trailrun = 100
 
-    simulator = RobotArm2DSimulator()
+    simulator = RobotArm2DSimulator(PaperIJCAS2025())
 
     class RobotArmPose:
         xStart = xS2
@@ -157,7 +158,7 @@ def case_2dof_multi():
 def case_3dof_multi():
     trailrun = 100
 
-    simulator = RobotArm2DRRRSimulator()
+    simulator = RobotArm2DRRRSimulator(PaperIJCAS2025())
 
     class RobotArmPose:
         xStart = xS3

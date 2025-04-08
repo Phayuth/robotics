@@ -1,50 +1,50 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from icecream import ic
-from stomp_linkpoint import compute_traj_obscost_per_N, plot_arm
 
-# import logging
-# logging.basicConfig(filename='example.log', level=logging.DEBUG)
-np.set_printoptions(linewidth=2000, suppress=True)
 np.random.seed(9)
 
 
-# parameters
-# N = 10  # number of waypoints
-# K = 6  # number of noisy trajectory to be generated
-N = 100  # number of waypoints
-K = 30  # number of noisy trajectory to be generated
-d = 2  # system dimension
-h = 10  # sensitivity scale
-tolerance = 0.1  # terminate upon the value is below
-R_scaler = 0.001  # scale R inverse
-stddev = [0.05, 0.05]  # 2 joints
-# stddev: this is the degree of noise that can be applied to the joints. ex: stddev = [0.05, 0.8, 0.8, 0.4, 0.4, 0.4] # 6 joints
-# Each value in this array is the amplitude of the noise applied to the joint at that position in the array.
-# For instace, the leftmost value in the array will be the value used to set the noise of the first joint of the robot (panda_joint1 in our case).
-# The dimensionality of this array should be equal to the number of joints in the planning group name.
-# Larger “stddev” values correspond to larger motions of the joints.
-num_iterations = 4000
+def generate_bezier_trajectory(theta_s, theta_g, N):
+    # Bezier curve
+    t = np.linspace(0, 1, N)
+    P0 = theta_s.reshape(2, 1)
+    P1 = np.array([-3, 3]).reshape(2, 1)
+    P2 = theta_g.reshape(2, 1)
+
+    trajectory = ((1 - t) ** 2) * P0 + (2 * (1 - t) * t) * P1 + (t**2) * P2
+    if print_log:
+        ic(trajectory.shape)
+        ic(trajectory)
+
+    return trajectory.T
 
 
-def generate_initial_trajectory():
-    # theta_s = np.array([0.0] * d)
-    # theta_g = np.array([np.pi] * d)
-    theta_s = np.array([0.0, 0.0])
-    theta_g = np.array([np.pi, 0.0])
+def generate_lerp_trajectory(theta_s, theta_g, N):
     trajectory = np.linspace(theta_s, theta_g, num=N, endpoint=True)
-    noise = 0.05 * np.random.uniform(-np.pi, np.pi, size=(N, d))
+
+    if print_log:
+        ic(trajectory.shape)
+        ic(trajectory)
+
+    return trajectory
+
+
+def add_noise_to_trajectory(trajectory):
+    noise = 0.05 * np.random.uniform(-np.pi, np.pi, size=trajectory.shape)
     trajectory = trajectory + noise
-    ic(trajectory.shape)
-    ic(trajectory)
+
+    if print_log:
+        ic(trajectory.shape)
+        ic(trajectory)
 
     return trajectory
 
 
 def compute_finitediff_A_matrix(N):
     # diff_rule = [0, 0, -1, 1, 0, 0, 0]
-    diff_rule = [0, 0, 1, -2, 1, 0, 0]  # start with -2
-    # diff_rule = [0, 1, -2, 1, 0, 0, 0]  # start with the last 1
+    # diff_rule = [0, 0, 1, -2, 1, 0, 0]  # start with -2
+    diff_rule = [0, 1, -2, 1, 0, 0, 0]  # start with the last 1
     # diff_rule = [0, 0, 0, 1, -2, 1, 0]  # start with the first 1
     half_length = len(diff_rule) // 2
     A = np.zeros([N, N])
@@ -53,8 +53,11 @@ def compute_finitediff_A_matrix(N):
             index = i + j
             if index >= 0 and index < N:
                 A[i, index] = diff_rule[j + half_length]
-    ic(A.shape)
-    ic(A)
+
+    if print_log:
+        ic(A.shape)
+        ic(A)
+
     return A
 
 
@@ -67,34 +70,38 @@ def compute_finitediff_A_matrix_new(N):
             index = i + j
             if index >= 0 and index < N:
                 A[i, index] = diff_rule[j + half_length]
-    ic(A.shape)
-    ic(A)
+
+    if print_log:
+        ic(A.shape)
+        ic(A)
+
     return A
 
 
-def compute_R_and_inverse(A):
+def compute_R_and_inverse(A, R_scaler):
     R = A.T @ A
     R_inv = np.linalg.inv(R)
 
     # scale covariance matrix, from stomp cpp code
     m = np.abs(R_inv).max()
-    R_inv_scale = R_scaler * (R_inv / m)
+    R_inv_scaled = R_scaler * (R_inv / m)
 
-    ic(R.shape)
-    ic(R)
-    ic(R_inv.shape)
-    ic(R_inv)
-    ic(R_inv_scale.shape)
-    ic(R_inv_scale)
+    if print_log:
+        ic(R.shape)
+        ic(R)
+        ic(R_inv.shape)
+        ic(R_inv)
+        ic(R_inv_scaled.shape)
+        ic(R_inv_scaled)
 
-    return R, R_inv, R_inv_scale
+    return R, R_inv, R_inv_scaled
 
 
 def compute_M_matrix(N, R_inv):
     # M = R_inv with each column scaled such that the maximum element is 1/N
-    m = R_inv.max(axis=0)
+    max_element = R_inv.max(axis=0)
     scaletoval = 1.0 / N
-    scale = scaletoval / m
+    scale = scaletoval / max_element
     M = scale * R_inv
 
     # zeroing out first and last rows
@@ -103,15 +110,18 @@ def compute_M_matrix(N, R_inv):
     M[-1] = 0.0
     M[-1, -1] = 1.0
 
-    ic(M.shape)
-    ic(M)
+    if print_log:
+        ic(M.shape)
+        ic(M)
 
     return M
 
 
-def generate_noisy_trajectories(N, K, d, R_inv_scale, trajectory):
+def generate_noisy_trajectories(K, stddev, R_inv, trajectory):
+    (N, d) = trajectory.shape
+
     # generate raw noise
-    epsilon = np.random.multivariate_normal(mean=np.zeros(N), cov=R_inv_scale, size=(K, d))  # K, d, N
+    epsilon = np.random.multivariate_normal(mean=np.zeros(N), cov=R_inv, size=(K, d))  # K, d, N
     epsilon = stddev * epsilon.transpose(0, 2, 1)  # K, N, d # scale with std per each joint
 
     # zeroing out the start and end noise values
@@ -121,337 +131,377 @@ def generate_noisy_trajectories(N, K, d, R_inv_scale, trajectory):
     # create K noisy trajectories add each generated noise to trajectory
     noisy_trajectories = epsilon + trajectory
 
-    ic(epsilon.shape)
-    ic(epsilon)
-    ic(noisy_trajectories.shape)
-    ic(noisy_trajectories)
+    if print_log:
+        ic(epsilon.shape)
+        ic(epsilon)
+        ic(noisy_trajectories.shape)
+        ic(noisy_trajectories)
 
     return noisy_trajectories, epsilon
 
 
-def obstacle_cost(noisy_trajectories):
-    obscost = np.zeros((N, K))
-    # for i in range(K):
-    #     q = compute_traj_obscost_per_N(noisy_trajectories[i])
-    #     obscost[:, i] = q
+def compute_traj_obscost(noisy_trajectories):
+    bodytoobsfulltraj = noisy_trajectories - obscxy.flatten()
+    dminfull = np.linalg.norm(bodytoobsfulltraj, axis=2) - obsr - bodyr
+    costfull = np.maximum(clearance + bodyr - dminfull, 0)
+    costfully = np.repeat(costfull[:, :, np.newaxis], 2, axis=2)
+    return costfully
+
+
+def obstacle_cost(noisy_trajectories):  # obstacle cost is joint together
+    # obscost = np.zeros(noisy_trajectories.shape)
+    obscost = compute_traj_obscost(noisy_trajectories)
     return obscost
 
 
-def constraint_cost(noisy_trajectories):
-    conscost = np.zeros((N, K))
+def constraint_cost(noisy_trajectories):  # constraint cost is joint together
+    conscost = np.zeros((noisy_trajectories.shape))
     return conscost
 
 
-def torque_cost(noisy_trajectories):
-    # torqcost = np.zeros((N, K))
-    # change to joint displacement instead. because i dont have a dynamic model.
-    e = np.diff(noisy_trajectories, axis=1, prepend=0.0)
-    e[:, 0, :] = 0.0
-    torqcost = np.abs(e).sum(axis=2).T
+def torque_cost(noisy_trajectories):  # torque cost is individual joint
+    # torqcost = np.zeros(noisy_trajectories.shape))
+    # change to joint displacement instead. because I dont have a dynamic model.
+    cost = np.diff(noisy_trajectories, axis=1, prepend=0.0)
+    cost[:, 0, :] = 0.0
+    torqcost = np.abs(cost)
+
+    # torqcost = np.abs(cost).sum(axis=2).T
+
+    if print_log:
+        ic(cost.shape)
+        ic(cost)
+        ic(torqcost.shape)
+        ic(torqcost)
+
     return torqcost
 
 
-def compute_cost_S_as_matrix(noisy_trajectories):
+def compute_cost_S(noisy_trajectories):
+    # a point in trajectory must have aleast some concept of cost.
+    # that cost will be use to compute probability and later determine the update value.
     qo = obstacle_cost(noisy_trajectories)
     qc = constraint_cost(noisy_trajectories)
     qt = torque_cost(noisy_trajectories)
-    S = qo + qc + qt  # N X K
+    S = qo + qc + qt
 
-    ic(S.shape)
-    ic(S)
+    if print_log:
+        ic(S.shape)
+        ic(S)
 
     return S
 
 
-def compute_probability_P_as_matrix(S, h, N):
-    # In algoritm table
-    # lamdas = 1 / h
-    # Se = np.exp(-lamdas * S)
-    # SKsum = Se.sum(axis=1).reshape(N, -1)
-    # P = Se / SKsum
-
+def compute_probability_P(S, h):
     # In Eq 11
-    Smin = S.min(axis=1, keepdims=True)  # K trajectory wise
-    Smax = S.max(axis=1, keepdims=True)
-    numerator = np.exp(-h * (S - Smin) / (Smax - Smin))  # inverse softmax
-    denominator = np.sum(numerator, axis=1, keepdims=True)
-    P = numerator / denominator
-    P[0, :] = 0.0  # avoid first element 0 to NaN
+    Smin = S.min(axis=0, keepdims=True)  # K trajectory wise
+    Smax = S.max(axis=0, keepdims=True)  # K trajectory wise
 
-    ic(P.shape)
-    ic(P)
+    numerator = np.exp(-h * (S - Smin) / (Smax - Smin))  # inverse softmax
+    denominator = np.sum(numerator, axis=0, keepdims=True)  # sum over k trajectories
+    P = numerator / denominator
+    P[:, 0, :] = 0.0  # avoid first element 0 to NaN
+    P[:, -1, :] = 0.0  # zero out last element
+
+    if print_log:
+        ic(Smin.shape)
+        ic(Smin)
+        ic(Smax.shape)
+        ic(Smax)
+        ic(P.shape)
+        ic(P)
 
     return P
 
 
 def compute_noisy_update(P, epsilon):
     # from a probability-weighted (convex combination) of noisy parameter from that time step
-    Preshape = P[np.newaxis, :, :]
-    Preshape = Preshape.transpose(2, 1, 0)
-    P_epsilon = Preshape * epsilon
-    delta_trajectory_noise = P_epsilon.sum(axis=0)
+    # Preshape = P[np.newaxis, :, :]
+    # Preshape = Preshape.transpose(2, 1, 0)
+    # P_epsilon = Preshape * epsilon
+    # delta_trajectory_noise = P_epsilon.sum(axis=0)
 
-    # Preshape = P[:, :, np.newaxis]
-    # epsilonreshape = epsilon.transpose(1, 0, 2)
-    # P_epsilon = Preshape * epsilonreshape
-    # delta_trajectory_noise = P_epsilon.sum(axis=1)
+    P_epsilon = P * epsilon
+    delta_trajectory_noise = P_epsilon.sum(axis=0)
     # delta_trajectory_noise[-1] = 0.0  # pin the last node exactly at the goal state, we don't want to update it
 
-    ic(Preshape.shape)
-    ic(Preshape)
-    # ic(epsilonreshape.shape)
-    # ic(epsilonreshape)
-    ic(P_epsilon.shape)
-    ic(P_epsilon)
-    ic(delta_trajectory_noise.shape)
-    ic(delta_trajectory_noise)
+    if print_log:
+        ic(P_epsilon.shape)
+        ic(P_epsilon)
+        ic(delta_trajectory_noise.shape)
+        ic(delta_trajectory_noise)
 
     return delta_trajectory_noise
 
 
-def trajectory_update_term(M, delta_trajectory_noise):
+def smooth_noisy(M, delta_trajectory_noise):
     # compute update value scaling ensures that no updated parameter exceeds the range that was explored in the noisy trajectories.
     # ensures that the updated trajectory remains smooth.
-    delta_trajectory = M @ delta_trajectory_noise
-    ic(delta_trajectory.shape)
-    ic(delta_trajectory)
-    return delta_trajectory
+    delta_trajectory_smoothed = M @ delta_trajectory_noise
+    # delta_trajectory_smoothed = delta_trajectory_noise
+
+    if print_log:
+        ic(delta_trajectory_smoothed.shape)
+        ic(delta_trajectory_smoothed)
+
+    return delta_trajectory_smoothed
+
+
+def update_trajectory(trajectory, delta_trajectory_smoothed):
+    trajectory_new = trajectory + delta_trajectory_smoothed  # column-wise addition
+
+    if print_log:
+        ic(trajectory_new.shape)
+        ic(trajectory_new)
+
+    return trajectory_new
+
+
+def unupdate_trajectory(trajectory, delta_trajectory_smoothed):
+    trajectory_new = trajectory - delta_trajectory_smoothed  # column-wise subtraction
+
+    if print_log:
+        ic(trajectory_new.shape)
+        ic(trajectory_new)
+
+    return trajectory_new
+
+
+def compute_trajectory_distance_cost(trajectory):
+    diffs = np.diff(trajectory, axis=0)
+    distances = np.linalg.norm(diffs, axis=1)
+    return np.sum(distances)
+
+
+def compute_trajectory_obstacle_cost(trajectory):
+    bodytoobs = trajectory - obscxy.flatten()
+    dmin = np.linalg.norm(bodytoobs, axis=1) - obsr - bodyr
+    cost = np.maximum(clearance + bodyr - dmin, 0)
+    return np.sum(cost)
 
 
 def compute_trajectory_cost_Q(trajectory, R):
-    smoothness_loss = 0.5 * np.trace(trajectory.T @ R @ trajectory)
-    sdcqtotal = compute_traj_obscost_per_N(trajectory).sum()
-    totalcost = sdcqtotal + smoothness_loss
-    ic(totalcost)
+    smoothness_cost = 0.5 * np.trace(trajectory.T @ R @ trajectory)
+    trajectory_cost = compute_trajectory_distance_cost(trajectory) + compute_trajectory_obstacle_cost(trajectory)
+    totalcost = trajectory_cost + smoothness_cost
+
+    if print_log:
+        ic(smoothness_cost)
+        ic(trajectory_cost)
+        ic(totalcost)
+
     return totalcost
 
 
-def optimize():
-    trajectory = generate_initial_trajectory()
+def optimize(theta_s, theta_g, N, R_scaler, K, stddev, h, num_iterations):
+    A = compute_finitediff_A_matrix_new(N)  # we must have index [0,0] and [-1,-1] equal to 1. otherwise, it is gonna be look weird
+    # A = compute_finitediff_A_matrix(N)
 
-    trajectory_new = generate_initial_trajectory()
-    A = compute_finitediff_A_matrix_new(N)
-    R, R_inv, R_inv_scale = compute_R_and_inverse(A)
-    # M = compute_M_matrix(N, R_inv)
-    M = compute_M_matrix(N, R_inv_scale)
+    # trajectory = generate_bezier_trajectory(theta_s, theta_g, N)
+    # trajectory_opt = generate_bezier_trajectory(theta_s, theta_g, N)
 
-    cost = compute_trajectory_cost_Q(trajectory_new, R)
+    trajectory = generate_lerp_trajectory(theta_s, theta_g, N)
+    trajectory_opt = generate_lerp_trajectory(theta_s, theta_g, N)
 
-    # while compute_trajectory_cost_Q(trajectory) > tolerance:
+    R, R_inv, R_inv_scaled = compute_R_and_inverse(A, R_scaler)
+    M = compute_M_matrix(N, R_inv)
+    cost = compute_trajectory_cost_Q(trajectory_opt, R)
+
+    cost_history = []
     for ii in range(num_iterations):
-        noisy_trajectories, epsilon = generate_noisy_trajectories(N, K, d, R_inv_scale, trajectory_new)
 
-        # compute cost and probability contribution
-        S = compute_cost_S_as_matrix(noisy_trajectories)
-        P = compute_probability_P_as_matrix(S, h, N)
-
-        # compute update term
+        noisy_trajectories, epsilon = generate_noisy_trajectories(K, stddev, R_inv_scaled, trajectory_opt)
+        S = compute_cost_S(noisy_trajectories)
+        P = compute_probability_P(S, h)
         delta_trajectory_noise = compute_noisy_update(P, epsilon)
-        delta_trajectory = trajectory_update_term(M, delta_trajectory_noise)
+        delta_trajectory_smoothed = smooth_noisy(M, delta_trajectory_noise)
+        trajectory_opt = update_trajectory(trajectory_opt, delta_trajectory_smoothed)
 
-        # update trajectory
-        trajectory_new = trajectory_new + delta_trajectory
-        current_cost = compute_trajectory_cost_Q(trajectory_new, R)
+        current_cost = compute_trajectory_cost_Q(trajectory_opt, R)
 
-        # check whether to keep the updated trajectory or revert back
-        if current_cost < cost:
+        if current_cost < cost:  # check whether to keep the updated trajectory or revert back
             cost = current_cost
         else:  # if it become worst, go back to the previous trajectory
-            trajectory_new = trajectory_new - delta_trajectory
-        ic(current_cost)
-    return trajectory, trajectory_new, R_inv_scale, noisy_trajectories, epsilon
+            trajectory_opt = unupdate_trajectory(trajectory_opt, delta_trajectory_smoothed)
+
+        cost_history.append(cost)
+
+    return trajectory, trajectory_opt, R_inv_scaled, noisy_trajectories, cost_history
 
 
-# # single test -----------------------------------------------------------------------------------------
-# # we must have index 0,0 and -1,-1 to be 1. otherwise, it is gonna be look weird
-# # A = compute_finitediff_A_matrix(N)
-# A = compute_finitediff_A_matrix_new(N)
-# trajectory = generate_initial_trajectory()
-# R, R_inv, R_inv_scale = compute_R_and_inverse(A)
-# noisy_trajectories, epsilon = generate_noisy_trajectories(N, K, d, R_inv_scale, trajectory)
-# S = compute_cost_S_as_matrix(noisy_trajectories)
-# P = compute_probability_P_as_matrix(S, h, N)
-# delta_trajectory_noise = compute_noisy_update(P, epsilon)
-# M = compute_M_matrix(N, R_inv)
-# delta_trajectory = trajectory_update_term(M, delta_trajectory_noise)
-# trajectory_new = trajectory + delta_trajectory  # column-wise addition
-# cost = compute_trajectory_cost_Q(trajectory_new, R)
-
-
-# loop test -----------------------------------------------------------------------------------------
-ic.disable()
-trajectory, trajectory_new, R_inv_scale, noisy_trajectories, epsilon = optimize()
-ic.enable()
-ic(trajectory_new)
-
-
-# raise SystemExit(0)
-
-
-# Plot ------------------------------------------------------------------------------------------------
-def plot_noise():
+if __name__ == "__main__":
+    # parameters
+    N = 60  # number of waypoints 10
+    K = 30  # number of noisy trajectory to be generated 6
+    d = 2  # system dimension
+    h = 10  # sensitivity scale
+    tolerance = 0.1  # terminate upon the value is below
+    # R_scaler = 100  # scale R inverse
+    # stddev = [0.05] * d  # 2 joints
+    R_scaler = 10  # scale R inverse
+    stddev = [0.5] * d  # 2 joints
+    # stddev: this is the degree of noise that can be applied to the joints. ex: stddev = [0.05, 0.8, 0.8, 0.4, 0.4, 0.4] # 6 joints
+    # Each value in this array is the amplitude of the noise applied to the joint at that position in the array.
+    # For instace, the leftmost value in the array will be the value used to set the noise of the first joint of the robot (panda_joint1 in our case).
+    # The dimensionality of this array should be equal to the number of joints in the planning group name.
+    # Larger “stddev” values correspond to larger motions of the joints.
+    num_iterations = 1000
     times = np.linspace(0, N, num=N)
-    fig, axs = plt.subplots(1, 1, figsize=(10, 15))
-    for i in range(epsilon.shape[0]):
-        for j in range(d):
-            axs.plot(times, epsilon[i, :, j])
-    axs.plot(times, [-np.pi] * len(times), "m", label=f"Joint Min : {-np.pi:.3f}")
-    axs.plot(times, [np.pi] * len(times), "c", label=f"Joint Max : {np.pi:.3f}")
-    axs.set_xlim(times[0], times[-1])
-    axs.legend(loc="upper right")
-    axs.grid(True)
-    axs.set_ylabel(f"noise")
-    axs.set_xlabel("Time")
-    fig.suptitle("All noise epsilon")
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.show()
+    print_log = False
 
+    # environment
+    theta_s = np.array([-2.0, -2.0])
+    theta_g = np.array([2.0, 2.0])
+    xlim = [-np.pi, np.pi]
+    ylim = [-np.pi, np.pi]
+    # obstacle
+    obscxy = np.array([0.0, 0.0]).reshape(2, 1)
+    obsr = 0.7
+    bodyr = 0.2
+    clearance = 0.1
 
-def plot_trajectory():
-    times = np.linspace(0, N, num=N)
-    fig, axs = plt.subplots(d, 1, figsize=(10, 15), sharex=True)
-    for i in range(d):
-        axs[i].plot(times, trajectory[..., i], "g-", label=f"Joint Position {i+1}")
-        axs[i].plot(times, [-np.pi] * len(times), "m", label=f"Joint Min : {-np.pi:.3f}")
-        axs[i].plot(times, [np.pi] * len(times), "c", label=f"Joint Max : {np.pi:.3f}")
-        axs[i].set_ylabel(f"theta {i+1}")
-        axs[i].set_xlim(times[0], times[-1])
-        axs[i].legend(loc="upper right")
-        axs[i].grid(True)
-    axs[-1].set_xlabel("Time")
-    fig.suptitle("Original trajectory")
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.show()
+    # stomp
+    if False:
+        A = compute_finitediff_A_matrix_new(N)  # we must have index [0,0] and [-1,-1] equal to 1. otherwise, it is gonna be look weird
+        # A = compute_finitediff_A_matrix(N)
+        # trajectory_init = generate_lerp_trajectory(theta_s, theta_g, N)
+        # trajectory_init = generate_bezier_trajectory(theta_s, theta_g, N)
+        # R, R_inv, R_inv_scaled = compute_R_and_inverse(A, R_scaler)
+        # M = compute_M_matrix(N, R_inv)
 
+        # noisy_trajectories, epsilon = generate_noisy_trajectories(K, stddev, R_inv_scaled, trajectory_init)
+        # S = compute_cost_S(noisy_trajectories)
+        # P = compute_probability_P(S, h)
+        # delta_trajectory_noise = compute_noisy_update(P, epsilon)
+        # delta_trajectory_smoothed = smooth_noisy(M, delta_trajectory_noise)
+        # trajectory_new = update_trajectory(trajectory_init, delta_trajectory_smoothed)
+        # cost = compute_trajectory_cost_Q(trajectory_new, R)
 
-def plot_noisy_trajectory():
-    times = np.linspace(0, N, num=N)
-    fig, axs = plt.subplots(d, 1, figsize=(10, 15), sharex=True)
-    for i in range(d):
-        axs[i].plot(times, trajectory[..., i], "g-", label=f"OG Joint Position {i+1}")
-        for j in range(noisy_trajectories.shape[0]):
-            axs[i].plot(times, noisy_trajectories[j, ..., i], "r-")
-        axs[i].plot(times, [-np.pi] * len(times), "m", label=f"Joint Min : {-np.pi:.3f}")
-        axs[i].plot(times, [np.pi] * len(times), "c", label=f"Joint Max : {np.pi:.3f}")
-        axs[i].set_ylabel(f"theta {i+1}")
-        axs[i].set_xlim(times[0], times[-1])
-        axs[i].legend(loc="upper right")
-        axs[i].grid(True)
-    axs[-1].set_xlabel("Time")
-    fig.suptitle("Noisy Trajectory")
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.show()
+        # t = np.array([0, 2, 10, 22, 35]).reshape(-1, 1)
+        # ic(t)
+        # ic(A @ t)
+        # R = A.T @ A
+        # ic(R)
+        # ic(t.T @ R @ t)
 
+    else:
+        trajectory_init, trajectory_new, R_inv_scaled, noisy_trajectories, cost_history = optimize(theta_s, theta_g, N, R_scaler, K, stddev, h, num_iterations)
 
-def plot_trajectory_after():
-    times = np.linspace(0, N, num=N)
-    fig, axs = plt.subplots(d, 1, figsize=(10, 15), sharex=True)
-    for i in range(d):
-        axs[i].plot(times, trajectory[..., i], "g-", label=f"Old Joint Position {i+1}")
-        axs[i].plot(times, trajectory_new[..., i], "r-", label=f"Joint Position {i+1}")
-        axs[i].plot(times, [-np.pi] * len(times), "m", label=f"Joint Min : {-np.pi:.3f}")
-        axs[i].plot(times, [np.pi] * len(times), "c", label=f"Joint Max : {np.pi:.3f}")
-        axs[i].set_ylabel(f"theta {i+1}")
-        axs[i].set_xlim(times[0], times[-1])
-        axs[i].legend(loc="upper right")
-        axs[i].grid(True)
-    axs[-1].set_xlabel("Time")
-    fig.suptitle("Update New Trajectory")
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.show()
+    if True:
+        # plot trajectory
+        if True:
+            fig1, ax1 = plt.subplots()
+            ax1.plot(trajectory_init[:, 0], trajectory_init[:, 1], "k--", linewidth=4, label="Original Trajectory")
+            ax1.plot(theta_s[0], theta_s[1], "ro", label="Start")
+            ax1.plot(theta_g[0], theta_g[1], "bo", label="Goal")
+            ax1.set_xlim(xlim)
+            ax1.set_ylim(ylim)
+            ax1.set_title("Trajectory")
+            ax1.set_xlabel("Theta 1")
+            ax1.set_ylabel("Theta 2")
+            ax1.set_aspect("equal", adjustable="box")
+            ax1.legend()
 
+            circle = plt.Circle(obscxy, obsr, color="r", alpha=0.5)
+            ax1.add_patch(circle)
 
-def plot_R_inverse():
-    plt.figure(figsize=(10, 6))
-    for i in range(N):
-        plt.plot(R_inv_scale[i, :], label=f"Row {i+1}", alpha=0.5)
-    plt.title("Inverse Covariance Matrix Rows (R^-1)")
-    plt.xlabel("Timestep Index")
-    plt.ylabel("Value")
-    plt.grid(True)
-    plt.show()
+            if True:
+                fig11, axs11 = plt.subplots(d, 1, sharex=True)
+                for i in range(d):
+                    axs11[i].plot(times, trajectory_init[..., i], "k--", label=f"Original {i+1}")
+                    axs11[i].plot(times, [-np.pi] * len(times), "m", label=f"Joint Min : {-np.pi:.3f}")
+                    axs11[i].plot(times, [np.pi] * len(times), "c", label=f"Joint Max : {np.pi:.3f}")
+                    axs11[i].set_ylabel(f"theta {i+1}")
+                    axs11[i].set_xlim(times[0], times[-1])
+                    axs11[i].legend(loc="upper right")
+                    axs11[i].grid(True)
+                axs11[-1].set_xlabel("Time")
 
+        # plot R_inv
+        if True:
+            fig2, ax2 = plt.subplots()
+            for i in range(N):
+                ax2.plot(R_inv_scaled[i, :], label=f"Row {i+1}", alpha=0.5)
+            ax2.set_title("Inverse Covariance Matrix Rows (R^-1)")
+            ax2.set_xlabel("Timestep Index")
+            ax2.set_ylabel("Value")
+            ax2.legend()
 
-plot_noise()
-plot_trajectory()
-plot_noisy_trajectory()
-plot_trajectory_after()
-plot_R_inverse()
+        # plot noisy trajectory
+        if True:
+            fig3, ax3 = plt.subplots()
+            ax3.plot(theta_s[0], theta_s[1], "ro", label="Start")
+            ax3.plot(theta_g[0], theta_g[1], "bo", label="Goal")
+            for i in range(K):
+                ax3.plot(noisy_trajectories[i, :, 0], noisy_trajectories[i, :, 1], alpha=0.5)
+            ax3.set_xlim(xlim)
+            ax3.set_ylim(ylim)
+            ax3.set_title("Noise Trajectories")
+            ax3.set_xlabel("Theta 1")
+            ax3.set_ylabel("Theta 2")
+            ax3.set_aspect("equal", adjustable="box")
+            ax3.legend()
 
+            circle = plt.Circle(obscxy, obsr, color="r", alpha=0.5)
+            ax3.add_patch(circle)
 
-import os
-import sys
+            if True:
+                fig33, axs33 = plt.subplots(d, 1, sharex=True)
+                for i in range(d):
+                    for j in range(noisy_trajectories.shape[0]):
+                        axs33[i].plot(times, noisy_trajectories[j, ..., i], alpha=0.5)
+                    axs33[i].plot(times, [-np.pi] * len(times), "m", label=f"Joint Min : {-np.pi:.3f}")
+                    axs33[i].plot(times, [np.pi] * len(times), "c", label=f"Joint Max : {np.pi:.3f}")
+                    axs33[i].set_ylabel(f"theta {i+1}")
+                    axs33[i].set_xlim(times[0], times[-1])
+                    axs33[i].legend(loc="upper right")
+                    axs33[i].grid(True)
+                axs33[-1].set_xlabel("Time")
 
-sys.path.append(str(os.path.abspath(os.getcwd())))
-from matplotlib import animation
+        # plot cost history
+        if True:
+            fig4, ax4 = plt.subplots()
+            ax4.plot(cost_history)
+            ax4.set_title("Cost History")
+            ax4.set_xlabel("Iteration")
+            ax4.set_ylabel("Cost")
 
+        # plot comparison
+        if True:
+            fig5, ax5 = plt.subplots()
+            ax5.plot(theta_s[0], theta_s[1], "ro", label="Start")
+            ax5.plot(theta_g[0], theta_g[1], "bo", label="Goal")
+            ax5.plot(trajectory_init[:, 0], trajectory_init[:, 1], "k--", linewidth=4, label="Original Trajectory")
+            ax5.plot(trajectory_new[:, 0], trajectory_new[:, 1], "r+", linewidth=4, label="Optimal Trajectory")
 
-class PlanarRobot:
+            for point in trajectory_new:
+                circle = plt.Circle((point[0], point[1]), radius=bodyr + clearance, color="b", fill=False, alpha=0.5)
+                ax5.add_patch(circle)
+                circle1 = plt.Circle((point[0], point[1]), radius=bodyr, color="r", fill=False, alpha=0.5)
+                ax5.add_patch(circle1)
 
-    def __init__(self):
-        self.alpha1 = 0
-        self.alpha2 = 0
-        self.d1 = 0
-        self.d2 = 0
-        self.a1 = 1
-        self.a2 = 1
+            ax5.set_xlim(xlim)
+            ax5.set_ylim(ylim)
+            ax5.set_title("Trajectory Comparison")
+            ax5.set_xlabel("Theta 1")
+            ax5.set_ylabel("Theta 2")
+            ax5.set_aspect("equal", adjustable="box")
+            ax5.legend()
 
-    def forward_kinematic(self, theta, return_link_pos=False):
-        theta1 = theta[0, 0]
-        theta2 = theta[1, 0]
+            circle = plt.Circle(obscxy, obsr, color="r", alpha=0.5)
+            ax5.add_patch(circle)
 
-        x = self.a1 * np.cos(theta1) + self.a2 * np.cos(theta1 + theta2)
-        y = self.a1 * np.sin(theta1) + self.a2 * np.sin(theta1 + theta2)
+            if True:
+                fig55, axs55 = plt.subplots(d, 1, sharex=True)
+                for i in range(d):
+                    axs55[i].plot(times, trajectory_init[..., i], "k--", label=f"Original {i+1}")
+                    axs55[i].plot(times, trajectory_new[..., i], "r+", label=f"Optimal {i+1}")
+                    axs55[i].plot(times, [-np.pi] * len(times), "m", label=f"Joint Min : {-np.pi:.3f}")
+                    axs55[i].plot(times, [np.pi] * len(times), "c", label=f"Joint Max : {np.pi:.3f}")
+                    axs55[i].set_ylabel(f"theta {i+1}")
+                    axs55[i].set_xlim(times[0], times[-1])
+                    axs55[i].legend(loc="upper right")
+                    axs55[i].grid(True)
+                axs55[-1].set_xlabel("Time")
 
-        if return_link_pos:
-
-            # option for return link end pose. normally used for collision checking
-            link_end_pose = []
-            link_end_pose.append([0, 0])
-
-            # link 1 pose
-            x1 = self.a1 * np.cos(theta1)
-            y1 = self.a1 * np.sin(theta1)
-            link_end_pose.append([x1, y1])
-
-            # link 2 pose
-            x2 = self.a1 * np.cos(theta1) + self.a2 * np.cos(theta1 + theta2)
-            y2 = self.a1 * np.sin(theta1) + self.a2 * np.sin(theta1 + theta2)
-            link_end_pose.append([x2, y2])
-
-            return link_end_pose
-
-        else:
-            return np.array([[x], [y]])
-
-
-robot = PlanarRobot()
-
-# obstacle
-cobs = np.array([0.0, 1.5]).reshape(2, 1)  # x y
-robs = 0.2  # r
-
-
-def play_back_path(path, animation):  # path format (2,n)
-    # plot task space
-    fig, ax = plt.subplots()
-    ax.grid(True)
-    ax.set_aspect("equal")
-    ax.set_xlim(-3, 3)
-    ax.set_ylim(-3, 3)
-
-    circle1 = plt.Circle(cobs, robs, color="r")
-    plt.gca().add_patch(circle1)
-
-    # plot animation link
-    (robotLinks,) = ax.plot([], [], color="indigo", linewidth=5, marker="o", markerfacecolor="r")
-
-    def update(frame):
-        link = robot.forward_kinematic(path[:, frame].reshape(2, 1), return_link_pos=True)
-        robotLinks.set_data([link[0][0], link[1][0], link[2][0]], [link[0][1], link[1][1], link[2][1]])
-
-    animation = animation.FuncAnimation(fig, update, frames=(path.shape[1]), interval=100, repeat=False)
-    plt.show()
-
-
-play_back_path(trajectory_new.T, animation)
+        plt.show()

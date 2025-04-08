@@ -6,7 +6,6 @@ sys.path.append(str(os.path.abspath(os.getcwd())))
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import ticker
-import matplotlib
 import pickle
 import pandas as pd
 
@@ -42,7 +41,7 @@ def get_(path):
     return mean_curve(ll)
 
 
-def multi():
+def cost_graph_multi():
     path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/planner_ijcas_data/"
 
     i = path + "env_RobotArm2DSimulator_types_Multi_planner_12_withlocgap_False_costgraph.pkl"
@@ -103,5 +102,68 @@ def multi():
     # plt.show()
 
 
+def find_iteration_end(data):
+    iterationDiffConstant = 200
+    costDiffConstant = 0.1
+    cBestPrevious = np.inf
+    cBestPreviousIteration = 0
+    for i in range(data.shape[0]):
+        cNow = data[i]
+        iterationNow = i
+        if cNow < cBestPrevious:
+            cBestPrevious = cNow
+            cBestPreviousIteration = iterationNow
+
+        if (cBestPrevious - cNow < costDiffConstant) and (iterationNow - cBestPreviousIteration > iterationDiffConstant):
+            break
+    return iterationNow
+
+
+def terminated_iteration(path):
+    loadedList = load_cost_graph_pkl(path)
+
+    arrs = [np.array(list) for list in loadedList]
+    dfs = [pd.DataFrame(ar[:, 1], index=ar[:, 0].astype(np.int32), columns=[f"cost-{i}th"]) for i, ar in enumerate(arrs)]
+
+    newIdx = pd.Index(range(2000))
+    newDfs = [d.reindex(newIdx) for d in dfs]
+
+    mergedf = pd.concat(newDfs, axis=1)
+    mergedf = mergedf.interpolate(method="values", limit_direction="both")
+
+    q = [find_iteration_end(mergedf[col]) for col in mergedf]
+
+    qmean = np.mean(q)
+    qstd = np.std(q)
+    return qmean, qstd
+
+
+def terminated_iteration_full():
+    path = "/home/yuth/ws_yuthdev/robotics_manipulator/datasave/planner_ijcas_data/"
+
+    i = path + "env_RobotArm2DSimulator_types_Multi_planner_12_withlocgap_False_costgraph.pkl"
+    j = path + "env_RobotArm2DSimulator_types_Multi_planner_16_withlocgap_False_costgraph.pkl"
+    k = path + "env_RobotArm2DSimulator_types_Multi_planner_13_withlocgap_False_costgraph.pkl"
+
+    l = path + "env_RobotArm2DSimulator_types_Multi_planner_12_withlocgap_True_costgraph.pkl"
+    m = path + "env_RobotArm2DSimulator_types_Multi_planner_16_withlocgap_True_costgraph.pkl"
+    n = path + "env_RobotArm2DSimulator_types_Multi_planner_13_withlocgap_True_costgraph.pkl"
+
+    q1m, q1s = terminated_iteration(i)
+    print(f"q1 : {q1m, q1s}")
+    q2m, q2s = terminated_iteration(j)
+    print(f"q2 : {q2m, q2s}")
+    q3m, q3s = terminated_iteration(k)
+    print(f"q3 : {q3m, q3s}")
+
+    q4m, q4s = terminated_iteration(l)
+    print(f"q4 : {q4m, q4s}")
+    q5m, q5s = terminated_iteration(m)
+    print(f"q5 : {q5m, q5s}")
+    q6m, q6s = terminated_iteration(n)
+    print(f"q6 : {q6m, q6s}")
+
+
 if __name__ == "__main__":
-    multi()
+    cost_graph_multi()
+    terminated_iteration_full()
