@@ -18,6 +18,11 @@ class PlanarRR:
         self.a1 = 2
         self.a2 = 2
 
+        # gripper
+        self.gripperLength = 0.5
+        self.gripperWidth = 0.5
+        self.gripperTipOffset = 0.1
+
         # visual
         self.shadowlevel = 0.2
 
@@ -28,6 +33,7 @@ class PlanarRR:
 
         self.linkcolor = "indigo"
         self.linkwidth = 1
+        self.grippercolor = "teal"
 
         self.jointmarker = "o"
         self.jointcolor = "k"
@@ -69,13 +75,74 @@ class PlanarRR:
         else:
             return np.array([[x], [y]])
 
-    def inverse_kinematic_geometry(self, desired_pose, elbow_option):
+    def forward_kinematic_with_gripper(self, theta, return_link_pos=False):
+        theta1 = theta[0, 0]
+        theta2 = theta[1, 0]
+
+        x = self.a1 * np.cos(theta1) + (self.a2 + self.gripperLength - self.gripperTipOffset) * np.cos(theta1 + theta2)
+        y = self.a1 * np.sin(theta1) + (self.a2 + self.gripperLength - self.gripperTipOffset) * np.sin(theta1 + theta2)
+
+        if return_link_pos:
+            # base
+            link_end_pose = []
+            link_end_pose.append([0, 0])
+
+            # link1
+            x1 = self.a1 * np.cos(theta1)
+            y1 = self.a1 * np.sin(theta1)
+            link_end_pose.append([x1, y1])
+
+            # link2
+            x2 = x1 + self.a2 * np.cos(theta1 + theta2)
+            y2 = y1 + self.a2 * np.sin(theta1 + theta2)
+            link_end_pose.append([x2, y2])
+
+            # end tip
+            x3 = x2 + self.gripperLength * np.cos(theta1 + theta2)
+            y3 = y2 + self.gripperLength * np.sin(theta1 + theta2)
+            link_end_pose.append([x3, y3])
+
+            # tcp
+            xtcp = x2 + (self.gripperLength - self.gripperTipOffset) * np.cos(theta1 + theta2)
+            ytcp = y2 + (self.gripperLength - self.gripperTipOffset) * np.sin(theta1 + theta2)
+            link_end_pose.append([xtcp, ytcp])
+
+            # base left jaw
+            xblj = x2 + (self.gripperWidth / 2) * np.cos(theta1 + theta2 + np.pi / 2)
+            yblj = y2 + (self.gripperWidth / 2) * np.sin(theta1 + theta2 + np.pi / 2)
+            link_end_pose.append([xblj, yblj])
+
+            # base right jaw
+            xbrj = x2 + (self.gripperWidth / 2) * np.cos(theta1 + theta2 - np.pi / 2)
+            ybrj = y2 + (self.gripperWidth / 2) * np.sin(theta1 + theta2 - np.pi / 2)
+            link_end_pose.append([xbrj, ybrj])
+
+            # tip left jaw
+            xtlj = xblj + self.gripperLength * np.cos(theta1 + theta2)
+            ytlj = yblj + self.gripperLength * np.sin(theta1 + theta2)
+            link_end_pose.append([xtlj, ytlj])
+
+            # tip right jaw
+            xtrj = xbrj + self.gripperLength * np.cos(theta1 + theta2)
+            ytrj = ybrj + self.gripperLength * np.sin(theta1 + theta2)
+            link_end_pose.append([xtrj, ytrj])
+
+            # [0   , 1    , 2    , 3     , 4  , 5          , 6           , 7         , 8          ]
+            # [base, link1, link2, endtip, tcp, baseleftjaw, baserightjaw, tipleftjaw, tiprightjaw]
+            return link_end_pose
+        else:
+            return np.array([[x], [y]])
+
+    def inverse_kinematic_geometry(self, desired_pose, elbow_option, with_gripper=False):
         x = desired_pose[0, 0]
         y = desired_pose[1, 0]
 
+        # modify the length of link2 if with gripper
+        length2 = self.a2 + self.gripperLength - self.gripperTipOffset if with_gripper else self.a2
+
         # check if the desired pose is inside of task space or not
         rd = np.sqrt(x**2 + y**2)
-        link_length = self.a1 + self.a2
+        link_length = self.a1 + length2
         if rd > link_length:
             print("The desired pose is outside of taskspace")
             return None
@@ -85,9 +152,9 @@ class PlanarRR:
         elif elbow_option == 1:
             sign = 1
 
-        D = (x**2 + y**2 - self.a1**2 - self.a2**2) / (2 * self.a1 * self.a2)
+        D = (x**2 + y**2 - self.a1**2 - length2**2) / (2 * self.a1 * length2)
         theta2 = np.arctan2(sign * np.sqrt(1 - D**2), D)
-        theta1 = np.arctan2(y, x) - np.arctan2((self.a2 * np.sin(theta2)), (self.a1 + self.a2 * np.cos(theta2)))
+        theta1 = np.arctan2(y, x) - np.arctan2((length2 * np.sin(theta2)), (self.a1 + length2 * np.cos(theta2)))
         return np.array([[theta1], [theta2]])
 
     def jacobian(self, theta):
@@ -165,6 +232,66 @@ class PlanarRR:
             alpha=self.shadowlevel if shadow else 1.0,
         )
 
+    def _plot_single_with_gripper(self, theta, axis, color, shadow=False):
+        link = self.forward_kinematic_with_gripper(theta, return_link_pos=True)
+
+        # [0   , 1    , 2    , 3     , 4  , 5          , 6           , 7         , 8          ]
+        # [base, link1, link2, endtip, tcp, baseleftjaw, baserightjaw, tipleftjaw, tiprightjaw]
+
+        # link color
+        axis.plot(
+            [link[0][0], link[1][0], link[2][0]],
+            [link[0][1], link[1][1], link[2][1]],
+            color=color,
+            linewidth=self.linkwidth,
+            alpha=self.shadowlevel if shadow else 1.0,
+        )
+
+        # gripper color
+        axis.plot(
+            [link[7][0], link[5][0], link[6][0], link[8][0]],
+            [link[7][1], link[5][1], link[6][1], link[8][1]],
+            color=color,
+            linewidth=self.linkwidth,
+            alpha=self.shadowlevel if shadow else 1.0,
+        )
+
+        # elbow and ee marker
+        axis.plot(
+            [link[1][0], link[2][0]],
+            [link[1][1], link[2][1]],
+            color=self.jointcolor,
+            linewidth=0,
+            marker=self.jointmarker,
+            markerfacecolor=self.jointmarkerfacecolor,
+            markersize=self.jointmarkersize,
+            alpha=self.shadowlevel if shadow else 1.0,
+        )
+
+        # tcp marker
+        axis.plot(
+            [link[4][0]],
+            [link[4][1]],
+            color=self.jointcolor,
+            linewidth=self.jointlinewidth,
+            marker=self.jointmarker,
+            markerfacecolor=self.jointmarkerfacecolor,
+            markersize=self.jointmarkersize,
+            alpha=self.shadowlevel if shadow else 1.0,
+        )
+
+        # tip marker
+        axis.plot(
+            [link[3][0]],
+            [link[3][1]],
+            color=self.eecolor,
+            linewidth=self.eelinewidth,
+            marker=self.eemarker,
+            markerfacecolor=self.eemarkerfacecolor,
+            markersize=self.eemarkersize,
+            alpha=self.shadowlevel if shadow else 1.0,
+        )
+
     def plot_arm(self, thetas, axis, shadow=False, colors=[]):
         if thetas.shape == (2, 1):
             self._plot_single(thetas, axis, color=self.linkcolor, shadow=shadow)
@@ -214,19 +341,7 @@ class PlanarRRVoxel(object):
 
         return position
 
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-
-    robot = PlanarRR()
-    desiredPose = np.array([[-0.15], [4 - 0.2590]])
-    thetaUp = robot.inverse_kinematic_geometry(desiredPose, elbow_option=0)
-    print(f"> thetaUp: \n{thetaUp}")
-    thetaDown = robot.inverse_kinematic_geometry(desiredPose, elbow_option=1)
-    print(f"> thetaDown: \n{thetaDown}")
-    robot.plot_arm(thetaUp, plt)
-    plt.show()
-
+def planar_rr_voxel_example():
     base_position = [15, 15]
     link_lenths = [5, 5]
     robot = PlanarRRVoxel(base_position, link_lenths)
@@ -237,4 +352,21 @@ if __name__ == "__main__":
     plt.plot([r1[0][0], r1[1][0]], [r1[0][1], r1[1][1]], "b", linewidth=8)
     plt.plot([r1[1][0], r1[2][0]], [r1[1][1], r1[2][1]], "r", linewidth=8)
     plt.gca().invert_yaxis()
+    plt.show()
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    robot = PlanarRR()
+    desiredPose = np.array([[-0.15], [4 - 0.2590]])
+    thetaUp = robot.inverse_kinematic_geometry(desiredPose, elbow_option=0)
+    thetaDown = robot.inverse_kinematic_geometry(desiredPose, elbow_option=1)
+
+    fig, ax = plt.subplots()
+    robot.plot_arm(thetaUp, ax)
+    robot._plot_single_with_gripper(np.array([0.0, np.pi/2]).reshape(2,1), ax, color="teal")
+    ax.set_xlim(-5, 5)
+    ax.set_ylim(-5, 5)
+    ax.set_aspect("equal")
     plt.show()

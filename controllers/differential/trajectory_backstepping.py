@@ -21,7 +21,7 @@ class DifferentialDriveBackSteppingTrajectoryController:
                       [                         0,                         0, 1]])
         qe = T @ (referencePose-currentPose)
         vc = referenceLinearVelo * np.cos(qe[2, 0]) + self.k1 * qe[0, 0]
-        wc = referenceAngularVelo + self.k2 * referenceLinearVelo * qe[1, 0] * self.k3 * np.sin(qe[2, 0])
+        wc = referenceAngularVelo + self.k2 * referenceLinearVelo * qe[1, 0] + self.k3 * np.sin(qe[2, 0])
 
         return np.array([[vc], [wc]])
 
