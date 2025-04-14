@@ -1,4 +1,4 @@
-<img align="right" src="./doc/cover.jpg" width="240">
+<img align="right" src="./_doc/cover.jpg" width="240">
 
 # General Robotics
 This is a repo contains various works and algorithms that I tested, implemented and will implement for General Robotics. [For Mom!]
