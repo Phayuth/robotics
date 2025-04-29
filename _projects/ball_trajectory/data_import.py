@@ -11,7 +11,7 @@ from spatial_geometry.spatial_transformation import RigidBodyTransformation as r
 from helper import read_txt_to_numpy
 
 # Original data
-parray = read_txt_to_numpy(txtFileString='datasave/joint_value/object_path.txt')
+parray = read_txt_to_numpy(txtFileString='path.txt')
 parray = parray[30:650,:]  # manual Trim
 
 fig = plt.figure()

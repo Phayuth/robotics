@@ -1,7 +1,9 @@
-from pyomo.environ import ConcreteModel, Var, Objective, Constraint, SolverFactory, NonNegativeReals, Integers, minimize, Binary, ConstraintList
+"""
+Solving graph shortest path
+https://www.youtube.com/watch?v=7uCx--vUiiI
 
-# solving graph shortest path
-# https://www.youtube.com/watch?v=7uCx--vUiiI
+"""
+from pyomo.environ import ConcreteModel, Var, Objective, Constraint, SolverFactory, NonNegativeReals, Integers, minimize, Binary, ConstraintList
 
 model = ConcreteModel()
 
@@ -20,8 +22,8 @@ model.obj = Objective(expr=sum(w[i] * model.x[e] for i, e in enumerate(A)), sens
 model.constraints = ConstraintList()
 
 # start and end constraints
-model.constraints.add(expr=model.x[A[0]] + model.x[A[1]] + model.x[A[2]] == 1) # we must start from node 1 so sum of x1i = 1
-model.constraints.add(expr=model.x[A[8]] + model.x[A[12]] + model.x[A[16]] == 1) # we must end at node 6 so sum of xi6 = 1
+model.constraints.add(expr=model.x[A[0]] + model.x[A[1]] + model.x[A[2]] == 1)  # we must start from node 1 so sum of x1i = 1
+model.constraints.add(expr=model.x[A[8]] + model.x[A[12]] + model.x[A[16]] == 1)  # we must end at node 6 so sum of xi6 = 1
 
 # define the constraints for bidirectional edges
 # sum of edge start = sum of edge end

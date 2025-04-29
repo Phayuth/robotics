@@ -23,13 +23,16 @@ Qinit = Utils.find_alt_config(qinit.reshape(2, 1), limt2)
 qmean = np.array([4, 2])
 Covxy = 0.01 * np.array([[6, 0], [0, 6]])
 Qset = Utils.find_alt_config(qmean.reshape(2, 1), limt2)
+npts = 1000
 
 # current single goal
 qgoal = np.array([0.0, 0.0])
 Qgoalset = Utils.find_alt_config(qgoal.reshape(2, 1), limt2)
 
-npts = 1000
+# cspace collision point
 collision = np.load("./datasave/planner_ijcas_data/collisionpoint_so2s.npy")
+
+convexhullGoalsetOnly = True
 
 
 def plot_cov_ellipse(cov, pos, nstd=1, **kwargs):
@@ -114,10 +117,10 @@ def which_point_in_polygon(pointlist, polys):
             return None
 
 
-pts1 = np.random.multivariate_normal(Qset[:, 0], Covxy, size=10000)
-pts2 = np.random.multivariate_normal(Qset[:, 1], Covxy, size=10000)
-pts3 = np.random.multivariate_normal(Qset[:, 2], Covxy, size=10000)
-pts4 = np.random.multivariate_normal(Qset[:, 3], Covxy, size=10000)
+pts1 = np.random.multivariate_normal(Qset[:, 0], Covxy, size=npts)
+pts2 = np.random.multivariate_normal(Qset[:, 1], Covxy, size=npts)
+pts3 = np.random.multivariate_normal(Qset[:, 2], Covxy, size=npts)
+pts4 = np.random.multivariate_normal(Qset[:, 3], Covxy, size=npts)
 ptss = np.vstack([pts1, pts2, pts3, pts4])
 
 if True:
@@ -149,7 +152,7 @@ if True:
     ax.set_aspect("equal")
     ax.set_title(f"Cspace Full View")
 
-    (lineinit,) = ax.plot([], [], "x", markersize=10, color="blue")
+    (lineinit,) = ax.plot([], [], "x-", markersize=10, color="blue")
 
     (linexy1,) = ax.plot([], [], "r-", lw=2)
     (linexy2,) = ax.plot([], [], "r-", lw=2)
@@ -232,7 +235,13 @@ if True:
             qinit[1] = event.ydata
             global Qinit
             Qinit = Utils.find_alt_config(qinit.reshape(2, 1), limt2)
-            lineinit.set_data(Qinit[0], Qinit[1])
+            QinitsetT = Qinit.T
+            orderinitQ = ConvexHull(QinitsetT)
+
+            x1init = np.hstack([QinitsetT[orderinitQ.vertices, 0], QinitsetT[orderinitQ.vertices, 0][0]])
+            y1init = np.hstack([QinitsetT[orderinitQ.vertices, 1], QinitsetT[orderinitQ.vertices, 1][0]])
+            lineinit.set_data(x1init, y1init)
+
             lineinitscope.set_data(Qinit[0], Qinit[1])
 
         if event.button is MouseButton.LEFT:
@@ -267,24 +276,19 @@ if True:
             line4_q1.set_data(t, line4[:, 0])
             line4_q2.set_data(t, line4[:, 1])
 
-            xlim = [np.min(QgoalsetT[:, 0]), np.max(QgoalsetT[:, 0])]
-            ylim = [np.min(QgoalsetT[:, 1]), np.max(QgoalsetT[:, 1])]
-            ax3.set_xlim(xlim)
-            ax3.set_ylim(ylim)
-
-            # p = ShapelyPolygon(orderQ.points[orderQ.vertices])
-            # qipoint = [ShapelyPoint(qi) for qi in Qinit.T]
-            # qinitInside = which_point_in_polygon(qipoint, p)
-
-            # line1scope = np.linspace(qinitInside, Qgoalset[:, 0], 100).reshape(-1, 2)
-            # line2scope = np.linspace(qinitInside, Qgoalset[:, 1], 100).reshape(-1, 2)
-            # line3scope = np.linspace(qinitInside, Qgoalset[:, 2], 100).reshape(-1, 2)
-            # line4scope = np.linspace(qinitInside, Qgoalset[:, 3], 100).reshape(-1, 2)
-
-            # linexy1scope.set_data(line1scope[:, 0], line1scope[:, 1])
-            # linexy2scope.set_data(line2scope[:, 0], line2scope[:, 1])
-            # linexy3scope.set_data(line3scope[:, 0], line3scope[:, 1])
-            # linexy4scope.set_data(line4scope[:, 0], line4scope[:, 1])
+            if convexhullGoalsetOnly:
+                # Qgoal convexhull only
+                xlim = [np.min(QgoalsetT[:, 0]), np.max(QgoalsetT[:, 0])]
+                ylim = [np.min(QgoalsetT[:, 1]), np.max(QgoalsetT[:, 1])]
+                ax3.set_xlim(xlim)
+                ax3.set_ylim(ylim)
+            else:
+                # Qinit and Qgoal convexhull
+                allset = np.vstack([Qinit.T, QgoalsetT])
+                xlim = [np.min(allset[:, 0]), np.max(allset[:, 0])]
+                ylim = [np.min(allset[:, 1]), np.max(allset[:, 1])]
+                ax3.set_xlim(xlim)
+                ax3.set_ylim(ylim)
 
         fig.canvas.draw()
         fig2.canvas.draw()

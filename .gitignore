@@ -48,6 +48,5 @@ MNIST/
 # Ignore tensorboad folder
 runs/
 
-# experiement data
-planner_thesis_data/
-planner_ijcas_data/
+# general ignore
+ignore/
