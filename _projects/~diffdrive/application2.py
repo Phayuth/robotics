@@ -3,8 +3,10 @@ Application 2
 Robot : DiffDrive
 Controller : Trajectory Control with switch to pose baisc control near goal region
 """
+
 import os
 import sys
+
 sys.path.append(str(os.path.abspath(os.getcwd())))
 
 import numpy as np
@@ -21,8 +23,8 @@ from trajectory_generator.traj_interpolator import BSplineSmoothingUnivariant
 # path
 path = np.array(PreRecordedPathMobileRobot.warehouse_path)
 print(f"> path.shape: {path.shape}")
-xc = path[:,0]
-yc = path[:,1]
+xc = path[:, 0]
+yc = path[:, 1]
 tc = np.linspace(0, 100, len(xc))
 
 # fitted trajectory : 1 trajectory for all point
@@ -43,17 +45,17 @@ ym = xym[1]
 fig = plt.figure(figsize=(8, 8))
 gs = gridspec.GridSpec(2, 2, height_ratios=[1, 1])
 ax1 = plt.subplot(gs[:, 0])
-ax1.plot(xc, yc, 'ro')
+ax1.plot(xc, yc, "ro")
 ax1.plot(xm, ym)
-ax1.set_title('xy')
+ax1.set_title("xy")
 ax2 = plt.subplot(gs[0, 1])
-ax2.plot(tc, xc, 'ro')
+ax2.plot(tc, xc, "ro")
 ax2.plot(tc, xm)
-ax2.set_title('x')
+ax2.set_title("x")
 ax3 = plt.subplot(gs[1, 1])
-ax3.plot(tc, yc, 'ro')
+ax3.plot(tc, yc, "ro")
 ax3.plot(tc, ym)
-ax3.set_title('y')
+ax3.set_title("y")
 plt.tight_layout()
 plt.show()
 
@@ -62,9 +64,11 @@ env = DiffDrive2DSimulator()
 controller = DifferentialDriveBackSteppingTrajectoryController(robot=env.robot)
 controllerPoseFwd = DifferentialDrivePoseBasicController(robot=env.robot)
 
+
 # simulator
 def dynamic(currentPose, input):
-    return env.robot.forward_external_kinematic(input, currentPose[2,0])
+    return env.robot.forward_external_kinematic(input, currentPose[2, 0])
+
 
 # # fitted trajectory : Spline trajectory
 def desired(currentPose, time):
@@ -85,6 +89,7 @@ def desired(currentPose, time):
 
     return np.array([[xRef], [yRef], [vr], [wr], [xRefDot], [yRefDot]])
 
+
 # fitted trajectory : 1 trajectory for all point
 # def desired(currentPose, time):
 #     xRef = polyX(time)
@@ -102,21 +107,23 @@ def desired(currentPose, time):
 
 #     return np.array([[xRef], [yRef], [vr], [wr], [xRefDot], [yRefDot]])
 
+
 def control(currentPose, desiredPose):
-    if np.linalg.norm([(currentPose[0,0] - qg[0,0]),(currentPose[1,0] - qg[1,0])]) > 1.5:
-        xRef = desiredPose[0,0]
-        yRef = desiredPose[1,0]
-        vr = desiredPose[2,0]
-        wr = desiredPose[3,0]
-        xdot = desiredPose[4,0]
-        ydot = desiredPose[5,0]
+    if np.linalg.norm([(currentPose[0, 0] - qg[0, 0]), (currentPose[1, 0] - qg[1, 0])]) > 1.5:
+        xRef = desiredPose[0, 0]
+        yRef = desiredPose[1, 0]
+        vr = desiredPose[2, 0]
+        wr = desiredPose[3, 0]
+        xdot = desiredPose[4, 0]
+        ydot = desiredPose[5, 0]
         thetaRef = np.arctan2(ydot, xdot)
         qr = np.array([[xRef], [yRef], [thetaRef]])
         return controller.kinematic_control(currentPose, qr, vr, wr)
     else:
         return controllerPoseFwd.kinematic_control(currentPose, qg)
 
-q0 = np.array([[15], [2.5], [np.pi/2]])
+
+q0 = np.array([[15], [2.5], [np.pi / 2]])
 qg = np.array([[12], [13.5]])
 tSpan = (0, 100)
 dt = 0.01

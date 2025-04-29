@@ -29,7 +29,7 @@ qgoal = np.array([0.0, 0.0])
 Qgoalset = Utils.find_alt_config(qgoal.reshape(2, 1), limt2)
 
 npts = 1000
-collision = np.load("./datasave/planner_ijcas_data/collision_point.npy")
+collision = np.load("./datasave/planner_ijcas_data/collisionpoint_so2s.npy")
 
 
 def plot_cov_ellipse(cov, pos, nstd=1, **kwargs):

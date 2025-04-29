@@ -14,8 +14,8 @@ def fig_cspace_2d():
     generate cspace figure with so2(minimal space), extended space.
     switch between torus=true/false for the corresponding
     """
-    torus = False
-    env = RobotArm2DSimulator(PaperICCAS2024(), torusspace=True)
+    torus = True
+    env = RobotArm2DSimulator(PaperTorusIFAC2025(), torusspace=torus)
     fig, ax = plt.subplots(1, 1)
     colp = env.plot_cspace(ax)
     if torus:
@@ -49,5 +49,5 @@ def fig_sequential_task_2d():
     env.plot_view(thetas)
 
 if __name__=="__main__":
-    # fig_cspace_2d()
-    fig_sequential_task_2d()
+    fig_cspace_2d()
+    # fig_sequential_task_2d()

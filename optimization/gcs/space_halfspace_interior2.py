@@ -13,7 +13,8 @@ m = GEKKO()
 q = m.Array(m.Var, 8)
 
 # minimize square cost
-m.Obj(((qsx - q[0]) ** 2 + (qsy - q[1]) ** 2) + ((q[0] - q[2]) ** 2 + (q[1] - q[3]) ** 2) + ((q[2] - q[4]) ** 2 + (q[3] - q[5]) ** 2) + ((q[4] - q[6]) ** 2 + (q[5] - q[7]) ** 2) + ((q[6] - qex) ** 2 + (q[7] - qey) ** 2))
+m.Obj(sum((q[i] - q[i + 2]) ** 2 + (q[i + 1] - q[i + 3]) ** 2 for i in range(0, 6, 2)) +
+      (qsx - q[0]) ** 2 + (qsy - q[1]) ** 2 + (q[6] - qex) ** 2 + (q[7] - qey) ** 2)
 
 m.Equations(
     [
