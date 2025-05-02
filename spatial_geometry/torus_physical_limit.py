@@ -11,8 +11,6 @@ from spatial_geometry.utils import Utils
 from matplotlib import collections as mc
 from scipy.spatial import ConvexHull
 from matplotlib.backend_bases import MouseButton
-from shapely.geometry import Point as ShapelyPoint
-from shapely.geometry import Polygon as ShapelyPolygon
 
 # init
 limt2 = np.array([[-2 * np.pi, 2 * np.pi], [-2 * np.pi, 2 * np.pi]])
@@ -30,7 +28,7 @@ qgoal = np.array([0.0, 0.0])
 Qgoalset = Utils.find_alt_config(qgoal.reshape(2, 1), limt2)
 
 # cspace collision point
-collision = np.load("./datasave/planner_ijcas_data/collisionpoint_so2s.npy")
+collision = np.load("./datasave/ignore/collisionpoint_so2s.npy")
 
 convexhullGoalsetOnly = True
 
