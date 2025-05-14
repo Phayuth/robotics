@@ -14,7 +14,7 @@ def fig_cspace_2d():
     generate cspace figure with so2(minimal space), extended space.
     switch between torus=true/false for the corresponding
     """
-    torus = True
+    torus = False
     env = RobotArm2DSimulator(PaperTorusIFAC2025(), torusspace=torus)
     fig, ax = plt.subplots(1, 1)
     colp = env.plot_cspace(ax)
@@ -31,9 +31,9 @@ def fig_cspace_2d():
     plt.show()
 
     if torus:
-        np.save("./datasave/planner_ijcas_data/collisionpoint_so2s.npy", colp)
+        np.save("./datasave/ignore/collisionpoint_exts.npy", colp)
     else:
-        np.save("./datasave/planner_ijcas_data/collisionpoint_exts.npy", colp)
+        np.save("./datasave/ignore/collisionpoint_so2s.npy", colp)
 
 
 def fig_sequential_task_2d():

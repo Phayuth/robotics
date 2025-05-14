@@ -35,11 +35,22 @@ def EKF_predict(x, u, P, Q):
     yaw = x[2, 0]
     v = u[0, 0]
 
-    F = np.array([[1.0, 0, 0, 0], [0, 1.0, 0, 0], [0, 0, 1.0, 0], [0, 0, 0, 0]])  # (4X4)
+    F = np.array(
+        [[1.0, 0, 0, 0], [0, 1.0, 0, 0], [0, 0, 1.0, 0], [0, 0, 0, 0]]
+    )  # (4X4)
 
-    B = np.array([[DT * math.cos(yaw), 0], [DT * math.sin(yaw), 0], [0.0, DT], [1.0, 0.0]])  # (4X2)
+    B = np.array(
+        [[DT * math.cos(yaw), 0], [DT * math.sin(yaw), 0], [0.0, DT], [1.0, 0.0]]
+    )  # (4X2)
 
-    J_F = np.array([[1.0, 0.0, -DT * v * math.sin(yaw), DT * math.cos(yaw)], [0.0, 1.0, DT * v * math.cos(yaw), DT * math.sin(yaw)], [0.0, 0.0, 1.0, 0.0], [0.0, 0.0, 0.0, 1.0]])
+    J_F = np.array(
+        [
+            [1.0, 0.0, -DT * v * math.sin(yaw), DT * math.cos(yaw)],
+            [0.0, 1.0, DT * v * math.cos(yaw), DT * math.sin(yaw)],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+    )
 
     x_pred = F @ x + B @ u  # (4X1) = (4X4)(4X1)+(4X2)(2X1)
     p_pred = J_F @ P @ np.transpose(J_F) + Q

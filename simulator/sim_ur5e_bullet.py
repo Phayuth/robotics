@@ -264,7 +264,12 @@ if __name__ == "__main__":
     robot = UR5eBullet("gui")
 
     # camera for exp2
-    # robot.set_visualizer_camera(1.0, 50.0, -35.0, (-0.037039175629615784, 0.08329583704471588, 0.2426416277885437))
+    robot.set_visualizer_camera(
+        1.0,
+        50.0,
+        -35.0,
+        (-0.037039175629615784, 0.08329583704471588, 0.2426416277885437),
+    )
 
     # camera for exp3
     robot.set_visualizer_camera(
