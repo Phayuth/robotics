@@ -23,7 +23,14 @@ class UR5eBullet:
         # load model and properties
         self.load_model()
         self.numJoints = self.get_num_joints()
-        self.jointNames = ["shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint", "wrist_1_joint", "wrist_2_joint", "wrist_3_joint"]
+        self.jointNames = [
+            "shoulder_pan_joint",
+            "shoulder_lift_joint",
+            "elbow_joint",
+            "wrist_1_joint",
+            "wrist_2_joint",
+            "wrist_3_joint",
+        ]
         self.jointIDs = [1, 2, 3, 4, 5, 6]
         self.gripperlinkid = 9
 
@@ -38,13 +45,26 @@ class UR5eBullet:
 
     def load_model(self):
         self.planeID = p.loadURDF("plane.urdf", [0, 0, 0])
-        self.ur5eID = p.loadURDF("./datasave/urdf/ur5e_extract_calibrated.urdf", [0, 0, 0], useFixedBase=True, flags=p.URDF_USE_SELF_COLLISION)
+        self.ur5eID = p.loadURDF(
+            "./datasave/urdf/ur5e_extract_calibrated.urdf",
+            [0, 0, 0],
+            useFixedBase=True,
+            flags=p.URDF_USE_SELF_COLLISION,
+        )
         # self.gripper = p.loadURDF("./datasave/urdf/robotiq85.urdf", [0, 0, 0])
         # self.tableID = p.loadURDF("table/table.urdf", [0, 0, 0])
-        self.pole1 = p.loadURDF("./datasave/urdf/simple_box.urdf", [0.3, 0.3, 0], useFixedBase=True)
-        self.pole2 = p.loadURDF("./datasave/urdf/simple_box.urdf", [-0.3, 0.3, 0], useFixedBase=True)
-        self.pole3 = p.loadURDF("./datasave/urdf/simple_box.urdf", [-0.3, -0.3, 0], useFixedBase=True)
-        self.pole4 = p.loadURDF("./datasave/urdf/simple_box.urdf", [0.3, -0.3, 0], useFixedBase=True)
+        self.pole1 = p.loadURDF(
+            "./datasave/urdf/simple_box.urdf", [0.3, 0.3, 0], useFixedBase=True
+        )
+        self.pole2 = p.loadURDF(
+            "./datasave/urdf/simple_box.urdf", [-0.3, 0.3, 0], useFixedBase=True
+        )
+        self.pole3 = p.loadURDF(
+            "./datasave/urdf/simple_box.urdf", [-0.3, -0.3, 0], useFixedBase=True
+        )
+        self.pole4 = p.loadURDF(
+            "./datasave/urdf/simple_box.urdf", [0.3, -0.3, 0], useFixedBase=True
+        )
 
     def get_visualizer_camera(self):
         (
@@ -75,8 +95,19 @@ class UR5eBullet:
         print(f"> dist: {dist}")
         print(f"> target: {target}")
 
-    def set_visualizer_camera(self, cameraDistance=3, cameraYaw=30, cameraPitch=52, cameraTargetPosition=[0, 0, 0]):
-        p.resetDebugVisualizerCamera(cameraDistance=cameraDistance, cameraYaw=cameraYaw, cameraPitch=cameraPitch, cameraTargetPosition=cameraTargetPosition)
+    def set_visualizer_camera(
+        self,
+        cameraDistance=3,
+        cameraYaw=30,
+        cameraPitch=52,
+        cameraTargetPosition=[0, 0, 0],
+    ):
+        p.resetDebugVisualizerCamera(
+            cameraDistance=cameraDistance,
+            cameraYaw=cameraYaw,
+            cameraPitch=cameraPitch,
+            cameraTargetPosition=cameraTargetPosition,
+        )
 
     def get_num_joints(self):
         return p.getNumJoints(self.ur5eID)
@@ -132,7 +163,9 @@ class UR5eBullet:
             positionGain=0.03,
         )
 
-    def control_array_motors(self, jointPositions, jointVelocities=[0, 0, 0, 0, 0, 0]):
+    def control_array_motors(
+        self, jointPositions, jointVelocities=[0, 0, 0, 0, 0, 0]
+    ):
         p.setJointMotorControlArray(
             bodyIndex=self.ur5eID,
             jointIndices=self.jointIDs,
@@ -143,11 +176,23 @@ class UR5eBullet:
         )
 
     def get_single_joint_state(self):
-        jointPosition, jointVelocity, jointReactionForce, appliedJointMotorTorque = p.getJointState(self.ur5eID, jointIndex=1)
-        return jointPosition, jointVelocity, jointReactionForce, appliedJointMotorTorque
+        (
+            jointPosition,
+            jointVelocity,
+            jointReactionForce,
+            appliedJointMotorTorque,
+        ) = p.getJointState(self.ur5eID, jointIndex=1)
+        return (
+            jointPosition,
+            jointVelocity,
+            jointReactionForce,
+            appliedJointMotorTorque,
+        )
 
     def get_array_joint_state(self):
-        j1, j2, j3, j4, j5, j6 = p.getJointStates(self.ur5eID, jointIndices=self.jointIDs)
+        j1, j2, j3, j4, j5, j6 = p.getJointStates(
+            self.ur5eID, jointIndices=self.jointIDs
+        )
         return j1, j2, j3, j4, j5, j6
 
     def get_array_joint_positions(self):
@@ -164,7 +209,12 @@ class UR5eBullet:
             frame_rot,
             link_vt,
             link_vr,
-        ) = p.getLinkState(self.ur5eID, self.gripperlinkid, computeLinkVelocity=True, computeForwardKinematics=True)
+        ) = p.getLinkState(
+            self.ur5eID,
+            self.gripperlinkid,
+            computeLinkVelocity=True,
+            computeForwardKinematics=True,
+        )
         return link_trn, link_rot
 
     def inverse_kin(self, positions, quaternions):
@@ -188,12 +238,18 @@ class UR5eBullet:
         #     print(f"Contact point details: {point}")
 
     def closest_point(self):
-        closest_points = p.getClosestPoints(bodyA=self.ur5eID, bodyB=self.tableID, distance=0.5)
+        closest_points = p.getClosestPoints(
+            bodyA=self.ur5eID, bodyB=self.tableID, distance=0.5
+        )
         print(f"> closest_points: {closest_points}")
 
     def reset_array_joint_state(self, targetValues):
         for i in range(6):
-            p.resetJointState(self.ur5eID, jointIndex=self.jointIDs[i], targetValue=targetValues[i])
+            p.resetJointState(
+                self.ur5eID,
+                jointIndex=self.jointIDs[i],
+                targetValue=targetValues[i],
+            )
 
     def collisioncheck(self):
         p.performCollisionDetection()
@@ -211,9 +267,17 @@ if __name__ == "__main__":
     # robot.set_visualizer_camera(1.0, 50.0, -35.0, (-0.037039175629615784, 0.08329583704471588, 0.2426416277885437))
 
     # camera for exp3
-    robot.set_visualizer_camera(1.4, 50.0, -35.0, (-0.037039175629615784, 0.08329583704471588, 0.2426416277885437))
+    robot.set_visualizer_camera(
+        1.4,
+        50.0,
+        -35.0,
+        (-0.037039175629615784, 0.08329583704471588, 0.2426416277885437),
+    )
 
-    path = np.loadtxt("/home/yuth/ws_yuthdev/bullet3/build_cmake/examples/MySixJointPlanning/zzz_path.csv", delimiter=",")
+    path = np.loadtxt(
+        "/home/yuth/ws_yuthdev/bullet3/build_cmake/examples/MySixJointPlanning/zzz_path.csv",
+        delimiter=",",
+    )
     print(f"> path.shape: {path.shape}")
 
     # qs = path[0]
