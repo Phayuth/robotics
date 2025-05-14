@@ -1,8 +1,4 @@
 import os
-import sys
-
-sys.path.append(str(os.path.abspath(os.getcwd())))
-
 import numpy as np
 import pinocchio
 from pinocchio.visualize import MeshcatVisualizer
@@ -12,7 +8,8 @@ from pinocchio.visualize import MeshcatVisualizer
 
 class UR5ePinocchio:
     def __init__(self):
-        self.urdf_filename = "./datasave/urdf/ur5e_extract_calibrated.urdf"
+        self.rsrcpath = os.environ["RSRC_DIR"]
+        self.urdf_filename = self.rsrcpath + "/ur5e/ur5e_extract_calibrated.urdf"
         self.model = pinocchio.buildModelFromUrdf(self.urdf_filename)
         self.modelname = self.model.name
         self.tip = self.model.getFrameId("gripper")
@@ -42,9 +39,13 @@ class UR5ePinocchio:
 
     def visualize(self):
         # Create geometry model
+        # model, collision_model, visual_model = pinocchio.buildModelsFromUrdf(
+        #     self.urdf_filename
+        # )
         model, collision_model, visual_model = pinocchio.buildModelsFromUrdf(
-            self.urdf_filename
+            self.urdf_filename, self.rsrcpath, pinocchio.JointModelFreeFlyer()
         )
+
         print(model)
         print(collision_model)
         print("-----------------------------")
@@ -57,9 +58,17 @@ class UR5ePinocchio:
         print("-----------------------------")
         print(viz.visual_model)
 
+        viz.displayVisuals(True)
+        viz.displayCollisions(True)
+        viz.displayFrames(True)
         q0 = pinocchio.neutral(model)
         viz.display(q0)
-        viz.displayVisuals(True)
+
+        import time
+
+        time.sleep(
+            5
+        )  # not putting sleep will cause the viewer to not show up WTF!
 
 
 if __name__ == "__main__":

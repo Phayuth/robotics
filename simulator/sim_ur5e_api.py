@@ -287,35 +287,3 @@ class UR5eArmCoppeliaSimAPI:
             conf = self.sim.getPathInterpolatedConfig(path, times, t)
             self.set_joint_position(self.jointDynamicHandles, np.array(conf).reshape(6, 1))
             t = self.sim.getSimulationTime() - startTime
-
-
-if __name__ == "__main__":
-    from datasave.joint_value.pre_record_value import PreRecordedPath
-    from datasave.joint_value.experiment_paper import URHarvesting
-
-    ur = UR5eArmCoppeliaSimAPI()
-
-    # ur.start_sim()
-    try:
-        while True:
-            # jj = np.array([-2.4307362897230953, -1.9950339217373045, -0.0010261435935210133, -0.6685270374364699, 0.9877321445181428, 1.2663907399297298]).reshape(6,1)
-            jg = np.array([-0.0027387777911584976, -1.9624139271178187, -1.4210033416748047, -2.6216727695860804, -1.4972699324237269, -3.134235207234518]).reshape(6,1)
-            ur.set_joint_position(ur.jointDynamicHandles, jg)
-            # # set joint visualize
-            # q = URHarvesting.PoseSingle1()
-            # qS = q.xStart
-            # qA = q.xApp
-            # qG = q.xGoal
-            # ur.set_pose_aux_goal(qA, qG)
-
-            # # play back
-            # path = PreRecordedPath.path.T  # shape(6, 12)
-            # ur.play_back_path(path)
-
-    except KeyboardInterrupt:
-        pass
-
-    finally:
-        ur.stop_sim()
-
-

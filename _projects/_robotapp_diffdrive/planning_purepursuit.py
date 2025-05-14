@@ -1,5 +1,4 @@
 """
-Application 1
 Robot : DiffDrive
 Planner : RRT*
 Controller : Path PurePursuit
@@ -41,7 +40,11 @@ plannarConfigDualTreea = {
 
 planner = RRTPlannerAPI.init_k_element_q(qStart, qAux, qGoal, plannarConfigDualTreea, 2)
 path = planner.begin_planner()
+planner.plot_2d_complete()
+planner.plot_performance()
+
 path = path.T
+
 
 # controller
 controller = DifferentialDrivePurePursuitController(path, loopMode=False)

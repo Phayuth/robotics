@@ -1,5 +1,4 @@
 """
-Application 2
 Robot : DiffDrive
 Controller : Trajectory Control with switch to pose baisc control near goal region
 """
