@@ -28,7 +28,8 @@ qgoal = np.array([0.0, 0.0])
 Qgoalset = Utils.find_alt_config(qgoal.reshape(2, 1), limt2)
 
 # cspace collision point
-collision = np.load("./datasave/ignore/collisionpoint_so2s.npy")
+rsrc = os.environ["RSRC_DIR"] + "/rnd_torus/"
+collision = np.load(rsrc + "collisionpoint_exts.npy")
 
 convexhullGoalsetOnly = True
 

@@ -30,10 +30,11 @@ def fig_cspace_2d():
         ax.set_ylim([-np.pi, np.pi])
     plt.show()
 
+    rsrc = os.environ["RSRC_DIR"] + "/rnd_torus/"
     if torus:
-        np.save("./datasave/ignore/collisionpoint_exts.npy", colp)
+        np.save(rsrc + "collisionpoint_exts.npy", colp)
     else:
-        np.save("./datasave/ignore/collisionpoint_so2s.npy", colp)
+        np.save(rsrc + "collisionpoint_so2s.npy", colp)
 
 
 def fig_sequential_task_2d():
@@ -48,6 +49,7 @@ def fig_sequential_task_2d():
     thetas = np.vstack((task0, task1, task2)).T
     env.plot_view(thetas)
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     fig_cspace_2d()
     # fig_sequential_task_2d()
