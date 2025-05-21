@@ -4,88 +4,9 @@ import os
 from spatial_geometry.utils import Utils
 from r2s_prm_plot import PlotterConfig
 import matplotlib.pyplot as plt
+from graph_mip import solve_graph_mip, multi_target_dijkstra
 
 np.set_printoptions(linewidth=2000, precision=2, suppress=True)
-from pyomo.environ import (
-    ConcreteModel,
-    Var,
-    Objective,
-    SolverFactory,
-    NonNegativeReals,
-    Integers,
-    minimize,
-    Binary,
-    ConstraintList,
-)
-import re
-
-
-def solve_graph_mip(graph, startnode, endnode):
-    # this looks exactly like network flow problem solved using LP
-    model = ConcreteModel()
-
-    A = []
-    w = []
-    for i in range(len(graph)):
-        for j in range(len(graph)):
-            # add any graph edge that is not 0 and tail is not startnode and head is not endnode
-            if graph[i][j] != 0 and j != startnode and i != endnode:
-                A.append(f"{i}x{j}")
-                w.append(graph[i][j])
-
-    model.x = Var(A, within=Binary)
-    model.obj = Objective(
-        expr=sum(w[i] * model.x[e] for i, e in enumerate(A)), sense=minimize
-    )
-    model.constraints = ConstraintList()
-
-    print(A)
-    print(w)
-
-    startpattern = rf"^x_{startnode}.*"
-    endpattern = rf"^x.*_{endnode}$"
-
-    startconstraints = [s for s in A if re.match(startpattern, s)]
-    print(f"> startconstraints: {startconstraints}")
-    endconstraints = [s for s in A if re.match(endpattern, s)]
-    print(f"> endconstraints: {endconstraints}")
-
-    # start and end constraints
-    # sum of start constraints must be 1
-    # sum of end constraints must be 1
-    model.constraints.add(expr=sum(model.x[xi] for xi in startconstraints) == 1)
-    model.constraints.add(expr=sum(model.x[xi] for xi in endconstraints) == 1)
-
-    # define the constraints for bidirectional edges
-    for i in range(len(graph)):
-        if i == startnode or i == endnode:
-            continue
-        sp = rf"^x_{i}.*"
-        ep = rf"^x.*_{i}$"
-        sc = [s for s in A if re.match(sp, s)]
-        print(f"> sc: {sc}")
-        ec = [s for s in A if re.match(ep, s)]
-        print(f"> ec: {ec}")
-        if len(sc) == 0 or len(ec) == 0:
-            continue
-        model.constraints.add(
-            expr=sum(model.x[xi] for xi in sc) == sum(model.x[xi] for xi in ec)
-        )
-        print("add constraint")
-
-    opt = SolverFactory("glpk")
-    result_obj = opt.solve(model, tee=True)
-
-    model.pprint()
-
-    opt_solution = [model.x[item].value for item in A]
-    print(f"> opt_solution: {opt_solution}")
-
-    xsol = [e for i, e in enumerate(A) if opt_solution[i] == 1]
-    print(f"> xsol: {xsol}")
-
-    objective_obj = model.obj()
-    print(f"> objective_obj: {objective_obj}")
 
 
 class SequentialPRM:
@@ -151,6 +72,29 @@ class SequentialPRM:
             print(f"no path between {start} and {end}")
             return None, np.inf
 
+    def make_task_seq_matter_adj_matrix(self, task_candidates_num):
+        # task_candidates_num = np.array([0, 1, 4, 4, 4])
+        node_num = task_candidates_num.sum()
+        cs = np.cumsum(task_candidates_num)
+        numtask = task_candidates_num.shape[0] - 2
+
+        adj_matrix = np.zeros((node_num, node_num))
+        for k in range(numtask):
+            for i in range(cs[k], cs[k + 1]):
+                for j in range(cs[k + 1], cs[k + 2]):
+                    adj_matrix[i, j] = 1
+        return adj_matrix
+
+    def make_task_seq_matter_adj_matrix_dist(self, adj_matrix, QQ):
+        task_graph_dist = np.zeros_like(adj_matrix)
+        for i in range(task_graph_dist.shape[0]):
+            for j in range(task_graph_dist.shape[0]):
+                if adj_matrix[i, j] != 0:
+                    path, cost = self.query_path(QQ[i], QQ[j])
+                    if path is not None:
+                        task_graph_dist[i, j] = cost
+        return task_graph_dist
+
     def task_seq_matter_graph(self):
         qinit = np.array([0.40, 5.95])
         qtask1 = np.array([-3.26, 5.40])
@@ -162,57 +106,52 @@ class SequentialPRM:
         Qtask1 = Utils.find_alt_config(qtask1.reshape(2, 1), limt2).T
         Qtask2 = Utils.find_alt_config(qtask2.reshape(2, 1), limt2).T
         Qtask3 = Utils.find_alt_config(qtask3.reshape(2, 1), limt2).T
-
-        task1numcand = Qtask1.shape[0]
-        print(f"task1numcand: {task1numcand}")
-        task2numcand = Qtask2.shape[0]
-        print(f"task2numcand: {task2numcand}")
-        task3numcand = Qtask3.shape[0]
-
         QQ = np.vstack((qinit, Qtask1, Qtask2, Qtask3))
 
-        task_graph = np.zeros((QQ.shape[0], QQ.shape[0]))
-
-        qinitvector = np.zeros((1, QQ.shape[0]))
-        qinitvector[0, 0] = 0
-        qinitvector[0, 1 : task1numcand + 1] = 1
-        task_graph[0] = qinitvector
-
-        idt1 = 1
-        idt2 = 2
-        for i in range(idt1, idt1 + task1numcand):
-            for j in range(
-                task1numcand - 1 + idt2, task1numcand - 1 + idt2 + task2numcand
-            ):
-                print(f"i: {i}, j: {j}")
-                task_graph[i, j] = 1
-
-        idt3 = 3
-        for i in range(1 + task2numcand, 1 + task2numcand + task3numcand):
-            for j in range(
-                1 + task1numcand + task2numcand,
-                1 + task1numcand + task2numcand + task3numcand,
-            ):
-                print(f"i: {i}, j: {j}")
-                task_graph[i, j] = 1
-
+        task1numcand = Qtask1.shape[0]
+        task2numcand = Qtask2.shape[0]
+        task3numcand = Qtask3.shape[0]
+        task_candidates_num = np.array(
+            [0, 1, task1numcand, task2numcand, task3numcand]
+        )
+        task_graph = self.make_task_seq_matter_adj_matrix(task_candidates_num)
         print(f"task_graph:")
         print(task_graph)
 
-        task_graph_dist = np.zeros((task_graph.shape[0], task_graph.shape[0]))
-        for i in range(task_graph.shape[0]):
-            for j in range(task_graph.shape[0]):
-                if task_graph[i, j] != 0:
-                    path, cost = self.query_path(QQ[i], QQ[j])
-                    if path is not None:
-                        task_graph_dist[i, j] = cost
-
+        task_graph_dist = self.make_task_seq_matter_adj_matrix_dist(task_graph, QQ)
         print(f"task_graph_dist:")
         print(task_graph_dist)
 
         self.plot_graph(None, QQ=QQ)
 
-        solve_graph_mip(task_graph_dist, 0, 7)
+        startnodeid = 0
+        endnodeid = 9
+        endnodeset = [9, 10, 11, 12]
+
+        pathid = solve_graph_mip(task_graph_dist, startnodeid, endnodeid)
+
+        pathmulti = multi_target_dijkstra(
+            task_graph_dist,
+            startnodeid,
+            endnodeset,
+        )
+
+        path_complete = []
+        for i in range(len(pathmulti) - 1):
+            path1, _ = self.query_path(QQ[pathmulti[i]], QQ[pathmulti[i + 1]])
+            if path1 is not None:
+                path_complete.append(path1)
+
+        path_complete = np.vstack(path_complete)
+        print(path_complete)
+
+        self.plot_graph(path_complete, QQ)
+
+    def make_task_seq_not_matter_adj_matrix(self, task_candidates_num):
+        pass
+
+    def make_task_seq_not_matter_adj_matrix_dist(self, adj_matrix, QQ):
+        pass
 
     def plot_graph(self, path, QQ=None):
         fig, ax = plt.subplots()
@@ -284,13 +223,13 @@ class SequentialPRM:
 if __name__ == "__main__":
     prm = SequentialPRM()
 
-    start = np.array([0.0, 0.0])
-    end = np.array([-4, -6])
-    path, cost = prm.query_path(start, end)
-    print("path", path)
-    print("cost", cost)
+    # start = np.array([0.0, 0.0])
+    # end = np.array([-4, -6])
+    # path, cost = prm.query_path(start, end)
+    # print("path", path)
+    # print("cost", cost)
 
-    prm.plot_graph(path, QQ=None)
+    # prm.plot_graph(path, QQ=None)
 
     # prm.query_task()
 
