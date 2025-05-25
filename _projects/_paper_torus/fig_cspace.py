@@ -50,6 +50,19 @@ def fig_sequential_task_2d():
     env.plot_view(thetas)
 
 
+def fig_sequential_task_2d_path():
+    """
+    generate and visualize figure with minimal and extended space.
+    """
+    torus = True
+    env = RobotArm2DSimulator(PaperTorusIFAC2025(), torusspace=torus)
+    rsrc = os.environ["RSRC_DIR"] + "/rnd_torus/"
+    thetas = np.loadtxt(rsrc + "paper_r2s_constrained_path.csv", delimiter=",")
+    print(thetas.shape)
+    env.plot_view(thetas.T)
+
+
 if __name__ == "__main__":
-    fig_cspace_2d()
+    # fig_cspace_2d()
     # fig_sequential_task_2d()
+    fig_sequential_task_2d_path()
