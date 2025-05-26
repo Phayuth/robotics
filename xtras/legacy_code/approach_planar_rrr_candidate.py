@@ -74,3 +74,22 @@ t_app = r.inverse_kinematic_geometry(aprch, elbow_option=0)
 r.plot_arm(t_targ, plt_basis=True)
 r.plot_arm(t_app)
 plt.show()
+
+
+# ICROS 2023 confpaper
+# xTarg = 1.5
+# yTarg = 0.2
+# alphaTarg = 2  # given from grapse pose candidate
+# hD = 0.25
+# wD = 0.25
+# rCrop = 0.1
+# phiTarg = alphaTarg - np.pi
+# xTopStart = (rCrop + hD) * np.cos(alphaTarg - np.pi / 2) + xTarg
+# yTopStart = (rCrop + hD) * np.sin(alphaTarg - np.pi / 2) + yTarg
+# xBotStart = (rCrop) * np.cos(alphaTarg + np.pi / 2) + xTarg
+# yBotStart = (rCrop) * np.sin(alphaTarg + np.pi / 2) + yTarg
+# recTop = ShapeRectangle(xTopStart, yTopStart, hD, wD, angle=alphaTarg)
+# recBot = ShapeRectangle(xBotStart, yBotStart, hD, wD, angle=alphaTarg)
+# self.taskMapObs = [recTop, recBot]
+# target = np.array([xTarg, yTarg, phiTarg]).reshape(3, 1)
+# thetaGoal = self.inverse_kinematic_geometry(target, elbow_option=0)
