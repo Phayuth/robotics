@@ -27,8 +27,12 @@ class RobotArm2DSimulator:
 
     def collision_check(self, xNewConfig):
         linkPose = self.robot.forward_kinematic(xNewConfig, return_link_pos=True)
-        linearm1 = ShapeLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
-        linearm2 = ShapeLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
+        linearm1 = ShapeLine2D(
+            linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1]
+        )
+        linearm2 = ShapeLine2D(
+            linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1]
+        )
 
         link = [linearm1, linearm2]
 
@@ -53,7 +57,9 @@ class RobotArm2DSimulator:
         for th1 in range(len(theta1)):
             theta = np.array([[theta1[th1]], [0]])
             linkPose = self.robot.forward_kinematic(theta, return_link_pos=True)
-            linearm1 = ShapeLine2D(linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1])
+            linearm1 = ShapeLine2D(
+                linkPose[0][0], linkPose[0][1], linkPose[1][0], linkPose[1][1]
+            )
 
             for i in self.taskMapObs:
                 if ShapeCollision.intersect_line_v_rectangle(linearm1, i):
@@ -64,8 +70,15 @@ class RobotArm2DSimulator:
                     for th2 in range(len(theta2)):
                         print(f"Theta1 {theta1[th1]} | Theta 2 {theta2[th2]}")
                         theta = np.array([[theta1[th1]], [theta2[th2]]])
-                        linkPose = self.robot.forward_kinematic(theta, return_link_pos=True)
-                        linearm2 = ShapeLine2D(linkPose[1][0], linkPose[1][1], linkPose[2][0], linkPose[2][1])
+                        linkPose = self.robot.forward_kinematic(
+                            theta, return_link_pos=True
+                        )
+                        linearm2 = ShapeLine2D(
+                            linkPose[1][0],
+                            linkPose[1][1],
+                            linkPose[2][0],
+                            linkPose[2][1],
+                        )
 
                         if ShapeCollision.intersect_line_v_rectangle(linearm2, i):
                             gridMap[th2, th1] = 1
@@ -77,6 +90,19 @@ class RobotArm2DSimulator:
             obs.plot("#2ca08980")
 
     def plot_cspace(self, axis):
+        collisionPoint = self.generate_collision_points()
+        axis.plot(
+            collisionPoint[:, 0],
+            collisionPoint[:, 1],
+            color="darkcyan",
+            linewidth=0,
+            marker="o",
+            markerfacecolor="darkcyan",
+            markersize=1.5,
+        )
+        return collisionPoint
+
+    def generate_collision_points(self):
         if self.torusspace:
             jointRange = np.linspace(-2 * np.pi, 2 * np.pi, 720)
         else:
@@ -91,7 +117,6 @@ class RobotArm2DSimulator:
                     collisionPoint.append([theta1, theta2])
 
         collisionPoint = np.array(collisionPoint)
-        axis.plot(collisionPoint[:, 0], collisionPoint[:, 1], color="darkcyan", linewidth=0, marker="o", markerfacecolor="darkcyan", markersize=1.5)
         return collisionPoint
 
     def play_back_path(self, path, animation):
@@ -107,13 +132,27 @@ class RobotArm2DSimulator:
         self.plot_taskspace()
 
         # plot animation link
-        (robotLinks,) = ax.plot([], [], color=self.robot.linkcolor, linewidth=self.robot.linkwidth, marker=self.robot.jointmarker, markerfacecolor="r")
+        (robotLinks,) = ax.plot(
+            [],
+            [],
+            color=self.robot.linkcolor,
+            linewidth=self.robot.linkwidth,
+            marker=self.robot.jointmarker,
+            markerfacecolor="r",
+        )
 
         def update(frame):
-            link = self.robot.forward_kinematic(path[:, frame].reshape(2, 1), return_link_pos=True)
-            robotLinks.set_data([link[0][0], link[1][0], link[2][0]], [link[0][1], link[1][1], link[2][1]])
+            link = self.robot.forward_kinematic(
+                path[:, frame].reshape(2, 1), return_link_pos=True
+            )
+            robotLinks.set_data(
+                [link[0][0], link[1][0], link[2][0]],
+                [link[0][1], link[1][1], link[2][1]],
+            )
 
-        animation = animation.FuncAnimation(fig, update, frames=(path.shape[1]), interval=100)
+        animation = animation.FuncAnimation(
+            fig, update, frames=(path.shape[1]), interval=100
+        )
         plt.show()
 
     def plot_view(self, thetas, shadowseq=False, colors=[]):
