@@ -6,7 +6,7 @@ sys.path.append(str(os.path.abspath(os.getcwd())))
 import matplotlib.pyplot as plt
 from simulator.sim_planar_rr import RobotArm2DSimulator
 import numpy as np
-from task_map import PaperICCAS2024, PaperTorusIFAC2025, PaperX202X
+from task_map import PaperICCAS2024
 
 
 def fig_cspace_2d():
@@ -15,7 +15,7 @@ def fig_cspace_2d():
     switch between torus=true/false for the corresponding
     """
     torus = False
-    env = RobotArm2DSimulator(PaperTorusIFAC2025(), torusspace=torus)
+    env = RobotArm2DSimulator(PaperICCAS2024(), torusspace=torus)
     fig, ax = plt.subplots(1, 1)
     colp = env.plot_cspace(ax)
     if torus:
@@ -42,7 +42,7 @@ def fig_sequential_task_2d():
     generate and visualize figure with minimal and extended space.
     """
     torus = False
-    env = RobotArm2DSimulator(PaperX202X(), torusspace=torus)
+    env = RobotArm2DSimulator(PaperICCAS2024(), torusspace=torus)
     task0 = np.array([-np.pi / 2, 0.0])  # initial configuration
     task1 = np.array([-1.0, 2.0])  # grab cup
     task2 = np.array([np.pi + 1, -2.0])  # place cup

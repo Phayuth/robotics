@@ -48,7 +48,9 @@ pq = pa.begin_planner()
 print(f"> pq: {pq}")
 time.sleep(3)
 
-# sss = UR5eArmCoppeliaSimAPI() # must create new instance. problem with zmq (deadlock) probably with collision check request. (If I let planning run out of iteration. It worked fine)
+# sss = UR5eArmCoppeliaSimAPI() # must create new instance.
+# problem with zmq (deadlock) probably with collision check request.
+# If I let planning run out of iteration. It worked fine.
 simu.play_back_path(pq)
 
 pa.plot_performance()
