@@ -50,3 +50,6 @@ runs/
 
 # general ignore
 ignore/
+
+
+.conda/

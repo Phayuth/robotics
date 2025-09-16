@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<robot name="robot2joints">
+    <link name="base_link" />
+    <link name="link1">
+        <visual>
+            <geometry>
+                <box size="0.3 0.05 0.05" />
+            </geometry>
+            <origin xyz="0.15 0 0" rpy="0 0 0" />
+            <material name="blue">
+                <color rgba="0 0 1 1" />
+            </material>
+        </visual>
+    </link>
+    <link name="link2">
+        <visual>
+            <geometry>
+                <box size="0.2 0.05 0.05" />
+            </geometry>
+            <origin xyz="0.1 0 0" rpy="0 0 0" />
+            <material name="green">
+                <color rgba="0 1 0 1" />
+            </material>
+        </visual>
+    </link>
+    <link name="end_effector">
+        <visual>
+            <geometry>
+                <sphere radius="0.03" />
+            </geometry>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <material name="red">
+                <color rgba="1 0 0 1" />
+            </material>
+        </visual>
+    </link>
+    <joint name="joint1" type="revolute">
+        <parent link="base_link" />
+        <child link="link1" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <axis xyz="0 0 1" />
+        <limit lower="-3.14" upper="3.14" effort="1" velocity="1" />
+    </joint>
+    <joint name="joint2" type="revolute">
+        <parent link="link1" />
+        <child link="link2" />
+        <origin xyz="0.3 0 0" rpy="0 0 0" />
+        <axis xyz="0 0 1" />
+        <limit lower="-3.14" upper="3.14" effort="1" velocity="1" />
+    </joint>
+    <joint name="ee" type="fixed">
+        <parent link="link2" />
+        <child link="end_effector" />
+        <origin xyz="0.2 0 0" rpy="0 0 0" />
+    </joint>
+</robot>
