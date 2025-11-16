@@ -62,7 +62,9 @@ class Utils:
                     qInLimit[i] = qw[i]
 
         if filterOriginalq:
-            exists = np.all(qInLimit == q, axis=0)
+            # Use np.allclose with tolerance to handle floating-point precision errors
+            exists = np.array([np.allclose(qInLimit[:, i], q.flatten(), atol=1e-10, rtol=1e-10)
+                              for i in range(qInLimit.shape[1])])
             filterout = qInLimit[:, ~exists]
             return filterout
 

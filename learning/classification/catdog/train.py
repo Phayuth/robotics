@@ -40,12 +40,12 @@ for epc in range(100):
         output = model(data)
         loss = criterion(output,target)
         loss_list.append(loss)
-        
+
         _,pred = output.max(1)
 
         num_cor += (pred == target).sum()
         num_samp += pred.size(0)
-        
+
 
         #backward
         optimizer.zero_grad()

@@ -1,7 +1,8 @@
-import cv2
 import glob
 import torch
 from torch.utils.data.dataset import Dataset
+from torchvision.io import read_image
+import torchvision.transforms.functional as TF
 
 
 class dataset_import(Dataset):
@@ -24,8 +25,13 @@ class dataset_import(Dataset):
         # Open image
         # im_as_im = Image.open(single_image_path) #original
         img_dim = 50
-        im_gray = cv2.imread(single_image_path, cv2.IMREAD_GRAYSCALE)
-        im_gray = cv2.resize(im_gray, (img_dim, img_dim))
+        # Read image as a torch tensor (C x H x W), dtype=uint8
+        img = read_image(single_image_path)
+        # If image is RGB, convert to grayscale (1 x H x W)
+        if img.shape[0] == 3:
+            img = TF.rgb_to_grayscale(img, num_output_channels=1)
+        # Resize to desired dimensions (works on torch tensors, keeps C x H x W)
+        img = TF.resize(img, [img_dim, img_dim])
         # Do some operations on image
         # Convert to numpy, dim = img_dimximg_dim
 
@@ -39,7 +45,8 @@ class dataset_import(Dataset):
 
         # Transform image to tensor, change data type
         # im_as_ten = torch.from_numpy(im_as_np).float() #original
-        im_as_ten = torch.from_numpy(im_gray / 255).float()
+        # Convert to float in range [0,1]
+        im_as_ten = img.float() / 255.0
         # Get label(class) of the image based on the file name
         # Let cat = 0, dog = 1
 
@@ -79,7 +86,8 @@ if __name__ == "__main__":
     imt, label = dataset_train.__getitem__(7520)
     print(imt.size())
     print(label)
-    plt.imshow(imt)
+    # imt is (1, H, W) tensor; squeeze channel for matplotlib
+    plt.imshow(imt.squeeze(), cmap='gray')
 
     # fake data
     f_data = torch.rand((8, 100, 100)).to("cuda")
