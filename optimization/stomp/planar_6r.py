@@ -131,7 +131,6 @@ def compute_obstacle_cost_one_traj_to_each_joint_k_traj(noisy_traj):
     return costfully
 
 
-# sys.exit(0)
 if __name__ == "__main__":
     K = 50
     N = 100
@@ -190,8 +189,10 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     ax.grid(True)
     ax.set_aspect("equal")
-    for o in oo:
-        polygon = pltPolygon(o.exterior, facecolor="r", edgecolor="r", alpha=0.5)
+    for i in range(len(oo.geoms)):
+        o = oo.geoms[i]
+        xy = np.array(o.exterior.coords.xy).T
+        polygon = pltPolygon(xy, facecolor="r", edgecolor="r", alpha=0.5)
         ax.add_patch(polygon)
     ax.set_xlim(-7, 7)
     ax.set_ylim(-7, 7)
